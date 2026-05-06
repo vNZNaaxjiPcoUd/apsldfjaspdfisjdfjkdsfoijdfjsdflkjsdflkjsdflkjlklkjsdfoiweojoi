@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown 終極編輯器 (圖片與分頁完美版)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style id="user-custom-style">
+        #preview {
+            padding: 40px;
+            background-color: white;
+            min-height: 100%;
+            line-height: 1.8;
+            color: #222;
+            font-size: 16px;
+        }
+        /* 核心分頁修復 */
+        #preview p, #preview h1, #preview h2, #preview h3, 
+        #preview h4, #preview img, #preview li, #preview blockquote {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            position: relative;
+        }
+        #preview img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 15px 0;
+        }
+    </style>
+
+    <style>
+        body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #eee; }
+        header { background: #1a1a1a; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .controls { display: flex; gap: 12px; }
+        
+        main { display: flex; flex: 1; overflow: hidden; background: white; }
+        
+        /* 固定左右各 50% */
+        .pane { 
+            flex: 0 0 50%; 
+            width: 50%;
+            display: flex; 
+            flex-direction: column; 
+            border-right: 1px solid #ccc;
+            overflow: hidden; 
+        }
+
+        /* 增加下方的橫向捲軸 */
+        textarea#markdown-input { 
+            flex: 1; 
+            padding: 20px; 
+            font-family: 'Consolas', monospace; 
+            font-size: 14px; 
+            border: none; 
+            resize: none; 
+            outline: none;
+            white-space: pre; 
+            overflow: auto;
+            background: #fdfdfd;
+        }
+
+        #preview-container { 
+            flex: 1; 
+            overflow-y: auto; 
+            overflow-x: auto; /* 預覽區也支援橫捲 */
+            background: #fff; 
+        }
+        
+        .hidden { display: none !important; }
+        #preview-pane.full-width { flex: 0 0 100%; width: 100%; }
+
+        button { background: #27ae60; color: white; border: none; padding: 10px 18px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        button:hover { background: #219150; }
+        button.pdf-btn { background: #e74c3c; }
+        button.pdf-btn:hover { background: #c0392b; }
+        select { padding: 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="controls">
+        <select id="view-mode">
+            <option value="split">雙邊顯示</option>
+            <option value="preview">僅顯示結果</option>
+        </select>
+    </div>
+    <div class="controls">
+        <button onclick="downloadHTML()">下載 HTML</button>
+        <button class="pdf-btn" id="pdf-trigger">📄 下載完美 PDF</button>
+    </div>
+</header>
+
+<main>
+    <section id="editor-pane" class="pane">
+        <textarea id="markdown-input" placeholder="在此輸入 Markdown..."></textarea>
+    </section>
+    
+    <section id="preview-pane" class="pane">
+        <div id="preview-container">
+            <div id="preview"></div>
+        </div>
+    </section>
+</main>
+
+<script>
+    const markdownInput = document.getElementById('markdown-input');
+    const preview = document.getElementById('preview');
+    const viewMode = document.getElementById('view-mode');
+    const editorPane = document.getElementById('editor-pane');
+    const previewPane = document.getElementById('preview-pane');
+
+    // 1. 即時預覽
+    markdownInput.addEventListener('input', () => {
+        preview.innerHTML = marked.parse(markdownInput.value);
+    });
+
+    // 2. 模式切換
+    viewMode.addEventListener('change', () => {
+        const isPreview = viewMode.value === 'preview';
+        editorPane.classList.toggle('hidden', isPreview);
+        previewPane.classList.toggle('full-width', isPreview);
+    });
+
+    // 核心解決方案：將圖片轉為 Base64
+    async function getBase64Image(url) {
+        try {
+            // 使用 proxy 繞過京東雲等 OSS 的嚴格限制
+            const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+            const response = await fetch(proxyUrl);
+            const blob = await response.blob();
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (e) {
+            console.error("圖片轉換失敗:", url);
+            return url; // 失敗則回傳原 URL
+        }
+    }
+
+    // 3. 下載 PDF
+    document.getElementById('pdf-trigger').addEventListener('click', async function() {
+        const btn = this;
+        const originalText = btn.innerText;
+        btn.innerText = "處理中 (轉換圖片)...";
+        btn.disabled = true;
+
+        // 複製一個暫時的容器來處理圖片，不影響 UI
+        const tempDiv = preview.cloneNode(true);
+        const images = tempDiv.querySelectorAll('img');
+        
+        for (let img of images) {
+            const base64 = await getBase64Image(img.src);
+            img.src = base64;
+        }
+
+        const opt = {
+            margin: [15, 10], // 上下, 左右
+            filename: 'document.pdf',
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true,
+                logging: false,
+                letterRendering: true
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            // avoid-all 是防止文字切斷的關鍵
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        try {
+            await html2pdf().set(opt).from(tempDiv).save();
+        } catch (err) {
+            alert("PDF 生成出錯");
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    });
+
+    function downloadHTML() {
+        const fullHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>${document.getElementById('user-custom-style').innerHTML}</style></head><body>${preview.innerHTML}</body></html>`;
+        const blob = new Blob([fullHTML], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'export.html';
+        a.click();
+    }
+
+    // 初始化範例 (包含你的圖片網址)
+    markdownInput.value = "# 完美 PDF 匯出測試\n\n這是一個 PNG 圖片測試（已處理跨域）：\n\n![PNG](https://s3.cn-north-1.jdcloud-oss.com/shendengbucket1/2024-04-01-16-18cDfxPQqHaANsXwI.png)\n\n### 分頁測試\n這裡有很多段落...\n\n" + "文字內容測試 ".repeat(100) + "\n\n### 再次測試圖片分頁\n\n![PNG](https://s3.cn-north-1.jdcloud-oss.com/shendengbucket1/2024-04-01-16-18cDfxPQqHaANsXwI.png)";
+    preview.innerHTML = marked.parse(markdownInput.value);
+</script>
+
+</body>
+</html>

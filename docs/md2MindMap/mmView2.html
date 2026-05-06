@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Mindmap 節點控制版</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100vh;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg); overflow: hidden;
+        }
+
+        #main-wrapper { display: flex; width: 100%; height: 100%; transition: 0.3s; }
+
+        /* 左側編輯器 */
+        #editor-container {
+            width: 50%; height: 100%; background: white;
+            border-right: 1px solid #e2e8f0; display: flex;
+            flex-direction: column; padding: 20px; box-sizing: border-box;
+            transition: width 0.3s ease, opacity 0.2s;
+        }
+
+        .full-mindmap #editor-container { width: 0; padding: 0; opacity: 0; border: none; overflow: hidden; }
+
+        textarea {
+            flex: 1; width: 100%; border: 1px solid #cbd5e1; border-radius: 8px;
+            padding: 15px; font-family: 'Consolas', monospace; font-size: 14px;
+            line-height: 1.6; outline: none; resize: none;
+        }
+
+        /* 右側心智圖 */
+        #mindmap-container { flex: 1; height: 100%; position: relative; background: white; }
+        svg#markmap { width: 100%; height: 100%; display: block; }
+
+        /* 工具欄 */
+        .toolbar {
+            position: absolute; top: 15px; right: 15px;
+            display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; z-index: 100;
+        }
+
+        button {
+            padding: 8px 12px; border: none; border-radius: 6px;
+            cursor: pointer; font-weight: 600; font-size: 12px;
+            color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #btn-layout { background-color: var(--primary); }
+        #btn-zoom { background-color: var(--success); }
+        #btn-expand { background-color: var(--warning); }
+        #btn-collapse { background-color: var(--danger); }
+
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markmap-lib"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+</head>
+<body>
+
+    <div id="main-wrapper">
+        <div id="editor-container">
+            <h2>Markdown 編輯</h2>
+            <textarea id="md-input">
+# 🌳 節點控制測試
+## 1. 展開與收合功能
+- 使用右上角的「橘色按鈕」全部展開
+- 使用右上角的「紅色按鈕」全部收合
+## 2. 佈局與縮放
+- 藍色：切換 50/50 畫面
+- 綠色：切換 1:1 或 全貌
+## 3. 測試深層節點
+### 第一層
+#### 第二層
+##### 第三層
+###### 第四層 (收合時看不見)
+            </textarea>
+        </div>
+
+        <div id="mindmap-container">
+            <div class="toolbar">
+                <button id="btn-layout">🌗 佈局</button>
+                <button id="btn-zoom">🔍 1:1/全貌</button>
+                <button id="btn-expand">➕ 全部展開</button>
+                <button id="btn-collapse">➖ 全部收合</button>
+            </div>
+            <svg id="markmap"></svg>
+        </div>
+    </div>
+
+    <script>
+        const { Transformer } = window.markmap;
+        const { Markmap } = window.markmap;
+        const transformer = new Transformer();
+
+        const mdInput = document.getElementById('md-input');
+        const svgElement = document.getElementById('markmap');
+        const wrapper = document.getElementById('main-wrapper');
+        
+        let mm;
+        let currentRootData; // 儲存目前的轉換後的數據
+        let isFullSize = false;
+
+        // 渲染函數
+        function render() {
+            const { root } = transformer.transform(mdInput.value);
+            currentRootData = root; // 更新全域數據
+            if (!mm) {
+                mm = Markmap.create(svgElement, { autoFit: true }, root);
+            } else {
+                mm.setData(root);
+            }
+        }
+
+        // 遞迴處理所有節點的展開/收合狀態
+        function setFoldStatus(node, status) {
+            if (node.children) {
+                node.payload = { ...node.payload, fold: status };
+                node.children.forEach(child => setFoldStatus(child, status));
+            }
+        }
+
+        // 按鈕：全部展開 (status = 0)
+        document.getElementById('btn-expand').onclick = () => {
+            if (!currentRootData) return;
+            setFoldStatus(currentRootData, 0); // 0 代表不摺疊
+            mm.setData(currentRootData);
+            setTimeout(() => mm.fit(), 200); // 展開後自動校正視角
+        };
+
+        // 按鈕：全部收合 (status = 1)
+        document.getElementById('btn-collapse').onclick = () => {
+            if (!currentRootData) return;
+            // 根節點通常不摺疊，我們摺疊根節點底下的第一層子節點
+            if (currentRootData.children) {
+                currentRootData.children.forEach(child => setFoldStatus(child, 1)); // 1 代表摺疊
+            }
+            mm.setData(currentRootData);
+            setTimeout(() => mm.fit(), 200);
+        };
+
+        // 按鈕：縮放切換 (1:1 / 全貌)
+        document.getElementById('btn-zoom').onclick = () => {
+            if (!isFullSize) { mm.rescale(0.5); isFullSize = true; }
+            else { mm.fit(); isFullSize = false; }
+        };
+
+        // 按鈕：佈局切換
+        document.getElementById('btn-layout').onclick = () => {
+            wrapper.classList.toggle('full-mindmap');
+            setTimeout(() => mm.fit(), 350);
+        };
+
+        mdInput.oninput = render;
+        window.onload = render;
+        window.onresize = () => mm && mm.fit();
+    </script>
+</body>
+</html>
