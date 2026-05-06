@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字幕時間軸去除</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        .container {
+            display: flex;
+            width: 100%;
+            gap: 20px;
+        }
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: #444;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 10px;
+        }
+        textarea {
+            flex: 1;
+            resize: none;
+            padding: 15px;
+            font-size: 1rem;
+            line-height: 1.6;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        textarea:focus {
+            border-color: #007bff;
+        }
+        #output {
+            background-color: #f8f9fa;
+            cursor: text;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="panel">
+        <h2>📥 貼上原始文字</h2>
+        <textarea id="input" placeholder="請在此貼上包含時間軸的文字..."></textarea>
+    </div>
+    <div class="panel">
+        <h2>📤 處理後的文字 (支援多種時間格式)</h2>
+        <textarea id="output" readonly placeholder="處理後的結果會即時顯示在這裡..."></textarea>
+    </div>
+</div>
+
+<script>
+    const inputArea = document.getElementById('input');
+    const outputArea = document.getElementById('output');
+
+    inputArea.addEventListener('input', function() {
+        const text = this.value;
+        
+        // 正規表達式升級解析：
+        // ^                      : 匹配每行開頭
+        // \d{1,2}:\d{2}          : 匹配數位時間 (如 0:08, 1:04, 12:49, 25:03)
+        // (?:\d{1,2}\s*分鐘\s*)? : 【關鍵修改】匹配「X 分鐘」，尾部的 ? 代表這整個段落是「可有可無」的
+        // \d{1,2}\s*秒           : 匹配「X 秒」 (如 8 秒, 4 秒, 49 秒)
+        // \s* : 匹配結尾的空白，確保文字開頭不會多出空格
+        // gm                     : 全域替換 (g) + 多行模式 (m)
+        const regex = /^\d{1,2}:\d{2}(?:\d{1,2}\s*分鐘\s*)?\d{1,2}\s*秒\s*/gm;
+        
+        outputArea.value = text.replace(regex, '');
+    });
+</script>
+
+</body>
+</html>
