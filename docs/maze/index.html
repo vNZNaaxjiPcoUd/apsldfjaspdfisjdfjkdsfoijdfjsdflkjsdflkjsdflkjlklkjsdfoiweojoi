@@ -8,11 +8,20 @@
 <meta name="theme-color" content="#121212">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
+    /* 新增：全域禁止系統預設觸控行為、選取、與長按選單 */
+    * {
+        box-sizing: border-box;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        touch-action: manipulation; /* 告訴瀏覽器這裡只有基本點擊，不要啟用連點放大 */
+    }
+
     body {
         background-color: #121212; color: #e0e0e0; font-family: "Courier New", Courier, monospace;
         margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
         height: 100dvh; overscroll-behavior: none; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
-        box-sizing: border-box; -webkit-user-select: none; user-select: none; touch-action: none;
+        touch-action: none; /* 徹底封殺滑動與縮放 */
     }
     #header { text-align: center; margin-bottom: 5px; width: 100%; flex-shrink: 0; }
     h1 { margin: 8px 0 4px 0; font-size: 18px; color: #ffffff; }
@@ -58,7 +67,6 @@
     
     @keyframes blink { 50% { opacity: 0.4; } }
 
-    /* 過關時的閃爍動畫 (利用背景色與光暈達成發光效果) */
     @keyframes winFlash {
         0%, 100% { background-color: #000; }
         50% { background-color: #FFC107; box-shadow: inset 0 0 50px #FFEB3B; }
@@ -103,6 +111,19 @@
 </div>
 
 <script>
+    // --- 新增：防止手機連點兩下放大畫面的終極攔截 ---
+    document.addEventListener('dblclick', function(e) { e.preventDefault(); }, { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (e) {
+        let now = (new Date()).getTime();
+        // 如果兩次點擊的間隔小於 300 毫秒，判定為連點並攔截預設放大行為
+        if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
+    // ------------------------------------------------
+
     const mazeContainer = document.getElementById('maze-container');
     const mazeWrapper = document.getElementById('maze-wrapper');
     const fixedPlayer = document.getElementById('fixed-player');
@@ -122,7 +143,7 @@
     let level = 1, totalGems = 0; 
     let resetClickCount = 0;
     let isMoving = false; 
-    let levelCompleteTimeout = null; // 儲存過關計時器，避免重置時發生衝突
+    let levelCompleteTimeout = null; 
     
     const DB_NAME = 'MazeGameDB', STORE_NAME = 'gameState'; let db;
     function initDB() { return new Promise((res) => { const req = indexedDB.open(DB_NAME, 1); req.onsuccess = e => { db = e.target.result; res(db); }; req.onupgradeneeded = e => { db = e.target.result; db.createObjectStore(STORE_NAME); }; }); }
@@ -330,18 +351,16 @@
                 mazeContainer.style.transform = 'translate(0px, 0px)';
                 mazeContainer.offsetHeight; 
                 
-                // --- 修改：抵達終點過關觸發 5 秒閃爍 ---
                 if (playerPos.r === goalPos.r && playerPos.c === goalPos.c) {
-                    mazeContainer.classList.add('maze-win'); // 開啟閃爍效果
+                    mazeContainer.classList.add('maze-win'); 
                     
                     levelCompleteTimeout = setTimeout(() => { 
-                        mazeContainer.classList.remove('maze-win'); // 5秒後關閉閃爍
+                        mazeContainer.classList.remove('maze-win'); 
                         level++; 
                         saveProgress(); 
                         startNewLevel(); 
-                    }, 5000); // 等待 5 秒鐘
+                    }, 5000); 
                     
-                    // isMoving 保持 true，鎖死這 5 秒讓玩家不能移動
                     return; 
                 }
                 
@@ -399,7 +418,6 @@
     });
     
     function resetLevel() { 
-        // 防呆處理：如果在過關閃爍的 5 秒內按下了重置按鈕，強制清除計時器並關閉閃爍
         if (levelCompleteTimeout) {
             clearTimeout(levelCompleteTimeout);
             levelCompleteTimeout = null;
@@ -414,7 +432,6 @@
     }
     
     function startNewLevel() { 
-        // 確保進入新關卡時清除一切閃爍效果與鎖定狀態
         if (levelCompleteTimeout) {
             clearTimeout(levelCompleteTimeout);
             levelCompleteTimeout = null;
