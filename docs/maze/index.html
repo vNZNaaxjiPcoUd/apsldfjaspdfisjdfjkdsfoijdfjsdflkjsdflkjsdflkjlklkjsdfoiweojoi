@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>迷宮</title>
-<link rel="manifest" href="mazemanifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#121212">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
@@ -501,5 +501,21 @@
         startNewLevel(); 
     });
 </script>
+
+<script>
+    // 註冊 Service Worker (PWA 核心)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker 註冊成功，範圍為: ', registration.scope);
+                })
+                .catch(err => {
+                    console.log('ServiceWorker 註冊失敗: ', err);
+                });
+        });
+    }
+</script>
+
 </body>
 </html>
