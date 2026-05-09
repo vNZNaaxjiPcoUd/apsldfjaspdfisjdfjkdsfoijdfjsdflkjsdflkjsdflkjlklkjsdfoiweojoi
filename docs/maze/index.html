@@ -21,9 +21,8 @@
     .gem-badge { color: #FFEB3B; border-color: #FFEB3B; }
     .total-gem-badge { color: #00BCD4; border-color: #00BCD4; }
     
-    /* 縮小 Padding 讓迷宮能撐得更大 */
     #maze-wrapper { padding: 4px; background-color: #1a1a1a; border: 3px solid #4CAF50; border-radius: 8px; margin-bottom: 8px; flex-shrink: 0; }
-    #maze-container { display: grid; gap: 0; background-color: #000; }
+    #maze-container { display: grid; gap: 0; background-color: #000; overflow: hidden; /* 防止內容溢出 */ }
     .cell { display: flex; align-items: center; justify-content: center; font-weight: bold; line-height: 1; transition: background-color 0.1s; }
 
     .wall { background-color: #808080; color: transparent; } 
@@ -35,7 +34,6 @@
     
     @keyframes blink { 50% { opacity: 0.4; } }
     
-    /* 微調按鈕大小，節省垂直空間給迷宮 */
     #controls { display: grid; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(3, 55px); gap: 6px; flex-shrink: 0; margin-bottom: 5px; }
     .btn { background-color: #2a2a2a; color: #bbb; border: 2px solid #444; border-radius: 10px; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
     .btn:active { background-color: #4CAF50; color: white; border-color: #4CAF50; }
@@ -75,8 +73,8 @@
 
     // --- 遊戲核心設定 ---
     let rows = 13, cols = 13; 
-    let VIEW_RADIUS = 10; // 預設視野半徑 (會隨螢幕自動調整)
-    let VIEW_SIZE = 21;   // 預設網格大小
+    let VIEW_RADIUS = 10; 
+    let VIEW_SIZE = 21;   
     
     let maze = [], gridCells = [], gems = [], playerPos = { r: 1, c: 1 }, goalPos = { r: 1, c: 1 };
     let level = 1, totalGems = 0; 
@@ -111,16 +109,20 @@
 
     function resizeMaze() {
         const isControlsVisible = window.getComputedStyle(controls).display !== 'none';
-        // 縮小預留高度，讓手機有更多垂直空間
-        const reservedHeight = isControlsVisible ? 220 : 80; 
-        // 縮減邊距為 12px，盡可能撐滿螢幕
-        const availableSize = Math.min(window.innerWidth - 12, window.innerHeight - reservedHeight);
+        
+        // 【修正1】增加預留的高度，避免迷宮被外框擠出螢幕或切斷
+        const reservedHeight = isControlsVisible ? 260 : 100; 
+        
+        // 確保左右也有一點安全邊距 (20px)
+        const availableSize = Math.min(window.innerWidth - 20, window.innerHeight - reservedHeight);
         
         mazeContainer.style.width = availableSize + 'px';
         mazeContainer.style.height = availableSize + 'px';
         mazeContainer.style.gridTemplateColumns = `repeat(${VIEW_SIZE}, 1fr)`;
         mazeContainer.style.gridTemplateRows = `repeat(${VIEW_SIZE}, 1fr)`;
-        mazeContainer.style.fontSize = Math.floor((availableSize / VIEW_SIZE) * 0.7) + 'px';
+        
+        // 【修正2】將字體比例從 0.7 縮小到 0.6，避免箭頭或符號過大被裁切
+        mazeContainer.style.fontSize = Math.floor((availableSize / VIEW_SIZE) * 0.6) + 'px';
     }
 
     window.addEventListener('resize', resizeMaze);
@@ -326,7 +328,6 @@
     function resetLevel() { playerPos = { r: 1, c: 1 }; drawMaze(); }
     
     function startNewLevel() { 
-        // 核心修改：判斷螢幕寬度，手機版視野改為看 6 步 (13x13 網格)，電腦版看 10 步 (21x21 網格)
         VIEW_RADIUS = window.innerWidth < 500 ? 6 : 10;
         VIEW_SIZE = VIEW_RADIUS * 2 + 1;
 
