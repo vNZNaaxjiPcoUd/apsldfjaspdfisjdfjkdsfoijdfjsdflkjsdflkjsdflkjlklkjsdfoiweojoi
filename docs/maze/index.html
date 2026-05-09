@@ -8,20 +8,20 @@
 <meta name="theme-color" content="#121212">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-    /* 新增：全域禁止系統預設觸控行為、選取、與長按選單 */
+    /* 全域禁止系統預設觸控行為、選取、與長按選單 */
     * {
         box-sizing: border-box;
         -webkit-user-select: none;
         user-select: none;
         -webkit-touch-callout: none;
-        touch-action: manipulation; /* 告訴瀏覽器這裡只有基本點擊，不要啟用連點放大 */
+        touch-action: manipulation;
     }
 
     body {
         background-color: #121212; color: #e0e0e0; font-family: "Courier New", Courier, monospace;
         margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
         height: 100dvh; overscroll-behavior: none; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
-        touch-action: none; /* 徹底封殺滑動與縮放 */
+        touch-action: none;
     }
     #header { text-align: center; margin-bottom: 5px; width: 100%; flex-shrink: 0; }
     h1 { margin: 8px 0 4px 0; font-size: 18px; color: #ffffff; }
@@ -111,18 +111,14 @@
 </div>
 
 <script>
-    // --- 新增：防止手機連點兩下放大畫面的終極攔截 ---
+    // 防止手機連點兩下放大畫面的攔截
     document.addEventListener('dblclick', function(e) { e.preventDefault(); }, { passive: false });
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function (e) {
         let now = (new Date()).getTime();
-        // 如果兩次點擊的間隔小於 300 毫秒，判定為連點並攔截預設放大行為
-        if (now - lastTouchEnd <= 300) {
-            e.preventDefault();
-        }
+        if (now - lastTouchEnd <= 300) e.preventDefault();
         lastTouchEnd = now;
     }, { passive: false });
-    // ------------------------------------------------
 
     const mazeContainer = document.getElementById('maze-container');
     const mazeWrapper = document.getElementById('maze-wrapper');
@@ -209,6 +205,7 @@
         let branchProb = Math.min(0.75, (level - 1) * 0.04);
         let activeCells = [{ r: 1, c: 1 }], pathCells = []; maze[1][1] = 0;
         
+        // 生成完美迷宮路徑
         while (activeCells.length > 0) {
             let index = (Math.random() < branchProb) ? Math.floor(Math.random() * activeCells.length) : activeCells.length - 1;
             let cell = activeCells[index], neighbors = [];
@@ -224,9 +221,58 @@
         }
         
         playerPos = { r: 1, c: 1 }; 
-        goalPos = { r: rows - 2, c: cols - 2 }; 
-        maze[goalPos.r][goalPos.c] = 0; 
+
+        // --- 新增 BFS 演算法：找出所有死胡同的距離 ---
+        let distances = Array.from({ length: rows }, () => Array(cols).fill(-1));
+        let queue = [{ r: 1, c: 1, d: 0 }];
+        distances[1][1] = 0;
+        let head = 0;
         
+        // 算出每一個可以走的格子距離起點有多遠
+        while (head < queue.length) {
+            let curr = queue[head++];
+            [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dr, dc]) => {
+                let nr = curr.r + dr, nc = curr.c + dc;
+                if (nr > 0 && nr < rows - 1 && nc > 0 && nc < cols - 1 && maze[nr][nc] === 0 && distances[nr][nc] === -1) {
+                    distances[nr][nc] = curr.d + 1;
+                    queue.push({ r: nr, c: nc, d: curr.d + 1 });
+                }
+            });
+        }
+
+        // 收集所有「死胡同」(周圍只有一條路)
+        let deadEnds = [];
+        for (let r = 1; r < rows - 1; r++) {
+            for (let c = 1; c < cols - 1; c++) {
+                if (maze[r][c] === 0 && (r !== 1 || c !== 1)) {
+                    let neighbors = 0;
+                    if (maze[r-1][c] === 0) neighbors++;
+                    if (maze[r+1][c] === 0) neighbors++;
+                    if (maze[r][c-1] === 0) neighbors++;
+                    if (maze[r][c+1] === 0) neighbors++;
+                    
+                    if (neighbors === 1) {
+                        deadEnds.push({ r, c, dist: distances[r][c] });
+                    }
+                }
+            }
+        }
+
+        // 依照距離由遠到近排序
+        deadEnds.sort((a, b) => b.dist - a.dist);
+        
+        // 從最遠的 5 個死胡同中隨機挑選 1 個作為終點
+        let poolSize = Math.min(5, deadEnds.length);
+        if (poolSize > 0) {
+            let pick = deadEnds[Math.floor(Math.random() * poolSize)];
+            goalPos = { r: pick.r, c: pick.c };
+        } else {
+            // 防呆機制 (極端情況)
+            goalPos = { r: rows - 2, c: cols - 2 }; 
+            maze[goalPos.r][goalPos.c] = 0; 
+        }
+        
+        // 生成寶石
         gems = []; 
         let gemCount = Math.floor((rows * cols) / 60);
         let candidates = pathCells.filter(p => !(p.r === 1 && p.c === 1) && !(p.r === goalPos.r && p.c === goalPos.c));
