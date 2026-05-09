@@ -36,9 +36,10 @@
     .btn:active { background-color: #4CAF50; color: white; border-color: #4CAF50; }
     #btn-up { grid-column: 2; grid-row: 1; }
     #btn-left { grid-column: 1; grid-row: 2; }
-    #btn-reset { grid-column: 2; grid-row: 2; font-size: 14px; background-color: #4a2c2c; color: #ffcccc; }
+    #btn-reset2 { grid-column: 2; grid-row: 2; font-size: 14px; background-color: #4a2c2c; color: #ffcccc; }
     #btn-right { grid-column: 3; grid-row: 2; }
     #btn-down { grid-column: 2; grid-row: 3; }
+
     @media (hover: hover) and (pointer: fine) { #controls { display: none; } }
 </style>
 </head>
@@ -46,16 +47,16 @@
 <div id="header">
     <div class="stats-container">
         <div class="stat-badge">第 <span id="level-display">1</span> 關</div>
-        <div class="stat-badge gem-badge">本關 ✨: <span id="gem-display">0</span></div>
+        <div class="stat-badge gem-badge">✨: <span id="gem-display">0</span></div>
         <div class="stat-badge total-gem-badge">累計 ✨: <span id="total-gem-display">0</span></div>
-        <div><button class="btn" id="btn-reset">重置</button></div>
+        <div class="stat-badge"><span id="btn-reset">重置</span></div>
     </div>
 </div>
 <div id="maze-wrapper"><div id="maze-container"></div></div>
 <div id="controls">
     <button class="btn" id="btn-up">▲</button>
     <button class="btn" id="btn-left">◄</button>
-    <button class="btn" id="btn-reset2"> </button>
+    <button class="btn" id="btn-reset2">+</button>
     <button class="btn" id="btn-right">►</button>
     <button class="btn" id="btn-down">▼</button>
 </div>
