@@ -21,9 +21,8 @@
     .gem-badge { color: #FFEB3B; border-color: #FFEB3B; }
     .total-gem-badge { color: #00BCD4; border-color: #00BCD4; }
     
-    /* 外框改為嚴格控制大小，不再使用 padding 避免擠壓裁切 */
     #maze-wrapper { 
-        position: relative; /* 為了讓固定在中央的玩家能對齊 */
+        position: relative; 
         background-color: #1a1a1a; 
         border: 3px solid #4CAF50; 
         border-radius: 8px; 
@@ -35,7 +34,6 @@
     
     #maze-container { 
         display: grid; gap: 0; background-color: #000; 
-        /* 將由 JS 動態控制平滑滑動 */
         will-change: transform; 
     }
     
@@ -44,7 +42,6 @@
     .wall { background-color: #808080; color: transparent; } 
     .path { color: transparent; }
     
-    /* 固定的玩家標記，永遠站在螢幕中央 */
     #fixed-player { 
         position: absolute; 
         left: 50%; top: 50%; 
@@ -60,6 +57,15 @@
     .indicator { color: #FF9800 !important; text-shadow: 0 0 5px #FF9800; font-size: 1.2em; z-index: 3; animation: blink 0.8s infinite; }
     
     @keyframes blink { 50% { opacity: 0.4; } }
+
+    /* 過關時的閃爍動畫 (利用背景色與光暈達成發光效果) */
+    @keyframes winFlash {
+        0%, 100% { background-color: #000; }
+        50% { background-color: #FFC107; box-shadow: inset 0 0 50px #FFEB3B; }
+    }
+    .maze-win {
+        animation: winFlash 0.5s ease-in-out infinite !important;
+    }
     
     #controls { display: grid; grid-template-columns: repeat(3, 70px); grid-template-rows: repeat(3, 55px); gap: 6px; flex-shrink: 0; margin-bottom: 5px; }
     .btn { background-color: #2a2a2a; color: #bbb; border: 2px solid #444; border-radius: 10px; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
@@ -84,9 +90,7 @@
 </div>
 
 <div id="maze-wrapper">
-    <!-- 迷宮底圖 (會滑動) -->
     <div id="maze-container"></div>
-    <!-- 永遠固定的玩家 (不會動) -->
     <div id="fixed-player">＠</div>
 </div>
 
@@ -111,13 +115,14 @@
     let rows = 13, cols = 13; 
     let VIEW_RADIUS = 10; 
     let VIEW_SIZE = 21;   
-    let RENDER_SIZE = 23; // 為了實現平滑捲動，我們需要在視線外圍預先多畫一圈「緩衝格子」
+    let RENDER_SIZE = 23; 
     let cellSize = 0;
     
     let maze = [], gridCells = [], gems = [], playerPos = { r: 1, c: 1 }, goalPos = { r: 1, c: 1 };
     let level = 1, totalGems = 0; 
     let resetClickCount = 0;
     let isMoving = false; 
+    let levelCompleteTimeout = null; // 儲存過關計時器，避免重置時發生衝突
     
     const DB_NAME = 'MazeGameDB', STORE_NAME = 'gameState'; let db;
     function initDB() { return new Promise((res) => { const req = indexedDB.open(DB_NAME, 1); req.onsuccess = e => { db = e.target.result; res(db); }; req.onupgradeneeded = e => { db = e.target.result; db.createObjectStore(STORE_NAME); }; }); }
@@ -152,23 +157,19 @@
         
         cellSize = Math.floor(availableSize / VIEW_SIZE);
         
-        // 設定外框大小 (精準裁切)
         mazeWrapper.style.width = (cellSize * VIEW_SIZE) + 'px';
         mazeWrapper.style.height = (cellSize * VIEW_SIZE) + 'px';
         
-        // 設定迷宮底圖大小 (多出 2 格做為滑動緩衝)
         mazeContainer.style.width = (cellSize * RENDER_SIZE) + 'px';
         mazeContainer.style.height = (cellSize * RENDER_SIZE) + 'px';
         mazeContainer.style.gridTemplateColumns = `repeat(${RENDER_SIZE}, 1fr)`;
         mazeContainer.style.gridTemplateRows = `repeat(${RENDER_SIZE}, 1fr)`;
         
-        // 將迷宮底圖往左上偏移一格，把緩衝區藏在框外
         mazeContainer.style.position = 'relative';
         mazeContainer.style.left = -cellSize + 'px';
         mazeContainer.style.top = -cellSize + 'px';
         mazeContainer.style.fontSize = Math.floor(cellSize * 0.6) + 'px';
         
-        // 設定玩家大小
         fixedPlayer.style.width = cellSize + 'px';
         fixedPlayer.style.height = cellSize + 'px';
         fixedPlayer.style.fontSize = Math.floor(cellSize * 0.6) + 'px';
@@ -215,7 +216,6 @@
 
     function initGrid() {
         mazeContainer.innerHTML = ''; gridCells = [];
-        // 渲染包含緩衝區的所有格子
         for (let r = 0; r < RENDER_SIZE; r++) {
             let rowCells = [];
             for (let c = 0; c < RENDER_SIZE; c++) {
@@ -240,7 +240,6 @@
             let clampedDr = Math.max(-VIEW_RADIUS, Math.min(VIEW_RADIUS, dr));
             let clampedDc = Math.max(-VIEW_RADIUS, Math.min(VIEW_RADIUS, dc));
             
-            // +1 是因為我們要跳過最外層的緩衝格子，顯示在真正的畫面上邊緣
             indR = clampedDr + VIEW_RADIUS + 1;
             indC = clampedDc + VIEW_RADIUS + 1;
 
@@ -257,7 +256,6 @@
         for (let r = 0; r < RENDER_SIZE; r++) {
             for (let c = 0; c < RENDER_SIZE; c++) {
                 let cell = gridCells[r][c];
-                // 計算實際地圖座標 (半徑需+1 以對應緩衝區)
                 let mapR = playerPos.r - (VIEW_RADIUS + 1) + r;
                 let mapC = playerPos.c - (VIEW_RADIUS + 1) + c;
                 
@@ -279,7 +277,6 @@
                     }
                 }
 
-                // 邊界指標
                 if (r === indR && c === indC) {
                     cell.classList.add('indicator'); 
                     cell.textContent = arrowChar;
@@ -292,7 +289,6 @@
         totalGemDisplay.textContent = totalGems;
     }
 
-    // --- 極致平滑的地圖卷軸邏輯 ---
     function movePlayer(dr, dc) {
         if (isMoving) return; 
         resetClickCount = 0; 
@@ -310,20 +306,17 @@
                 return;
             }
             
-            // 1. 動畫視覺滑動：玩家不動，我們利用 CSS 將地圖往反方向「拉」一格
             let shiftX = -dc * cellSize;
             let shiftY = -dr * cellSize;
-            const ANIMATION_DURATION = 40; // 40 毫秒高速平滑滑動
+            const ANIMATION_DURATION = 40; 
 
             mazeContainer.style.transition = `transform ${ANIMATION_DURATION}ms linear`;
             mazeContainer.style.transform = `translate(${shiftX}px, ${shiftY}px)`;
             
-            // 2. 等待滑動動畫跑完後，更新實際座標，並瞬間重置地圖
             setTimeout(() => {
                 playerPos.r = nR; 
                 playerPos.c = nC; 
                 
-                // 吃寶石判斷
                 let gIdx = gems.findIndex(g => g.r === playerPos.r && g.c === playerPos.c);
                 if (gIdx !== -1) {
                     gems.splice(gIdx, 1);
@@ -331,22 +324,27 @@
                     saveProgress(); 
                 }
 
-                // 重新繪製已經抵達新座標的地圖
                 drawMaze(); 
                 
-                // 瞬間解除 CSS 位移 (因為地圖已經重繪，視覺上會完美銜接)
                 mazeContainer.style.transition = 'none';
                 mazeContainer.style.transform = 'translate(0px, 0px)';
-                mazeContainer.offsetHeight; // 強制瀏覽器立刻刷新樣式
+                mazeContainer.offsetHeight; 
                 
-                // 檢查過關
+                // --- 修改：抵達終點過關觸發 5 秒閃爍 ---
                 if (playerPos.r === goalPos.r && playerPos.c === goalPos.c) {
-                    isMoving = false;
-                    setTimeout(() => { level++; saveProgress(); startNewLevel(); }, 150);
-                    return;
+                    mazeContainer.classList.add('maze-win'); // 開啟閃爍效果
+                    
+                    levelCompleteTimeout = setTimeout(() => { 
+                        mazeContainer.classList.remove('maze-win'); // 5秒後關閉閃爍
+                        level++; 
+                        saveProgress(); 
+                        startNewLevel(); 
+                    }, 5000); // 等待 5 秒鐘
+                    
+                    // isMoving 保持 true，鎖死這 5 秒讓玩家不能移動
+                    return; 
                 }
                 
-                // 遇到岔路停止判斷
                 let isIntersection = false;
                 if (dr !== 0) { 
                     if (maze[playerPos.r][playerPos.c - 1] === 0 || maze[playerPos.r][playerPos.c + 1] === 0) isIntersection = true;
@@ -359,7 +357,6 @@
                     return;
                 }
                 
-                // 接續走下一步
                 nextStep(stepCount + 1); 
 
             }, ANIMATION_DURATION);
@@ -402,7 +399,14 @@
     });
     
     function resetLevel() { 
-        isMoving = false; // 中斷可能在進行的滑動
+        // 防呆處理：如果在過關閃爍的 5 秒內按下了重置按鈕，強制清除計時器並關閉閃爍
+        if (levelCompleteTimeout) {
+            clearTimeout(levelCompleteTimeout);
+            levelCompleteTimeout = null;
+        }
+        mazeContainer.classList.remove('maze-win');
+        
+        isMoving = false; 
         playerPos = { r: 1, c: 1 }; 
         mazeContainer.style.transition = 'none';
         mazeContainer.style.transform = 'translate(0px, 0px)';
@@ -410,8 +414,14 @@
     }
     
     function startNewLevel() { 
+        // 確保進入新關卡時清除一切閃爍效果與鎖定狀態
+        if (levelCompleteTimeout) {
+            clearTimeout(levelCompleteTimeout);
+            levelCompleteTimeout = null;
+        }
+        mazeContainer.classList.remove('maze-win');
         isMoving = false;
-        // 判斷手機版與電腦版視野
+        
         VIEW_RADIUS = window.innerWidth < 500 ? 6 : 10;
         VIEW_SIZE = VIEW_RADIUS * 2 + 1;
         RENDER_SIZE = VIEW_SIZE + 2;
