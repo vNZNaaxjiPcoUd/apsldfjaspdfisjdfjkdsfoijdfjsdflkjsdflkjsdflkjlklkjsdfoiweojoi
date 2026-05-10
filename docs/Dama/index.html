@@ -428,8 +428,8 @@ function render() {
     
     const statusDiv = document.getElementById('status');
     statusDiv.textContent = currentPlayer === 1 ? '白方' : '黑方';
-    statusDiv.style.color = currentPlayer === 1 ? '#f1c40f' : '#222222';
-    statusDiv.style.color = currentPlayer === 1 ? '#222222' : '#f1c40f';
+    statusDiv.style.color = currentPlayer === 1 ? '#222222' : '#eeeeee';
+    statusDiv.style.backgroundColor = currentPlayer === 1 ? '#eeeeee' : '#222222';
     if (globalMaxCaptures > 0) {
         statusDiv.innerHTML += ' <span class="alert-eat">吃子</span>';
     }
