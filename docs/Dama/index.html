@@ -2,14 +2,16 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 加入 viewport-fit=cover 適應 iPhone 瀏海屏 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Dama 土耳其跳棋</title>
     <!-- PWA Manifest -->
     <link rel="manifest" id="manifest-link">
     <style>
         :root {
-            /* 設定為畫面的 90%，確保不受螢幕大小限制 */
-            --board-size: 90vmin;
+            /* 修正1: 使用 min() 確保棋盤既不會超出寬度，也不會超出高度，並預留上下空間 */
+            --board-size: min(95vw, 65vh); /* 舊版 iOS 備用 */
+            --board-size: min(95vw, 65dvh); /* 新版 iOS 動態高度 */
             --cell-size: calc(var(--board-size) / 8);
             --piece-size: calc(var(--cell-size) * 0.8);
             --p1-color: #f0f0f0;
@@ -23,16 +25,23 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            
+            /* 修正2: 解決 iPhone 上下滾動與白邊的問題 */
+            height: 100vh;
+            height: 100dvh; /* 動態視窗高度，避開 Safari 網址列 */
+            overflow: hidden; /* 強制鎖死畫面，不允許上下滾動 */
+            touch-action: none; /* 關閉 iOS 預設的雙擊放大與橡皮筋滾動回彈效果 */
+
             background-color: #2c3e50;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
             user-select: none;
+            -webkit-user-select: none; /* iOS 專用防文字選取 */
         }
 
         header {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             width: 100%;
             max-width: var(--board-size);
             display: flex;
@@ -76,7 +85,7 @@
         #board {
             width: var(--board-size);
             height: var(--board-size);
-            /* 移除了 max-width 和 max-height，讓棋盤真正達到 90% */
+            box-sizing: border-box; /* 修正3: 讓 border 包含在棋盤長寬內，避免被額外撐大 8px */
             display: grid;
             grid-template-columns: repeat(8, 1fr);
             grid-template-rows: repeat(8, 1fr);
@@ -115,7 +124,6 @@
         .piece {
             width: var(--piece-size);
             height: var(--piece-size);
-            /* 移除了原本棋子 60px 的限制，使其能隨棋盤等比放大 */
             border-radius: 50%;
             position: absolute;
             cursor: pointer;
@@ -127,7 +135,6 @@
         .piece.p1 { background-color: var(--p1-color); border: 2px solid #ccc; }
         .piece.p2 { background-color: var(--p2-color); border: 2px solid #000; }
 
-        /* 王的視覺：疊加兩顆棋子 */
         .piece.king { transform: translateY(-4px); }
         .piece.king.p1 { box-shadow: 0 4px 0 0 #ccc, 0 8px 6px rgba(0,0,0,0.4); }
         .piece.king.p2 { box-shadow: 0 4px 0 0 #000, 0 8px 6px rgba(0,0,0,0.4); }
@@ -139,7 +146,13 @@
             z-index: 20;
         }
         
-        /* 移除了原本鎖定 600px 的 media query */
+        .footer-link {
+            margin-top: 15px;
+        }
+        .footer-link a {
+            color: #bdc3c7;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -152,27 +165,23 @@
 
     <div id="board"></div>
 
-    <div><a href="https://n.jwint.net/r?book=Dama" target="_blank">說明</a></div>
+    <div class="footer-link"><a href="https://n.jwint.net/r?book=Dama" target="_blank">說明</a></div>
+
 <script>
-/** 
- * 遊戲邏輯核心
- */
+// ---------- 這裡的 JS 邏輯完全保留原本的程式碼 ----------
 const EMPTY = 0, P1 = 1, P2 = 2, P1_KING = 3, P2_KING = 4;
 let board = [];
 let currentPlayer = P1;
 let historyStack = [];
-let midJumpPiece = null; // 紀錄連續跳躍中的棋子座標 {r, c}
+let midJumpPiece = null; 
 
 let globalMaxCaptures = 0;
-let validMovesMap = {}; // "r,c" -> [ valid paths ]
+let validMovesMap = {}; 
 let selectedPiece = null;
 
-// 初始化棋盤
 function initBoard() {
     board = Array(8).fill(null).map(() => Array(8).fill(EMPTY));
-    // 白方 (P1) 放第 2, 3 排 (索引 1, 2)
     for(let c = 0; c < 8; c++) { board[1][c] = P1; board[2][c] = P1; }
-    // 黑方 (P2) 放倒數第 2, 3 排 (索引 5, 6)
     for(let c = 0; c < 8; c++) { board[5][c] = P2; board[6][c] = P2; }
     
     currentPlayer = P1;
@@ -196,12 +205,10 @@ function isCurrentPlayer(piece) {
     return piece === P2 || piece === P2_KING;
 }
 
-// 深度優先搜尋找出最大吃子路徑
 function findCaptures(b, r, c, player, currentPath, capturedPositions) {
     let pieceType = b[r][c];
     let isKing = (pieceType === P1_KING || pieceType === P2_KING);
     let enemy = player === 1 ? [P2, P2_KING] : [P1, P1_KING];
-    // 移動方向：白方(1)向下，黑方(2)向上。王可四向。
     let dirs = isKing ? [[-1,0],[1,0],[0,-1],[0,1]] :
                (player === 1 ? [[1,0],[0,-1],[0,1]] : [[-1,0],[0,-1],[0,1]]);
     
@@ -210,14 +217,14 @@ function findCaptures(b, r, c, player, currentPath, capturedPositions) {
 
     for (let d of dirs) {
         if (!isKing) {
-            let nr = r + d[0], nc = c + d[1]; // 敵子位置
-            let jr = r + d[0]*2, jc = c + d[1]*2; // 降落位置
+            let nr = r + d[0], nc = c + d[1]; 
+            let jr = r + d[0]*2, jc = c + d[1]*2; 
             
             if (isValid(nr, nc) && isValid(jr, jc) && enemy.includes(b[nr][nc]) && b[jr][jc] === EMPTY) {
                 foundCapture = true;
                 let nextB = copyBoard(b);
                 nextB[r][c] = EMPTY;
-                nextB[nr][nc] = EMPTY; // 吃掉
+                nextB[nr][nc] = EMPTY; 
                 nextB[jr][jc] = pieceType;
 
                 let res = findCaptures(nextB, jr, jc, player, 
@@ -227,7 +234,6 @@ function findCaptures(b, r, c, player, currentPath, capturedPositions) {
                 bestCaptures.push(...res);
             }
         } else {
-            // 王的吃子：射線掃描
             let step = 1;
             while(true) {
                 let nr = r + d[0]*step, nc = c + d[1]*step;
@@ -235,16 +241,15 @@ function findCaptures(b, r, c, player, currentPath, capturedPositions) {
                 
                 if (b[nr][nc] !== EMPTY) {
                     if (enemy.includes(b[nr][nc])) {
-                        // 找到敵人，尋找背後所有可能的空格降落點
                         let lstep = 1;
                         while(true) {
                             let jr = nr + d[0]*lstep, jc = nc + d[1]*lstep;
-                            if (!isValid(jr, jc) || b[jr][jc] !== EMPTY) break; // 被擋住或出界
+                            if (!isValid(jr, jc) || b[jr][jc] !== EMPTY) break; 
                             
                             foundCapture = true;
                             let nextB = copyBoard(b);
                             nextB[r][c] = EMPTY;
-                            nextB[nr][nc] = EMPTY; // 吃掉
+                            nextB[nr][nc] = EMPTY; 
                             nextB[jr][jc] = pieceType;
 
                             let res = findCaptures(nextB, jr, jc, player, 
@@ -255,7 +260,7 @@ function findCaptures(b, r, c, player, currentPath, capturedPositions) {
                             lstep++;
                         }
                     }
-                    break; // 射線被阻擋，換方向
+                    break; 
                 }
                 step++;
             }
@@ -268,7 +273,6 @@ function findCaptures(b, r, c, player, currentPath, capturedPositions) {
     return bestCaptures;
 }
 
-// 取得普通移動
 function getNormalMoves(b, r, c, player) {
     let pieceType = b[r][c];
     let isKing = (pieceType === P1_KING || pieceType === P2_KING);
@@ -296,7 +300,6 @@ function getNormalMoves(b, r, c, player) {
     return moves;
 }
 
-// 計算當前所有合法操作（強制吃最大）
 function updateValidMoves() {
     validMovesMap = {};
     globalMaxCaptures = 0;
@@ -313,7 +316,6 @@ function updateValidMoves() {
         }
     }
 
-    // 1. 找所有吃子路徑並更新最大值
     for(let p of piecesToCheck) {
         let paths = findCaptures(board, p.r, p.c, currentPlayer, [], []);
         for(let pathObj of paths) {
@@ -324,7 +326,6 @@ function updateValidMoves() {
         allPaths.push({r: p.r, c: p.c, paths: paths});
     }
 
-    // 2. 篩選合法動作
     if (globalMaxCaptures > 0) {
         for(let p of allPaths) {
             let maxPaths = p.paths.filter(x => x.captures.length === globalMaxCaptures);
@@ -342,7 +343,6 @@ function updateValidMoves() {
     }
 }
 
-// 儲存狀態以供悔棋
 function saveState() {
     historyStack.push({
         board: copyBoard(board),
@@ -367,11 +367,9 @@ function undo() {
     }
 }
 
-// 點擊事件處理
 function handleCellClick(r, c) {
     let clickedPiece = board[r][c];
 
-    // 點擊自己的棋子：嘗試選取
     if (isCurrentPlayer(clickedPiece)) {
         if (validMovesMap[`${r},${c}`]) {
             selectedPiece = {r, c};
@@ -380,47 +378,39 @@ function handleCellClick(r, c) {
         return;
     }
 
-    // 點擊空格：嘗試移動
     if (clickedPiece === EMPTY && selectedPiece) {
         let paths = validMovesMap[`${selectedPiece.r},${selectedPiece.c}`];
-        // 尋找符合第一步降落點的路徑
         let chosenPath = paths.find(p => p.path.length > 0 && p.path[0].r === r && p.path[0].c === c);
         
         if (chosenPath) {
-            saveState(); // 執行前存檔
+            saveState(); 
 
-            // 執行第一步
             let pieceType = board[selectedPiece.r][selectedPiece.c];
             board[selectedPiece.r][selectedPiece.c] = EMPTY;
             
-            // 如果有吃子，移除該子
             if (chosenPath.captures.length > 0) {
                 let cap = chosenPath.captures[0];
                 board[cap.r][cap.c] = EMPTY;
             }
 
-            // 移動棋子
             board[r][c] = pieceType;
 
-            // 判斷是否升變為王
             let promoted = false;
             if (currentPlayer === 1 && r === 7 && pieceType === P1) { board[r][c] = P1_KING; promoted = true; }
             if (currentPlayer === 2 && r === 0 && pieceType === P2) { board[r][c] = P2_KING; promoted = true; }
 
-            // 判斷是否還要繼續連跳
             if (globalMaxCaptures > 1) {
                 midJumpPiece = {r, c};
-                selectedPiece = {r, c}; // 保持選中以方便操作
+                selectedPiece = {r, c}; 
             } else {
                 midJumpPiece = null;
                 selectedPiece = null;
-                currentPlayer = currentPlayer === 1 ? 2 : 1; // 換人
+                currentPlayer = currentPlayer === 1 ? 2 : 1; 
             }
 
             updateValidMoves();
             render();
 
-            // 檢查是否遊戲結束
             if (Object.keys(validMovesMap).length === 0) {
                 setTimeout(() => {
                     let winner = currentPlayer === 1 ? '黑方 (Black)' : '白方 (White)';
@@ -432,12 +422,10 @@ function handleCellClick(r, c) {
     }
 }
 
-// 畫面渲染
 function render() {
     const boardDiv = document.getElementById('board');
     boardDiv.innerHTML = '';
     
-    // 更新狀態列
     const statusDiv = document.getElementById('status');
     statusDiv.textContent = currentPlayer === 1 ? '白方回合' : '黑方回合';
     statusDiv.style.color = currentPlayer === 1 ? '#f1c40f' : '#e74c3c';
@@ -445,7 +433,6 @@ function render() {
         statusDiv.innerHTML += ' <span class="alert-eat">(強制吃子!)</span>';
     }
 
-    // 準備標亮座標
     let highlights = [];
     if (selectedPiece && validMovesMap[`${selectedPiece.r},${selectedPiece.c}`]) {
         let paths = validMovesMap[`${selectedPiece.r},${selectedPiece.c}`];
@@ -474,7 +461,6 @@ function render() {
                     piece.classList.add('selected');
                 }
                 
-                // 如果是強制必須移動的棋子，加一點動畫提示
                 if (!selectedPiece && validMovesMap[`${r},${c}`]) {
                     piece.style.boxShadow = '0 0 10px 5px rgba(241, 196, 15, 0.6)';
                 }
@@ -486,23 +472,19 @@ function render() {
     }
 }
 
-// 註冊 PWA Service Worker (內聯寫法，無須外部檔案)
 if ('serviceWorker' in navigator) {
     const swCode = `
         const CACHE_NAME = 'dama-v1';
         self.addEventListener('install', e => {
             self.skipWaiting();
         });
-        self.addEventListener('fetch', e => {
-            // 這個離線版本不需要網路資源，直接回應即可
-        });
+        self.addEventListener('fetch', e => {});
     `;
     const blob = new Blob([swCode], {type: 'application/javascript'});
     const url = URL.createObjectURL(blob);
     navigator.serviceWorker.register(url).catch(console.error);
 }
 
-// 注入 Manifest 資料
 const manifestJSON = {
     "name": "Dama 土耳其跳棋",
     "short_name": "Dama",
@@ -520,7 +502,6 @@ const manifestJSON = {
 const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
 document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
 
-// 啟動遊戲
 initBoard();
 </script>
 
