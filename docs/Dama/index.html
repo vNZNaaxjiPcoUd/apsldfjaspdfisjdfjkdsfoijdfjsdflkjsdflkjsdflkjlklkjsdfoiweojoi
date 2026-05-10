@@ -430,7 +430,7 @@ function render() {
     statusDiv.textContent = currentPlayer === 1 ? '白方回合' : '黑方回合';
     statusDiv.style.color = currentPlayer === 1 ? '#f1c40f' : '#e74c3c';
     if (globalMaxCaptures > 0) {
-        statusDiv.innerHTML += ' <span class="alert-eat">(強制吃子!)</span>';
+        statusDiv.innerHTML += ' <span class="alert-eat">吃子</span>';
     }
 
     let highlights = [];
