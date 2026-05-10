@@ -3,7 +3,9 @@ const CACHE_NAME = 'local-note-v1.6';
 const urlsToCache = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './icon-192x192.png',
+  './style_black.css'
   // 如果你有其他的 CSS 或 JS 檔案，請務必加在這裡，例如：
   // './style.css',
   // './app.js'
