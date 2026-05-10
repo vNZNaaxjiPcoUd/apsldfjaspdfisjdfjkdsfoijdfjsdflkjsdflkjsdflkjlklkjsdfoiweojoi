@@ -261,8 +261,8 @@
         // 依照距離由遠到近排序
         deadEnds.sort((a, b) => b.dist - a.dist);
         
-        // 從最遠的 5 個死胡同中隨機挑選 1 個作為終點
-        let poolSize = Math.min(5, deadEnds.length);
+        // 從最遠的 3 個死胡同中隨機挑選 1 個作為終點
+        let poolSize = Math.min(3, deadEnds.length);
         if (poolSize > 0) {
             let pick = deadEnds[Math.floor(Math.random() * poolSize)];
             goalPos = { r: pick.r, c: pick.c };
