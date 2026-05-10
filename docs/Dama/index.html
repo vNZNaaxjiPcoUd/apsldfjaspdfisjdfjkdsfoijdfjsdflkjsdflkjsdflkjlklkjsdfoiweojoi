@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dama 土耳其跳棋</title>
+    <!-- PWA Manifest -->
+    <link rel="manifest" id="manifest-link">
+    <style>
+        :root {
+            --board-size: 90vmin;
+            --cell-size: calc(var(--board-size) / 8);
+            --piece-size: calc(var(--cell-size) * 0.8);
+            --p1-color: #f0f0f0;
+            --p2-color: #222222;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #2c3e50;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            user-select: none;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: var(--board-size);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { margin: 0; font-size: 24px; }
+
+        #status {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .alert-eat { color: #ff6b6b; animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: background 0.2s;
+        }
+
+        button:active { background-color: #2980b9; transform: translateY(2px); box-shadow: 0 2px 3px rgba(0,0,0,0.3); }
+        button:disabled { background-color: #7f8c8d; cursor: not-allowed; }
+
+        #board {
+            width: var(--board-size);
+            height: var(--board-size);
+            max-width: 600px;
+            max-height: 600px;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            border: 4px solid #1a252f;
+            background-color: #ecf0f1;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .cell {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-sizing: border-box;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .cell.dark { background-color: #bdc3c7; }
+        
+        .cell.highlight {
+            background-color: rgba(46, 204, 113, 0.5);
+            cursor: pointer;
+        }
+
+        .cell.highlight::after {
+            content: '';
+            width: 30%;
+            height: 30%;
+            background-color: #2ecc71;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .piece {
+            width: var(--piece-size);
+            height: var(--piece-size);
+            max-width: 60px;
+            max-height: 60px;
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+            z-index: 10;
+        }
+
+        .piece.p1 { background-color: var(--p1-color); border: 2px solid #ccc; }
+        .piece.p2 { background-color: var(--p2-color); border: 2px solid #000; }
+
+        /* 王的視覺：疊加兩顆棋子 */
+        .piece.king { transform: translateY(-4px); }
+        .piece.king.p1 { box-shadow: 0 4px 0 0 #ccc, 0 8px 6px rgba(0,0,0,0.4); }
+        .piece.king.p2 { box-shadow: 0 4px 0 0 #000, 0 8px 6px rgba(0,0,0,0.4); }
+
+        .piece.selected {
+            outline: 4px solid #f1c40f;
+            outline-offset: 2px;
+            transform: scale(1.1);
+            z-index: 20;
+        }
+
+        @media (min-width: 650px) {
+            :root {
+                --board-size: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div id="status">白方回合</div>
+        <button id="undo-btn" onclick="undo()" disabled>↩</button>
+    </header>
+
+    <div id="board"></div>
+
+<script>
+/** 
+ * 遊戲邏輯核心
+ */
+const EMPTY = 0, P1 = 1, P2 = 2, P1_KING = 3, P2_KING = 4;
+let board = [];
+let currentPlayer = P1;
+let historyStack = [];
+let midJumpPiece = null; // 紀錄連續跳躍中的棋子座標 {r, c}
+
+let globalMaxCaptures = 0;
+let validMovesMap = {}; // "r,c" -> [ valid paths ]
+let selectedPiece = null;
+
+// 初始化棋盤
+function initBoard() {
+    board = Array(8).fill(null).map(() => Array(8).fill(EMPTY));
+    // 白方 (P1) 放第 2, 3 排 (索引 1, 2)
+    for(let c = 0; c < 8; c++) { board[1][c] = P1; board[2][c] = P1; }
+    // 黑方 (P2) 放倒數第 2, 3 排 (索引 5, 6)
+    for(let c = 0; c < 8; c++) { board[5][c] = P2; board[6][c] = P2; }
+    
+    currentPlayer = P1;
+    historyStack = [];
+    midJumpPiece = null;
+    selectedPiece = null;
+    updateValidMoves();
+    render();
+}
+
+function copyBoard(b) {
+    return b.map(row => [...row]);
+}
+
+function isValid(r, c) {
+    return r >= 0 && r < 8 && c >= 0 && c < 8;
+}
+
+function isCurrentPlayer(piece) {
+    if (currentPlayer === 1) return piece === P1 || piece === P1_KING;
+    return piece === P2 || piece === P2_KING;
+}
+
+// 深度優先搜尋找出最大吃子路徑
+function findCaptures(b, r, c, player, currentPath, capturedPositions) {
+    let pieceType = b[r][c];
+    let isKing = (pieceType === P1_KING || pieceType === P2_KING);
+    let enemy = player === 1 ? [P2, P2_KING] : [P1, P1_KING];
+    // 移動方向：白方(1)向下，黑方(2)向上。王可四向。
+    let dirs = isKing ? [[-1,0],[1,0],[0,-1],[0,1]] :
+               (player === 1 ? [[1,0],[0,-1],[0,1]] : [[-1,0],[0,-1],[0,1]]);
+    
+    let foundCapture = false;
+    let bestCaptures = [];
+
+    for (let d of dirs) {
+        if (!isKing) {
+            let nr = r + d[0], nc = c + d[1]; // 敵子位置
+            let jr = r + d[0]*2, jc = c + d[1]*2; // 降落位置
+            
+            if (isValid(nr, nc) && isValid(jr, jc) && enemy.includes(b[nr][nc]) && b[jr][jc] === EMPTY) {
+                foundCapture = true;
+                let nextB = copyBoard(b);
+                nextB[r][c] = EMPTY;
+                nextB[nr][nc] = EMPTY; // 吃掉
+                nextB[jr][jc] = pieceType;
+
+                let res = findCaptures(nextB, jr, jc, player, 
+                    [...currentPath, {r:jr, c:jc}], 
+                    [...capturedPositions, {r:nr, c:nc}]
+                );
+                bestCaptures.push(...res);
+            }
+        } else {
+            // 王的吃子：射線掃描
+            let step = 1;
+            while(true) {
+                let nr = r + d[0]*step, nc = c + d[1]*step;
+                if (!isValid(nr, nc)) break;
+                
+                if (b[nr][nc] !== EMPTY) {
+                    if (enemy.includes(b[nr][nc])) {
+                        // 找到敵人，尋找背後所有可能的空格降落點
+                        let lstep = 1;
+                        while(true) {
+                            let jr = nr + d[0]*lstep, jc = nc + d[1]*lstep;
+                            if (!isValid(jr, jc) || b[jr][jc] !== EMPTY) break; // 被擋住或出界
+                            
+                            foundCapture = true;
+                            let nextB = copyBoard(b);
+                            nextB[r][c] = EMPTY;
+                            nextB[nr][nc] = EMPTY; // 吃掉
+                            nextB[jr][jc] = pieceType;
+
+                            let res = findCaptures(nextB, jr, jc, player, 
+                                [...currentPath, {r:jr, c:jc}], 
+                                [...capturedPositions, {r:nr, c:nc}]
+                            );
+                            bestCaptures.push(...res);
+                            lstep++;
+                        }
+                    }
+                    break; // 射線被阻擋，換方向
+                }
+                step++;
+            }
+        }
+    }
+
+    if (!foundCapture) {
+        return [{ path: currentPath, captures: capturedPositions }];
+    }
+    return bestCaptures;
+}
+
+// 取得普通移動
+function getNormalMoves(b, r, c, player) {
+    let pieceType = b[r][c];
+    let isKing = (pieceType === P1_KING || pieceType === P2_KING);
+    let dirs = isKing ? [[-1,0],[1,0],[0,-1],[0,1]] :
+               (player === 1 ? [[1,0],[0,-1],[0,1]] : [[-1,0],[0,-1],[0,1]]);
+    let moves = [];
+    
+    for(let d of dirs) {
+        if(!isKing) {
+            let nr = r+d[0], nc = c+d[1];
+            if(isValid(nr,nc) && b[nr][nc] === EMPTY) moves.push({r:nr, c:nc});
+        } else {
+            let step = 1;
+            while(true) {
+                let nr = r+d[0]*step, nc = c+d[1]*step;
+                if(isValid(nr,nc) && b[nr][nc] === EMPTY) {
+                    moves.push({r:nr, c:nc});
+                    step++;
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+    return moves;
+}
+
+// 計算當前所有合法操作（強制吃最大）
+function updateValidMoves() {
+    validMovesMap = {};
+    globalMaxCaptures = 0;
+    let allPaths = [];
+
+    let piecesToCheck = [];
+    if (midJumpPiece) {
+        piecesToCheck.push(midJumpPiece);
+    } else {
+        for(let r=0; r<8; r++) {
+            for(let c=0; c<8; c++) {
+                if(isCurrentPlayer(board[r][c])) piecesToCheck.push({r, c});
+            }
+        }
+    }
+
+    // 1. 找所有吃子路徑並更新最大值
+    for(let p of piecesToCheck) {
+        let paths = findCaptures(board, p.r, p.c, currentPlayer, [], []);
+        for(let pathObj of paths) {
+            if(pathObj.captures.length > globalMaxCaptures) {
+                globalMaxCaptures = pathObj.captures.length;
+            }
+        }
+        allPaths.push({r: p.r, c: p.c, paths: paths});
+    }
+
+    // 2. 篩選合法動作
+    if (globalMaxCaptures > 0) {
+        for(let p of allPaths) {
+            let maxPaths = p.paths.filter(x => x.captures.length === globalMaxCaptures);
+            if(maxPaths.length > 0) {
+                validMovesMap[`${p.r},${p.c}`] = maxPaths;
+            }
+        }
+    } else {
+        for(let p of piecesToCheck) {
+            let nMoves = getNormalMoves(board, p.r, p.c, currentPlayer);
+            if(nMoves.length > 0) {
+                validMovesMap[`${p.r},${p.c}`] = nMoves.map(m => ({ path: [m], captures: [] }));
+            }
+        }
+    }
+}
+
+// 儲存狀態以供悔棋
+function saveState() {
+    historyStack.push({
+        board: copyBoard(board),
+        currentPlayer,
+        midJumpPiece: midJumpPiece ? {...midJumpPiece} : null
+    });
+    document.getElementById('undo-btn').disabled = false;
+}
+
+function undo() {
+    if (historyStack.length > 0) {
+        let state = historyStack.pop();
+        board = state.board;
+        currentPlayer = state.currentPlayer;
+        midJumpPiece = state.midJumpPiece;
+        selectedPiece = null;
+        updateValidMoves();
+        render();
+    }
+    if (historyStack.length === 0) {
+        document.getElementById('undo-btn').disabled = true;
+    }
+}
+
+// 點擊事件處理
+function handleCellClick(r, c) {
+    let clickedPiece = board[r][c];
+
+    // 點擊自己的棋子：嘗試選取
+    if (isCurrentPlayer(clickedPiece)) {
+        if (validMovesMap[`${r},${c}`]) {
+            selectedPiece = {r, c};
+            render();
+        }
+        return;
+    }
+
+    // 點擊空格：嘗試移動
+    if (clickedPiece === EMPTY && selectedPiece) {
+        let paths = validMovesMap[`${selectedPiece.r},${selectedPiece.c}`];
+        // 尋找符合第一步降落點的路徑
+        let chosenPath = paths.find(p => p.path.length > 0 && p.path[0].r === r && p.path[0].c === c);
+        
+        if (chosenPath) {
+            saveState(); // 執行前存檔
+
+            // 執行第一步
+            let pieceType = board[selectedPiece.r][selectedPiece.c];
+            board[selectedPiece.r][selectedPiece.c] = EMPTY;
+            
+            // 如果有吃子，移除該子
+            if (chosenPath.captures.length > 0) {
+                let cap = chosenPath.captures[0];
+                board[cap.r][cap.c] = EMPTY;
+            }
+
+            // 移動棋子
+            board[r][c] = pieceType;
+
+            // 判斷是否升變為王
+            let promoted = false;
+            if (currentPlayer === 1 && r === 7 && pieceType === P1) { board[r][c] = P1_KING; promoted = true; }
+            if (currentPlayer === 2 && r === 0 && pieceType === P2) { board[r][c] = P2_KING; promoted = true; }
+
+            // 判斷是否還要繼續連跳
+            if (globalMaxCaptures > 1) {
+                midJumpPiece = {r, c};
+                selectedPiece = {r, c}; // 保持選中以方便操作
+            } else {
+                midJumpPiece = null;
+                selectedPiece = null;
+                currentPlayer = currentPlayer === 1 ? 2 : 1; // 換人
+            }
+
+            updateValidMoves();
+            render();
+
+            // 檢查是否遊戲結束
+            if (Object.keys(validMovesMap).length === 0) {
+                setTimeout(() => {
+                    let winner = currentPlayer === 1 ? '黑方 (Black)' : '白方 (White)';
+                    alert('遊戲結束！沒有可移動的棋子。\n獲勝者是：' + winner);
+                    initBoard();
+                }, 100);
+            }
+        }
+    }
+}
+
+// 畫面渲染
+function render() {
+    const boardDiv = document.getElementById('board');
+    boardDiv.innerHTML = '';
+    
+    // 更新狀態列
+    const statusDiv = document.getElementById('status');
+    statusDiv.textContent = currentPlayer === 1 ? '白方回合' : '黑方回合';
+    statusDiv.style.color = currentPlayer === 1 ? '#f1c40f' : '#e74c3c';
+    if (globalMaxCaptures > 0) {
+        statusDiv.innerHTML += ' <span class="alert-eat">(強制吃子!)</span>';
+    }
+
+    // 準備標亮座標
+    let highlights = [];
+    if (selectedPiece && validMovesMap[`${selectedPiece.r},${selectedPiece.c}`]) {
+        let paths = validMovesMap[`${selectedPiece.r},${selectedPiece.c}`];
+        paths.forEach(p => {
+            if (p.path.length > 0) highlights.push(`${p.path[0].r},${p.path[0].c}`);
+        });
+    }
+
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            let cell = document.createElement('div');
+            cell.className = `cell ${(r+c)%2 === 1 ? 'dark' : ''}`;
+            if (highlights.includes(`${r},${c}`)) cell.classList.add('highlight');
+            
+            cell.onclick = () => handleCellClick(r, c);
+
+            let pieceVal = board[r][c];
+            if (pieceVal !== EMPTY) {
+                let piece = document.createElement('div');
+                piece.className = 'piece';
+                if (pieceVal === P1 || pieceVal === P1_KING) piece.classList.add('p1');
+                if (pieceVal === P2 || pieceVal === P2_KING) piece.classList.add('p2');
+                if (pieceVal === P1_KING || pieceVal === P2_KING) piece.classList.add('king');
+                
+                if (selectedPiece && selectedPiece.r === r && selectedPiece.c === c) {
+                    piece.classList.add('selected');
+                }
+                
+                // 如果是強制必須移動的棋子，加一點動畫提示
+                if (!selectedPiece && validMovesMap[`${r},${c}`]) {
+                    piece.style.boxShadow = '0 0 10px 5px rgba(241, 196, 15, 0.6)';
+                }
+
+                cell.appendChild(piece);
+            }
+            boardDiv.appendChild(cell);
+        }
+    }
+}
+
+// 註冊 PWA Service Worker (內聯寫法，無須外部檔案)
+if ('serviceWorker' in navigator) {
+    const swCode = `
+        const CACHE_NAME = 'dama-v1';
+        self.addEventListener('install', e => {
+            self.skipWaiting();
+        });
+        self.addEventListener('fetch', e => {
+            // 這個離線版本不需要網路資源，直接回應即可
+        });
+    `;
+    const blob = new Blob([swCode], {type: 'application/javascript'});
+    const url = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url).catch(console.error);
+}
+
+// 注入 Manifest 資料
+const manifestJSON = {
+    "name": "Dama 土耳其跳棋",
+    "short_name": "Dama",
+    "display": "standalone",
+    "background_color": "#2c3e50",
+    "theme_color": "#2c3e50",
+    "icons": [
+        {
+            "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMmMzZTUwIi8+PGNpcmNsZSBjeD0iMjU2IiBjeT0iMjU2IiByPSIxNTAiIGZpbGw9IiNmZmYiLz48L3N2Zz4=",
+            "sizes": "512x512",
+            "type": "image/svg+xml"
+        }
+    ]
+};
+const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/json'});
+document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
+
+// 啟動遊戲
+initBoard();
+</script>
+
+</body>
+</html>
