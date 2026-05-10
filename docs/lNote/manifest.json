@@ -1,7 +1,9 @@
 {
-  "name": "Note",
+  "name": "Local Note",
   "short_name": "Note",
+  "description": "A local, offline-capable note-taking app.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f4e4c1",
   "theme_color": "#2c2c2c",
@@ -9,7 +11,8 @@
     {
       "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='black'/></svg>",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }
