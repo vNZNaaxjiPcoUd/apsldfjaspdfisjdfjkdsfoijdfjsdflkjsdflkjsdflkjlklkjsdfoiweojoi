@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>加密 ToDo 列表</title>
-    <link rel="manifest" href="manifest.json">
+
     <style>
         :root {
             --primary: #66bb6a;     /* 主色調：柔和淡綠色 */
@@ -76,6 +76,56 @@
     <!-- 引入加密 API 腳本 -->
     <script src="https://h.jwint.net/static/crypto-js.min.js"></script>
     <script src="keepMe.js"></script>
+
+    <script>
+        // 在網頁一載入時，立刻動態生成專屬的 PWA Manifest
+        (function() {
+            // 1. 抓取網址上的 DB 名稱 (支援 ?id=b 或 ?b 的寫法)
+            let currentUrl = window.location.href;
+            let dbId = "預設清單";
+            
+            if (currentUrl.includes('id=')) {
+                dbId = currentUrl.split('id=')[1].split('&')[0];
+            } else if (currentUrl.includes('?')) {
+                dbId = currentUrl.split('?')[1].split('&')[0];
+            }
+
+            // 2. 建立專屬的 Manifest JSON 物件
+            const manifest = {
+                "name": `ToDo - ${dbId}`,       // 讓每個 App 有不同的名字，例如 "ToDo - b"
+                "short_name": dbId,             // 桌面圖示下方顯示的短名
+                "description": `加密待辦事項 (${dbId})`,
+                "start_url": `./index.html?id=${dbId}`, // 關鍵：讓它啟動時自帶該 DB 參數
+                "display": "standalone",
+                "background_color": "#f1f8f1",
+                "theme_color": "#66bb6a",
+                "icons": [
+                    {
+                        "src": "https://www.google.com/s2/favicons?sz=192&domain=google.com",
+                        "sizes": "192x192",
+                        "type": "image/png"
+                    },
+                    {
+                        "src": "https://www.google.com/s2/favicons?sz=512&domain=google.com",
+                        "sizes": "512x512",
+                        "type": "image/png"
+                    }
+                ]
+            };
+
+            // 3. 將 JSON 轉成 Blob 並產生虛擬網址
+            const stringManifest = JSON.stringify(manifest);
+            const blob = new Blob([stringManifest], { type: 'application/json' });
+            const manifestURL = URL.createObjectURL(blob);
+
+            // 4. 動態插入 <link rel="manifest"> 到 head 中
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = manifestURL;
+            document.head.appendChild(link);
+        })();
+    </script>
+
 </head>
 <body>
 
