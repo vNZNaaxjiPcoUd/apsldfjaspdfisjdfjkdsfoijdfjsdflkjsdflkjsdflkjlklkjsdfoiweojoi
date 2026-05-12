@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>加密 ToDo 列表</title>
+    <title>ToDo</title>
 
     <style>
         :root {
@@ -141,6 +141,11 @@
             }, 3000);
         };
 
+        // 為方便呼叫，新增一個 showToast 函式 (本質一樣是 window.alert)
+        function showToast(msg) {
+            window.alert(msg);
+        }
+
         // --- 實作自訂的 Confirm 與 Prompt (非同步 Promise) ---
         function showCustomDialog({ msg, isPrompt = false, okText = "確定", cancelText = "取消", danger = false, inputType = "text" }) {
             return new Promise(resolve => {
@@ -208,7 +213,7 @@
             const manifest = {
                 "name": `ToDo - ${manifestName}`,
                 "short_name": manifestName,
-                "description": `加密待辦事項 (${manifestName})`,
+                "description": `待辦事項 (${manifestName})`,
                 "start_url": `./index.html${dbId ? '?id=' + dbId : ''}`,
                 "display": "standalone",
                 "background_color": "#f1f8f1",
@@ -248,13 +253,13 @@
     <!-- 登入畫面 -->
     <div id="login-screen">
         <div class="login-card">
-            <h2>🔒 加密 ToDo</h2>
+            <h2>🔒 ToDo</h2>
             <div class="input-group-login">
-                <label>資料庫名稱 (ID)</label>
-                <input type="text" id="login-db-name" placeholder="輸入資料庫名稱" onkeydown="if(event.key === 'Enter') document.getElementById('login-password').focus()">
+                <label>帳號</label>
+                <input type="text" id="login-db-name" placeholder="輸入帳號" onkeydown="if(event.key === 'Enter') document.getElementById('login-password').focus()">
             </div>
             <div class="input-group-login">
-                <label>解密密碼</label>
+                <label>密碼</label>
                 <input type="password" id="login-password" placeholder="輸入密碼" onkeydown="if(event.key === 'Enter') attemptLogin()">
             </div>
             <button id="login-btn" onclick="attemptLogin()">登入</button>
@@ -274,7 +279,7 @@
             <ul id="list-nav"></ul>
             
             <div style="padding: 10px 0; border-top: 1px solid var(--border); margin-top: auto;">
-                <button onclick="changePassword()" style="width: 100%; background: var(--warning); color: var(--text); border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold;">🔑 修改資料庫密碼</button>
+                <button onclick="changePassword()" style="width: 100%; background: var(--warning); color: var(--text); border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold;">🔑 修改密碼</button>
             </div>
 
             <div class="input-group" style="margin-top: 10px; margin-bottom: 0;">
@@ -395,7 +400,7 @@
             const loginBtn = document.getElementById('login-btn');
 
             if (!dbNameInput || !pwdInput) {
-                errorMsg.innerText = "請完整輸入資料庫名稱與密碼！";
+                errorMsg.innerText = "請完整輸入名稱與密碼！";
                 return;
             }
 
@@ -426,7 +431,7 @@
             }
 
             if (isDecryptionFailed) {
-                errorMsg.innerText = "❌ 密碼錯誤或雲端資料非加密格式！";
+                errorMsg.innerText = "❌ 密碼錯誤！";
                 loginBtn.innerText = "登入";
                 loginBtn.disabled = false;
                 return;
@@ -462,7 +467,7 @@
 
         async function refreshData() {
             if (hasUnsavedChanges) {
-                let ans = await customConfirm("⚠️ 您有未保存的變更！\n重新載入會遺失您剛剛的修改。\n\n確定要放棄修改並重新載入嗎？", "放棄修改", "取消", true);
+                let ans = await customConfirm("⚠️ 您有未保存的變更！\n重新載入會遺失您剛剛的修改。\n\n確定要放棄修改並重新載入嗎？", "重新載入", "取消", true);
                 if (!ans) return;
             }
             
@@ -481,13 +486,13 @@
                         activeListId = appData.lists[0].id;
                     }
                     renderAll();
-                    alert("✅ 重新載入成功");
+                    showToast("✅ 重新載入成功");
                 } catch(e) {
-                    alert("❌ 雲端資料解析失敗！");
+                    showToast("❌ 雲端資料解析失敗！");
                     renderAll(); 
                 }
             } else {
-                alert("❌ 重新載入失敗（可能是網路問題）");
+                showToast("❌ 重新載入失敗（可能是網路問題）");
                 renderAll(); 
             }
         }
@@ -592,7 +597,10 @@
 
         async function deleteList(id, e) {
             e.stopPropagation();
-            if(appData.lists.length <= 1) { alert("至少需保留一個清單"); return; }
+            if(appData.lists.length <= 1) { 
+                showToast("❌ 至少需保留一個清單"); 
+                return; 
+            }
             
             let ans = await customConfirm("確定刪除此分類清單嗎？\n內部項目將一併消失。", "刪除", "取消", true);
             if(ans) {
@@ -600,6 +608,7 @@
                 if(activeListId === id) activeListId = appData.lists[0].id;
                 markChanged();
                 renderAll();
+                showToast("✅ 清單已刪除");
             }
         }
 
@@ -632,6 +641,7 @@
             list.items = list.items.filter(i => i.id !== id);
             markChanged();
             renderMain();
+            showToast("✅ 項目已刪除");
         }
 
         function toggleItem(id) {
@@ -753,6 +763,7 @@
             item.subItems = item.subItems.filter(s => s.id !== subId);
             markChanged();
             renderModalSubList(item);
+            showToast("✅ 子項目已刪除");
         }
 
         function updateSaveBtnUI() {
@@ -781,14 +792,14 @@
             if (!confirmPwd) return;
 
             if (newPwd !== confirmPwd) {
-                alert("❌ 兩次輸入的密碼不一致，修改失敗。");
+                showToast("❌ 兩次輸入的密碼不一致，修改失敗。");
                 return;
             }
             
             setDbKey(newPwd);
             markChanged();
             forceSave();
-            alert("✅ 密碼已更新！系統已開始使用新密碼加密上傳。");
+            showToast("✅ 密碼已更新！系統已開始上傳。");
         }
 
         async function doActualSave() {
@@ -806,7 +817,7 @@
                 saveBtn.style.color = "var(--primary)";
                 setTimeout(()=> { if(!hasUnsavedChanges) updateSaveBtnUI(); }, 2000);
             } else if (res && res.message && res.message.includes("不匹配")) {
-                let userChoice = await customConfirm("⚠️ 發現版本衝突！\n\n這份清單在其他裝置已經被修改過了。為了防止覆蓋別人的資料，請選擇：\n\n【強制覆蓋】：以現在畫面上的內容為主\n【放棄修改】：重新載入雲端的最新資料", "強制覆蓋", "放棄修改", true);
+                let userChoice = await customConfirm("⚠️ 發現版本衝突！\n\n這份清單在其他裝置已經被修改過了。為了防止覆蓋別人的資料，請選擇：\n\n【強制覆蓋】：以現在畫面上的內容為主，存入雲端", "強制覆蓋", "取消", true);
                 
                 if (userChoice) {
                     const saveBtn = document.querySelector('.save-btn');
@@ -821,18 +832,18 @@
                             saveBtn.style.background = "white";
                             saveBtn.style.color = "var(--primary)";
                             setTimeout(()=> { if(!hasUnsavedChanges) updateSaveBtnUI(); }, 2000);
-                            alert("✅ 強制覆蓋成功！");
+                            showToast("✅ 強制覆蓋成功！");
                         } else {
-                            alert("❌ 覆蓋失敗，請檢查網路。");
+                            showToast("❌ 覆蓋失敗，請檢查網路。");
                         }
                     } else {
-                        alert("❌ 無法獲取雲端最新狀態，覆蓋失敗。");
+                        showToast("❌ 無法獲取雲端最新狀態，覆蓋失敗。");
                     }
                 } else {
                     refreshData(); 
                 }
             } else {
-                alert("❌ 保存失敗，請檢查網路或密鑰狀態");
+                showToast("❌ 保存失敗，請檢查網路或密鑰狀態");
             }
         }
 
