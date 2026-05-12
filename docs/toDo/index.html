@@ -278,9 +278,19 @@
             </div>
             <ul id="list-nav"></ul>
             
+            <!-- 替換從這裡開始 -->
             <div style="padding: 10px 0; border-top: 1px solid var(--border); margin-top: auto;">
+                <!-- 匯入 / 匯出按鈕 -->
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button onclick="exportData()" style="flex: 1; background: var(--primary); color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; font-weight: bold;">📥 匯出</button>
+                    <button onclick="document.getElementById('import-file').click()" style="flex: 1; background: var(--info-border); color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; font-weight: bold;">📤 匯入</button>
+                    <!-- 隱藏的檔案選擇器 -->
+                    <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importData(event)">
+                </div>
+
                 <button onclick="changePassword()" style="width: 100%; background: var(--warning); color: var(--text); border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold;">🔑 修改密碼</button>
             </div>
+            <!-- 替換到這裡結束 -->
 
             <div class="input-group" style="margin-top: 10px; margin-bottom: 0;">
                 <input type="text" id="new-list-name" placeholder="新增分類..." onkeydown="if(event.key === 'Enter') addNewList()">
@@ -857,6 +867,85 @@
                 console.log("觸發自動保存...");
                 doActualSave();
             }
+        }
+
+        // --- 新增：匯出功能 ---
+        function exportData() {
+            try {
+                // 將 appData 轉為格式化的 JSON 字串
+                const dataStr = JSON.stringify(appData, null, 2);
+                const blob = new Blob([dataStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                
+                // 建立一個隱藏的 a 標籤來觸發下載
+                const a = document.createElement("a");
+                a.href = url;
+                
+                // 產生檔名 (例如: ToDo_Backup_20231025.json)
+                const date = new Date();
+                const dateString = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+                a.download = `ToDo_Backup_${dateString}.json`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showToast("✅ 資料匯出成功");
+            } catch (e) {
+                showToast("❌ 資料匯出失敗");
+                console.error(e);
+            }
+        }
+
+        // --- 新增：匯入功能 ---
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // 基本的資料格式驗證
+                    if (!importedData || !Array.isArray(importedData.lists)) {
+                        throw new Error("格式不符");
+                    }
+
+                    // 再次確認是否要覆蓋
+                    let ans = await customConfirm("⚠️ 確定要匯入嗎？\n這將會【完全覆蓋】您目前畫面上的所有資料！", "確認匯入", "取消", true);
+                    
+                    if (ans) {
+                        appData = importedData;
+                        
+                        // 確保至少有一個有效的清單被選中
+                        if (appData.lists.length > 0) {
+                            activeListId = appData.lists[0].id;
+                        } else {
+                            appData.lists = [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }];
+                            activeListId = appData.lists[0].id;
+                        }
+
+                        markChanged(); // 標示為尚未保存，右上角保存按鈕會亮起
+                        renderAll();   // 重新渲染畫面
+                        
+                        // 如果側欄是開啟的，順便關閉它
+                        if (document.getElementById('sidebar').classList.contains('open')) {
+                            toggleSidebar();
+                        }
+                        
+                        showToast("✅ 匯入成功！請記得點擊右上角「保存」同步到雲端。");
+                    }
+                } catch (error) {
+                    showToast("❌ 匯入失敗：檔案格式錯誤或損毀");
+                    console.error(error);
+                } finally {
+                    // 清空 input，允許使用者再次選取同一個檔案
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
         }
 
         window.addEventListener('beforeunload', function (e) {
