@@ -1,5 +1,20 @@
 
 
+// need <script src="https://h.jwint.net/static/crypto-js.min.js"></script>
+// usage:
+// setDbName(dbId);
+// setDbKey(pwd);
+//
+// let res = await getFromAPI();
+// let rawData = getContent(); 
+// if (res && res.status === "success" 
+// if (res && res.message === "Key not found") 
+// if (res && res.status === "error") 
+// 
+// setContent(jsonStr); 
+// const res = await saveToAPI(); 
+// if (res && res.message && res.message.includes("不匹配")) 
+// if (res && res.status === "success")
 
 
 // 加密
