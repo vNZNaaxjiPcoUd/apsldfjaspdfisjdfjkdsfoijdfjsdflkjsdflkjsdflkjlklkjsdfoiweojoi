@@ -22,7 +22,7 @@
         
         /* Navbar */
         header { display: flex; align-items: center; background: var(--primary); color: white; padding: 10px 15px; position: sticky; top: 0; z-index: 10; transition: background 0.3s; }
-        header h1 { flex: 1; margin: 0 15px; font-size: 1.2rem; outline: none; padding: 5px; border-bottom: 1px dashed rgba(255,255,255,0.5); }
+        header h1 { flex: 1; margin: 0 10px; font-size: 1.2rem; outline: none; padding: 5px; border-bottom: 1px dashed rgba(255,255,255,0.5); }
         .icon-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 5px; }
         .save-btn { background: white; color: var(--primary); border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         
@@ -47,19 +47,20 @@
         .todo-card { background: var(--card); padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid transparent; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; transition: 0.2s; user-select: none; }
         .todo-card.completed { opacity: 0.7; background: var(--bg); border: 1px dashed var(--border); }
         .todo-card.completed .todo-title { text-decoration: line-through; color: var(--text-light); }
-        .checkbox { width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary); }
-        .todo-info { flex: 1; cursor: pointer; }
-        .todo-title { font-size: 1.1rem; font-weight: 500; margin-bottom: 4px; }
+        
+        /* 拖曳把手 - 手機版專用優化 */
+        .drag-handle { color: #b0bec5; font-size: 1.2rem; cursor: grab; padding: 5px; touch-action: none; /* 防止手機拖曳時畫面捲動 */ }
+        .drag-handle:active { cursor: grabbing; }
+        .sortable-ghost { opacity: 0.4; background: var(--border); }
+
+        .checkbox { width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary); flex-shrink: 0; }
+        .todo-info { flex: 1; cursor: pointer; overflow: hidden; }
+        .todo-title { font-size: 1.1rem; font-weight: 500; margin-bottom: 4px; word-break: break-word; }
         .todo-time { font-size: 0.8rem; color: var(--text-light); }
-        .delete-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 1.2rem; opacity: 0.7; transition: 0.2s; }
+        .delete-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 1.2rem; opacity: 0.7; transition: 0.2s; padding: 5px; }
         .delete-btn:hover { opacity: 1; }
         .divider { margin: 20px 0 10px 0; font-size: 0.9rem; font-weight: bold; color: var(--primary-dark); border-bottom: 1px solid var(--border); padding-bottom: 5px; }
         
-        /* 拖曳排序樣式 */
-        #todo-list .todo-card { cursor: grab; }
-        #todo-list .todo-card:active { cursor: grabbing; }
-        .sortable-ghost { opacity: 0.4; background: var(--border); }
-
         /* Modal */
         #modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(44, 62, 46, 0.4); z-index: 1000; display: none; justify-content: center; align-items: center; }
         .modal { background: var(--card); width: 90%; max-width: 500px; max-height: 90vh; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
@@ -76,7 +77,6 @@
         
         #overlay-bg { position: fixed; top:0; left:0; width: 100vw; height: 100vh; background: rgba(44, 62, 46, 0.3); z-index: 50; display: none; }
         
-        /* 拒絕存取畫面 */
         #access-denied { display: none; text-align: center; margin-top: 20vh; color: var(--danger); }
     </style>
     
@@ -147,6 +147,8 @@
         <header>
             <button class="icon-btn" onclick="toggleSidebar()">☰</button>
             <h1 id="main-title" contenteditable="true" onblur="updateListName()">載入中...</h1>
+            <!-- 新增的刷新按鈕 -->
+            <button class="icon-btn" onclick="refreshData()" title="重新載入" style="font-size: 1.1rem; margin-right: 5px;">🔄</button>
             <button class="save-btn" onclick="forceSave()">保存</button>
         </header>
 
@@ -196,24 +198,20 @@
     </div>
 
     <script>
-        // --- 核心資料結構 ---
         let appData = { lists: [] };
         let activeListId = null;
-        let modalNavStack = []; // 儲存無限層級的導覽路徑 ID
+        let modalNavStack = []; 
         let hasUnsavedChanges = false;
         let sortableInstance = null; 
 
-        // 產生唯一 ID
         function generateId() {
             return 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
         }
 
-        // 停止並顯示拒絕存取
         function denyAccess() {
             document.getElementById('access-denied').style.display = 'block';
         }
 
-        // 遞迴尋找項目 (支援無限巢狀)
         function findItemRecursive(items, targetId) {
             if (!items) return null;
             for (let i = 0; i < items.length; i++) {
@@ -226,7 +224,6 @@
             return null;
         }
 
-        // 取得目前 Modal 正在顯示的那個項目
         function getCurrentModalItem() {
             if (modalNavStack.length === 0) return null;
             const currentId = modalNavStack[modalNavStack.length - 1];
@@ -251,6 +248,11 @@
             if (!pwd) { denyAccess(); return; }
             setDbKey(pwd);
 
+            await initialLoad();
+        };
+
+        // 將載入邏輯抽出來，方便「刷新按鈕」重複使用
+        async function initialLoad() {
             while (true) {
                 let res = await getFromAPI();
                 if (res && res.message === "Key not found") {
@@ -268,7 +270,7 @@
                 }
 
                 if (isDecryptionFailed) {
-                    pwd = prompt('❌ 密碼錯誤或雲端資料非加密格式！\n請重新輸入密碼：');
+                    let pwd = prompt('❌ 密碼錯誤或雲端資料非加密格式！\n請重新輸入密碼：');
                     if (pwd === null) { denyAccess(); return; }
                     setDbKey(pwd);
                     continue;
@@ -278,7 +280,7 @@
                     appData = JSON.parse(rawData);
                     break;
                 } catch (e) {
-                    pwd = prompt('❌ 資料解析失敗 (密碼可能錯誤)！\n請重新嘗試輸入密碼：');
+                    let pwd = prompt('❌ 資料解析失敗 (密碼可能錯誤)！\n請重新嘗試輸入密碼：');
                     if (pwd === null) { denyAccess(); return; }
                     setDbKey(pwd);
                     continue;
@@ -289,12 +291,51 @@
                 appData.lists = [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }];
             }
             
-            activeListId = appData.lists[0].id;
+            // 如果原本選中的分類不存在了，就選第一個
+            if (!activeListId || !appData.lists.find(l => l.id === activeListId)) {
+                activeListId = appData.lists[0].id;
+            }
+            
             document.getElementById('app-container').style.display = 'block';
+            hasUnsavedChanges = false;
+            updateSaveBtnUI();
             
             setInterval(autoSave, 600000);
             renderAll();
-        };
+        }
+
+        // --- 刷新按鈕邏輯 ---
+        async function refreshData() {
+            if (hasUnsavedChanges) {
+                if (!confirm("⚠️ 您有未保存的變更！\n重新載入會遺失您剛剛的修改。\n確定要放棄修改並重新載入嗎？")) {
+                    return;
+                }
+            }
+            
+            document.getElementById('main-title').innerText = "載入中...";
+            
+            let res = await getFromAPI();
+            let rawData = getContent();
+
+            if (res && res.status === "success" && rawData && rawData.startsWith('{')) {
+                try {
+                    appData = JSON.parse(rawData);
+                    hasUnsavedChanges = false;
+                    updateSaveBtnUI();
+                    
+                    if (!appData.lists.find(l => l.id === activeListId)) {
+                        activeListId = appData.lists[0].id;
+                    }
+                    renderAll();
+                } catch(e) {
+                    alert("❌ 雲端資料解析失敗！");
+                    renderAll(); // 恢復原畫面標題
+                }
+            } else {
+                alert("❌ 重新載入失敗（可能是網路問題）");
+                renderAll(); 
+            }
+        }
 
         function renderAll() {
             renderSidebar();
@@ -329,7 +370,9 @@
                 li.className = 'todo-card ' + (item.completed ? 'completed' : '');
                 li.setAttribute('data-id', item.id);
                 
+                // 加入 drag-handle 拖曳把手
                 li.innerHTML = `
+                    <span class="drag-handle">⋮⋮</span>
                     <input type="checkbox" class="checkbox" ${item.completed ? 'checked' : ''} onclick="toggleItem('${item.id}')">
                     <div class="todo-info" onclick="openModal('${item.id}')">
                         <div class="todo-title">${item.title}</div>
@@ -344,10 +387,9 @@
 
             if (sortableInstance) sortableInstance.destroy();
             sortableInstance = new Sortable(todoUl, {
+                handle: '.drag-handle', // 指定拖曳把手，解決手機滑動衝突
                 animation: 150,
                 ghostClass: 'sortable-ghost',
-                delay: 150,
-                delayOnTouchOnly: true,
                 onEnd: syncListOrder
             });
         }
@@ -419,7 +461,6 @@
             const title = titleInput.value.trim();
             if(!title) return;
             const list = appData.lists.find(l => l.id === activeListId);
-            // 新項目加在最前面
             list.items.unshift({ id: generateId(), title: title, time: '', details: '', completed: false, subItems: [] });
             titleInput.value = '';
             markChanged();
@@ -441,11 +482,9 @@
             markChanged();
             renderMain();
         }
-
-        // --- 無限層級 Modal 邏輯 ---
         
         function openModal(id) {
-            modalNavStack = [id]; // 初始化路徑，第一層
+            modalNavStack = [id]; 
             renderModal();
             document.getElementById('modal-overlay').style.display = 'flex';
         }
@@ -453,17 +492,17 @@
         function closeModal() {
             document.getElementById('modal-overlay').style.display = 'none';
             modalNavStack = [];
-            renderMain(); // 關閉時重繪主畫面以更新可能的標題變更
+            renderMain(); 
         }
 
         function drillDown(id) {
-            modalNavStack.push(id); // 往下鑽一層
+            modalNavStack.push(id); 
             renderModal();
         }
 
         function modalGoBack() {
             if (modalNavStack.length > 1) {
-                modalNavStack.pop(); // 回上一層
+                modalNavStack.pop(); 
                 renderModal();
             }
         }
@@ -499,7 +538,6 @@
             if(!item.subItems) item.subItems = [];
             
             item.subItems.forEach((sub) => {
-                // 自動為舊資料修補 ID
                 if (!sub.id) sub.id = generateId();
                 if (!sub.subItems) sub.subItems = [];
 
@@ -526,7 +564,6 @@
             if(!title) return;
             
             if(!item.subItems) item.subItems = [];
-            // 子項目新增也放最前面
             item.subItems.unshift({ id: generateId(), title: title, time: '', details: '', completed: false, subItems: [] });
             input.value = '';
             markChanged();
@@ -551,12 +588,22 @@
             renderModalSubList(item);
         }
 
-        // --- 保存與離開機制 ---
+        function updateSaveBtnUI() {
+            const saveBtn = document.querySelector('.save-btn');
+            if (hasUnsavedChanges) {
+                saveBtn.innerText = "保存 *";
+                saveBtn.style.background = "var(--warning)";
+                saveBtn.style.color = "var(--text)";
+            } else {
+                saveBtn.innerText = "保存";
+                saveBtn.style.background = "white";
+                saveBtn.style.color = "var(--primary)";
+            }
+        }
+
         function markChanged() {
             hasUnsavedChanges = true;
-            document.querySelector('.save-btn').innerText = "保存 *";
-            document.querySelector('.save-btn').style.background = "var(--warning)";
-            document.querySelector('.save-btn').style.color = "var(--text)";
+            updateSaveBtnUI();
         }
 
         function changePassword() {
@@ -586,7 +633,7 @@
                 saveBtn.innerText = "已保存";
                 saveBtn.style.background = "white";
                 saveBtn.style.color = "var(--primary)";
-                setTimeout(()=> { if(!hasUnsavedChanges) saveBtn.innerText = "保存"; }, 2000);
+                setTimeout(()=> { if(!hasUnsavedChanges) updateSaveBtnUI(); }, 2000);
             } else if (res && res.message && res.message.includes("不匹配")) {
                 let userChoice = confirm("⚠️ 發現版本衝突！\n\n這份清單在其他裝置已經被修改過了。為了防止覆蓋別人的資料，請選擇：\n\n【確定】：強制覆蓋雲端資料 (以你現在畫面上的內容為主)\n【取消】：放棄你的修改，重新載入雲端的最新資料");
                 
@@ -602,7 +649,7 @@
                             saveBtn.innerText = "已覆蓋";
                             saveBtn.style.background = "white";
                             saveBtn.style.color = "var(--primary)";
-                            setTimeout(()=> { if(!hasUnsavedChanges) saveBtn.innerText = "保存"; }, 2000);
+                            setTimeout(()=> { if(!hasUnsavedChanges) updateSaveBtnUI(); }, 2000);
                             alert("✅ 強制覆蓋成功！");
                         } else {
                             alert("❌ 覆蓋失敗，請檢查網路。");
@@ -611,7 +658,7 @@
                         alert("❌ 無法獲取雲端最新狀態，覆蓋失敗。");
                     }
                 } else {
-                    location.reload();
+                    refreshData(); // 使用新寫的刷新函數取代 location.reload()
                 }
             } else {
                 alert("保存失敗，請檢查網路或密鑰狀態");
