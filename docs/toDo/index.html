@@ -800,9 +800,9 @@
         function updateSaveBtnUI() {
             const saveBtn = document.querySelector('.save-btn');
             if (hasUnsavedChanges) {
-                saveBtn.innerText = "保存 *";
-                saveBtn.style.background = "var(--warning)";
-                saveBtn.style.color = "var(--text)";
+                saveBtn.innerText = "需保存";
+                saveBtn.style.background = "var(--danger)";
+                saveBtn.style.color = "var(--bg)";
             } else {
                 saveBtn.innerText = "保存";
                 saveBtn.style.background = "white";
