@@ -1,19 +1,31 @@
-const CACHE_NAME = 'todo-pwa-v1.2';
+const CACHE_NAME = 'todo-pwa-v1.3'; // 升級版本號以強制更新
 const urlsToCache = [
   './',
   './index.html',
-  './manifest.json',
+  // 注意：已移除 './manifest.json'，因為它是動態生成的
   './keepMe.js',
   './favicon192.png',
   './favicon512.png',
   'https://h.jwint.net/static/crypto-js.min.js'
 ];
 
-// 安裝時快取核心檔案
+// 安裝時快取核心檔案 (採用高容錯寫法)
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+      .then(async cache => {
+        console.log('Service Worker: 開始快取檔案...');
+        // 逐一快取檔案，就算某個檔案失敗，也不會讓整個安裝崩潰
+        for (let url of urlsToCache) {
+          try {
+            await cache.add(url);
+            console.log(`✅ 成功快取: ${url}`);
+          } catch (error) {
+            console.warn(`❌ 無法快取檔案 (但不影響主程式): ${url}`, error);
+          }
+        }
+      })
+      .then(() => self.skipWaiting()) // 強制立即啟用新的 Service Worker
   );
 });
 
@@ -39,10 +51,11 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Service Worker: 刪除舊快取', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // 立即接管所有頁面
   );
 });
