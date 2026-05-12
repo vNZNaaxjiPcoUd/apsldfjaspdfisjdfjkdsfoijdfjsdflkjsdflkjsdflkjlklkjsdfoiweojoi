@@ -155,7 +155,7 @@
             // 1. 取得 DB 名稱
             const urlParams = new URLSearchParams(window.location.search);
             let dbId = urlParams.get('id');
-            console.log(urlParams);
+            //console.log(urlParams);
             while (!dbId || dbId.trim() === '') {
                 dbId = prompt('請輸入清單資料庫 (DB) 名稱：');
             }

@@ -238,13 +238,13 @@ async function saveToAPI() {
             updateStatus(`加密失敗，請確認 AES 密鑰是否正確`, 'error');
             res = { status: "error", message: "加密失敗" };
         } else {
-            updateStatus("加密成功");
+            //updateStatus("加密成功");
 
             // 2. 這裡必須上傳 encContent (密文) ！！！
             res = await doSave(dbName, encContent, getTag());
             
             if (res.status === "success") {
-                updateStatus(`已上傳 ${dbName}`, 'success');
+                //updateStatus(`已上傳 ${dbName}`, 'success');
                 setTag(res.tag);
             } else {
                 const regex = new RegExp(`Tag mismatch!`, 's');
@@ -295,7 +295,7 @@ async function getFromAPI() {
         setTag(res.tag);
 
         encryptedContentValue = res.value;
-        updateStatus("已將 API 讀取的內容放入密文區:", encryptedContentValue);
+        //updateStatus("已將 API 讀取的內容放入密文區:", encryptedContentValue);
 
         let key = getDbKey();
         res = await decData(key, encryptedContentValue);
@@ -303,7 +303,7 @@ async function getFromAPI() {
             alert("解密失敗！密碼錯誤或雲端資料非加密格式。"); // 加上 alert 讓提示更明顯
             updateStatus(`解密失敗，請確認 AES 密鑰是否正確`, 'error');
         }else{
-            updateStatus(`解密成功，內容已載入`, 'success');
+            //updateStatus(`解密成功，內容已載入`, 'success');
             setContent(res.value);
         }
     } else {
