@@ -1,9 +1,11 @@
-const CACHE_NAME = 'todo-pwa-v1';
+const CACHE_NAME = 'todo-pwa-v1.1';
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
   './keepMe.js',
+  './favicon192.png',
+  './favicon512.png',
   'https://h.jwint.net/static/crypto-js.min.js'
 ];
 
