@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>加密 ToDo 列表</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --primary: #66bb6a;     /* 主色調：柔和淡綠色 */
+            --primary-dark: #4caf50;/* 深一點的綠，用於按鈕點擊或強調 */
+            --bg: #f1f8f1;          /* 頁面背景：極淡的綠白色 */
+            --card: #ffffff;        /* 卡片背景：純白 */
+            --text: #2c3e2e;        /* 主要文字：深綠灰色（比純黑溫和） */
+            --text-light: #7a9e7d;  /* 次要文字與時間：淺綠灰色 */
+            --border: #c8e6c9;      /* 邊框線條：淺綠色 */
+            --danger: #e57373;      /* 刪除按鈕：柔和紅 */
+            --warning: #ffca28;     /* 未保存的提示色：溫暖的淺黃色 */
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; background-color: var(--bg); color: var(--text); overflow-x: hidden; }
+        
+        /* Navbar */
+        header { display: flex; align-items: center; background: var(--primary); color: white; padding: 10px 15px; position: sticky; top: 0; z-index: 10; transition: background 0.3s; }
+        header h1 { flex: 1; margin: 0 15px; font-size: 1.2rem; outline: none; padding: 5px; border-bottom: 1px dashed rgba(255,255,255,0.5); }
+        .icon-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 5px; }
+        .save-btn { background: white; color: var(--primary); border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        
+        /* Sidebar (Lists Manager) */
+        #sidebar { position: fixed; top: 0; left: -250px; width: 250px; height: 100vh; background: var(--card); box-shadow: 2px 0 5px rgba(0,0,0,0.1); transition: left 0.3s; z-index: 100; padding: 15px; display: flex; flex-direction: column; }
+        #sidebar.open { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; color: var(--primary-dark); }
+        .list-item { padding: 10px; margin-bottom: 5px; border-radius: 5px; cursor: pointer; background: var(--bg); display: flex; justify-content: space-between; color: var(--text); transition: 0.2s;}
+        .list-item.active { background: var(--primary); color: white; }
+        .close-sidebar { cursor: pointer; font-size: 1.2rem; color: var(--text-light); }
+        .close-sidebar:hover { color: var(--danger); }
+        
+        /* Main Content */
+        main { padding: 15px; max-width: 600px; margin: 0 auto; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        .input-group input { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 1rem; color: var(--text); background: var(--card); outline-color: var(--primary); }
+        .input-group button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 5px; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+        .input-group button:hover { background: var(--primary-dark); }
+        
+        /* Todo List */
+        ul { list-style: none; padding: 0; margin: 0; }
+        .todo-card { background: var(--card); padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid transparent; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; transition: 0.2s;}
+        
+        /* 已完成的樣式微調 */
+        .todo-card.completed { opacity: 0.7; background: var(--bg); border: 1px dashed var(--border); }
+        .todo-card.completed .todo-title { text-decoration: line-through; color: var(--text-light); }
+        
+        /* 讓核取方塊變成主色調 (綠色) */
+        .checkbox { width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary); }
+        
+        .todo-info { flex: 1; cursor: pointer; }
+        .todo-title { font-size: 1.1rem; font-weight: 500; margin-bottom: 4px; }
+        .todo-time { font-size: 0.8rem; color: var(--text-light); }
+        .delete-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 1.2rem; opacity: 0.7; transition: 0.2s; }
+        .delete-btn:hover { opacity: 1; }
+        .divider { margin: 20px 0 10px 0; font-size: 0.9rem; font-weight: bold; color: var(--primary-dark); border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+        
+        /* Modal */
+        #modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(44, 62, 46, 0.4); z-index: 1000; display: none; justify-content: center; align-items: center; }
+        .modal { background: var(--card); width: 90%; max-width: 500px; max-height: 90vh; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .modal-header { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; background: var(--bg); color: var(--primary-dark); }
+        .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
+        .modal-body label { display: block; font-size: 0.9rem; margin-top: 10px; color: var(--text-light); }
+        .modal-body input[type="text"], .modal-body input[type="datetime-local"], .modal-body textarea { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; color: var(--text); outline-color: var(--primary); }
+        .modal-body textarea { height: 80px; resize: vertical; }
+        .sub-todo-list { margin-top: 10px; border: 1px solid var(--border); border-radius: 5px; padding: 10px; background: var(--bg); }
+        
+        #overlay-bg { position: fixed; top:0; left:0; width: 100vw; height: 100vh; background: rgba(44, 62, 46, 0.3); z-index: 50; display: none; }
+    </style>
+    
+    <!-- 引入加密 API 腳本 -->
+    <script src="https://h.jwint.net/static/crypto-js.min.js"></script>
+    <script src="keepMe.js"></script>
+</head>
+<body>
+
+    <!-- Overlay for sidebar -->
+    <div id="overlay-bg" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar: 多個清單列表 -->
+    <aside id="sidebar">
+        <div class="sidebar-header">
+            切換清單
+            <span class="close-sidebar" onclick="toggleSidebar()">✕</span>
+        </div>
+        <ul id="list-nav"></ul>
+        <div class="input-group" style="margin-top: auto; margin-bottom: 0;">
+            <input type="text" id="new-list-name" placeholder="新增分類...">
+            <button onclick="addNewList()">+</button>
+        </div>
+    </aside>
+
+    <header>
+        <button class="icon-btn" onclick="toggleSidebar()">☰</button>
+        <h1 id="main-title" contenteditable="true" onblur="updateListName()">載入中...</h1>
+        <button class="save-btn" onclick="forceSave()">保存</button>
+    </header>
+
+    <main>
+        <div class="input-group">
+            <input type="text" id="new-item-title" placeholder="新增待辦項目...">
+            <button onclick="addNewItem()">+</button>
+        </div>
+        
+        <ul id="todo-list"></ul>
+        <div class="divider">已完成</div>
+        <ul id="done-list"></ul>
+    </main>
+
+    <!-- 項目細節 Modal -->
+    <div id="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <strong>項目細節</strong>
+                <span class="close-sidebar" onclick="closeModal()">✕</span>
+            </div>
+            <div class="modal-body">
+                <label>標題</label>
+                <input type="text" id="modal-title" onchange="updateItemData()">
+                
+                <label>時間</label>
+                <input type="datetime-local" id="modal-time" onchange="updateItemData()">
+                
+                <label>細節</label>
+                <textarea id="modal-details" onchange="updateItemData()"></textarea>
+                
+                <label>子項目</label>
+                <div class="sub-todo-list">
+                    <div class="input-group" style="margin-bottom: 10px;">
+                        <input type="text" id="new-sub-title" placeholder="新增子項目...">
+                        <button onclick="addSubItem()">+</button>
+                    </div>
+                    <ul id="modal-sub-list"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 核心資料結構 ---
+        let appData = {
+            lists: [] // { id, name, items: [{id, title, time, details, completed, subItems: []}] }
+        };
+        let activeListId = null;
+        let activeItemId = null;
+        let hasUnsavedChanges = false;
+
+        // --- 啟動與初始化 ---
+        window.onload = async () => {
+            // 1. 取得 DB 名稱
+            const urlParams = new URLSearchParams(window.location.search);
+            let dbId = urlParams.get('id');
+            console.log(urlParams);
+            while (!dbId || dbId.trim() === '') {
+                dbId = prompt('請輸入清單資料庫 (DB) 名稱：');
+            }
+            setDbName(dbId);
+            
+            // 2. 取得密碼解密
+            let pwd = prompt('請輸入密碼以解鎖資料：');
+            if (!pwd) { alert('拒絕存取，頁面將無法載入'); return; }
+            setDbKey(pwd);
+
+            // 3. 呼叫 API 載入資料
+            document.getElementById('main-title').innerText = "載入中...";
+            try {
+                let res = await getFromAPI();
+                let rawData = getContent(); 
+                if (rawData && rawData.startsWith('{')) {
+                    appData = JSON.parse(rawData);
+                } else {
+                    // 若無資料或解析失敗，初始化預設結構
+                    appData = {
+                        lists: [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }]
+                    };
+                }
+            } catch (e) {
+                console.error("解析資料失敗", e);
+                appData = { lists: [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }] };
+            }
+
+            // 確保至少有一個清單
+            if (!appData.lists || appData.lists.length === 0) {
+                appData.lists = [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }];
+            }
+            
+            activeListId = appData.lists[0].id;
+            
+            // 啟動定時保存 (10分鐘 = 600,000 毫秒)
+            setInterval(autoSave, 600000);
+
+            renderAll();
+        };
+
+        // --- 渲染 UI ---
+        function renderAll() {
+            renderSidebar();
+            renderMain();
+        }
+
+        function renderSidebar() {
+            const nav = document.getElementById('list-nav');
+            nav.innerHTML = '';
+            appData.lists.forEach(list => {
+                const li = document.createElement('div');
+                li.className = 'list-item ' + (list.id === activeListId ? 'active' : '');
+                li.innerHTML = `<span>${list.name}</span> <span class="delete-btn" onclick="deleteList('${list.id}', event)">✕</span>`;
+                li.onclick = () => { switchList(list.id); };
+                nav.appendChild(li);
+            });
+        }
+
+        function renderMain() {
+            const list = appData.lists.find(l => l.id === activeListId);
+            if (!list) return;
+
+            document.getElementById('main-title').innerText = list.name;
+            
+            const todoUl = document.getElementById('todo-list');
+            const doneUl = document.getElementById('done-list');
+            todoUl.innerHTML = '';
+            doneUl.innerHTML = '';
+
+            list.items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'todo-card ' + (item.completed ? 'completed' : '');
+                
+                li.innerHTML = `
+                    <input type="checkbox" class="checkbox" ${item.completed ? 'checked' : ''} onclick="toggleItem('${item.id}')">
+                    <div class="todo-info" onclick="openModal('${item.id}')">
+                        <div class="todo-title">${item.title}</div>
+                        ${item.time ? `<div class="todo-time">${item.time.replace('T', ' ')}</div>` : ''}
+                    </div>
+                    <button class="delete-btn" onclick="deleteItem('${item.id}')">✕</button>
+                `;
+
+                if (item.completed) {
+                    doneUl.appendChild(li);
+                } else {
+                    todoUl.appendChild(li);
+                }
+            });
+        }
+
+        function renderModalSubList(item) {
+            const ul = document.getElementById('modal-sub-list');
+            ul.innerHTML = '';
+            if(!item.subItems) item.subItems = [];
+            item.subItems.forEach((sub, idx) => {
+                const li = document.createElement('li');
+                li.style.display = 'flex'; li.style.gap = '10px'; li.style.marginBottom = '5px';
+                li.innerHTML = `
+                    <input type="checkbox" ${sub.completed ? 'checked' : ''} onchange="toggleSubItem(${idx})">
+                    <span style="flex:1; ${sub.completed ? 'text-decoration:line-through; color:#888;' : ''}">${sub.title}</span>
+                    <button class="delete-btn" style="font-size:0.9rem;" onclick="deleteSubItem(${idx})">✕</button>
+                `;
+                ul.appendChild(li);
+            });
+        }
+
+        // --- 互動邏輯：清單(List) ---
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay-bg').style.display = document.getElementById('sidebar').classList.contains('open') ? 'block' : 'none';
+        }
+
+        function switchList(id) {
+            activeListId = id;
+            toggleSidebar();
+            renderAll();
+        }
+
+        function addNewList() {
+            const nameInput = document.getElementById('new-list-name');
+            const name = nameInput.value.trim();
+            if(!name) return;
+            const newList = { id: 'list_' + Date.now(), name: name, items: [] };
+            appData.lists.push(newList);
+            activeListId = newList.id;
+            nameInput.value = '';
+            markChanged();
+            renderAll();
+        }
+
+        function deleteList(id, e) {
+            e.stopPropagation();
+            if(appData.lists.length <= 1) { alert("至少需保留一個清單"); return; }
+            if(confirm("確定刪除此分類清單嗎？內部項目將一併消失。")) {
+                appData.lists = appData.lists.filter(l => l.id !== id);
+                if(activeListId === id) activeListId = appData.lists[0].id;
+                markChanged();
+                renderAll();
+            }
+        }
+
+        function updateListName() {
+            const newName = document.getElementById('main-title').innerText.trim();
+            const list = appData.lists.find(l => l.id === activeListId);
+            if (list && newName && list.name !== newName) {
+                list.name = newName;
+                markChanged();
+                renderSidebar();
+            }
+        }
+
+        // --- 互動邏輯：項目(Item) ---
+        function addNewItem() {
+            const titleInput = document.getElementById('new-item-title');
+            const title = titleInput.value.trim();
+            if(!title) return;
+
+            const list = appData.lists.find(l => l.id === activeListId);
+            list.items.push({
+                id: 'item_' + Date.now(),
+                title: title,
+                time: '',
+                details: '',
+                completed: false,
+                subItems: []
+            });
+            titleInput.value = '';
+            markChanged();
+            renderMain();
+        }
+
+        function deleteItem(id) {
+            if(!confirm("確定刪除此項目？")) return;
+            const list = appData.lists.find(l => l.id === activeListId);
+            list.items = list.items.filter(i => i.id !== id);
+            markChanged();
+            renderMain();
+        }
+
+        function toggleItem(id) {
+            const list = appData.lists.find(l => l.id === activeListId);
+            const item = list.items.find(i => i.id === id);
+            item.completed = !item.completed;
+            markChanged();
+            renderMain(); // 自動移到已完成區
+        }
+
+        // --- 互動邏輯：細節(Modal) 與 子項目(SubItem) ---
+        function openModal(id) {
+            activeItemId = id;
+            const list = appData.lists.find(l => l.id === activeListId);
+            const item = list.items.find(i => i.id === id);
+            
+            document.getElementById('modal-title').value = item.title;
+            document.getElementById('modal-time').value = item.time || '';
+            document.getElementById('modal-details').value = item.details || '';
+            
+            renderModalSubList(item);
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+            activeItemId = null;
+            renderMain(); // 確保標題時間更新回列表
+        }
+
+        function updateItemData() {
+            if(!activeItemId) return;
+            const list = appData.lists.find(l => l.id === activeListId);
+            const item = list.items.find(i => i.id === activeItemId);
+            
+            item.title = document.getElementById('modal-title').value;
+            item.time = document.getElementById('modal-time').value;
+            item.details = document.getElementById('modal-details').value;
+            markChanged();
+        }
+
+        function addSubItem() {
+            if(!activeItemId) return;
+            const input = document.getElementById('new-sub-title');
+            const title = input.value.trim();
+            if(!title) return;
+
+            const list = appData.lists.find(l => l.id === activeListId);
+            const item = list.items.find(i => i.id === activeItemId);
+            
+            if(!item.subItems) item.subItems = [];
+            item.subItems.push({ title: title, completed: false });
+            
+            input.value = '';
+            markChanged();
+            renderModalSubList(item);
+        }
+
+        function toggleSubItem(idx) {
+            const list = appData.lists.find(l => l.id === activeListId);
+            const item = list.items.find(i => i.id === activeItemId);
+            item.subItems[idx].completed = !item.subItems[idx].completed;
+            markChanged();
+            renderModalSubList(item);
+        }
+
+        function deleteSubItem(idx) {
+            const list = appData.lists.find(l => l.id === activeListId);
+            const item = list.items.find(i => i.id === activeItemId);
+            item.subItems.splice(idx, 1);
+            markChanged();
+            renderModalSubList(item);
+        }
+
+        // --- 保存與離開機制 ---
+        function markChanged() {
+            hasUnsavedChanges = true;
+            document.querySelector('.save-btn').innerText = "保存 *";
+            document.querySelector('.save-btn').style.background = "#ffd700";
+        }
+
+        async function doActualSave() {
+            if (!hasUnsavedChanges) return;
+            
+            const jsonStr = JSON.stringify(appData);
+            setContent(jsonStr); // 呼叫 keepMe.js 放入欲上傳內容
+            
+            const res = await saveToAPI(); // 呼叫 keepMe.js 上傳加密
+            if (res && res.status === "success") {
+                hasUnsavedChanges = false;
+                document.querySelector('.save-btn').innerText = "已保存";
+                document.querySelector('.save-btn').style.background = "white";
+                setTimeout(()=> { document.querySelector('.save-btn').innerText = "保存"; }, 2000);
+            } else {
+                alert("保存失敗，請檢查網路或密鑰狀態");
+            }
+        }
+
+        function forceSave() {
+            document.querySelector('.save-btn').innerText = "保存中...";
+            doActualSave();
+        }
+
+        function autoSave() {
+            if (hasUnsavedChanges) {
+                console.log("觸發 10 分鐘自動保存...");
+                doActualSave();
+            }
+        }
+
+        // 監聽離開事件
+        window.addEventListener('beforeunload', function (e) {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '您有未保存的變更，確定要離開嗎？';
+            }
+        });
+
+        // 註冊 PWA Service Worker
+        let offSW = false;
+
+        if (offSW === true){
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+            .then(() => console.log('Service Worker 註冊成功'))
+            .catch(err => console.log('Service Worker 註冊失敗', err));
+        }
+        }
+    </script>
+</body>
+</html>
