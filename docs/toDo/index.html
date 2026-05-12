@@ -7,15 +7,15 @@
 
     <style>
         :root {
-            --primary: #66bb6a;     /* 主色調：柔和淡綠色 */
-            --primary-dark: #4caf50;/* 深一點的綠，用於按鈕點擊或強調 */
-            --bg: #f1f8f1;          /* 頁面背景：極淡的綠白色 */
-            --card: #ffffff;        /* 卡片背景：純白 */
-            --text: #2c3e2e;        /* 主要文字：深綠灰色（比純黑溫和） */
-            --text-light: #7a9e7d;  /* 次要文字與時間：淺綠灰色 */
-            --border: #c8e6c9;      /* 邊框線條：淺綠色 */
-            --danger: #e57373;      /* 刪除按鈕：柔和紅 */
-            --warning: #ffca28;     /* 未保存的提示色：溫暖的淺黃色 */
+            --primary: #66bb6a;
+            --primary-dark: #4caf50;
+            --bg: #f1f8f1;
+            --card: #ffffff;
+            --text: #2c3e2e;
+            --text-light: #7a9e7d;
+            --border: #c8e6c9;
+            --danger: #e57373;
+            --warning: #ffca28;
         }
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; background-color: var(--bg); color: var(--text); overflow-x: hidden; }
@@ -45,14 +45,9 @@
         /* Todo List */
         ul { list-style: none; padding: 0; margin: 0; }
         .todo-card { background: var(--card); padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid transparent; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; transition: 0.2s;}
-        
-        /* 已完成的樣式微調 */
         .todo-card.completed { opacity: 0.7; background: var(--bg); border: 1px dashed var(--border); }
         .todo-card.completed .todo-title { text-decoration: line-through; color: var(--text-light); }
-        
-        /* 讓核取方塊變成主色調 (綠色) */
         .checkbox { width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary); }
-        
         .todo-info { flex: 1; cursor: pointer; }
         .todo-title { font-size: 1.1rem; font-weight: 500; margin-bottom: 4px; }
         .todo-time { font-size: 0.8rem; color: var(--text-light); }
@@ -71,6 +66,9 @@
         .sub-todo-list { margin-top: 10px; border: 1px solid var(--border); border-radius: 5px; padding: 10px; background: var(--bg); }
         
         #overlay-bg { position: fixed; top:0; left:0; width: 100vw; height: 100vh; background: rgba(44, 62, 46, 0.3); z-index: 50; display: none; }
+        
+        /* 拒絕存取畫面 */
+        #access-denied { display: none; text-align: center; margin-top: 20vh; color: var(--danger); }
     </style>
     
     <!-- 引入加密 API 腳本 -->
@@ -80,9 +78,8 @@
     <script>
         // 在網頁一載入時，立刻動態生成專屬的 PWA Manifest
         (function() {
-            // 1. 抓取網址上的 DB 名稱 (支援 ?id=b 或 ?b 的寫法)
             let currentUrl = window.location.href;
-            let dbId = "預設清單";
+            let dbId = "";
             
             if (currentUrl.includes('id=')) {
                 dbId = currentUrl.split('id=')[1].split('&')[0];
@@ -90,160 +87,201 @@
                 dbId = currentUrl.split('?')[1].split('&')[0];
             }
 
-            // 2. 建立專屬的 Manifest JSON 物件
+            const manifestName = dbId ? dbId : "待辦事項";
+
             const manifest = {
-                "name": `ToDo - ${dbId}`,       // 讓每個 App 有不同的名字，例如 "ToDo - b"
-                "short_name": dbId,             // 桌面圖示下方顯示的短名
-                "description": `加密待辦事項 (${dbId})`,
-                "start_url": `./index.html?id=${dbId}`, // 關鍵：讓它啟動時自帶該 DB 參數
+                "name": `ToDo - ${manifestName}`,
+                "short_name": manifestName,
+                "description": `加密待辦事項 (${manifestName})`,
+                "start_url": `./index.html${dbId ? '?id=' + dbId : ''}`,
                 "display": "standalone",
                 "background_color": "#f1f8f1",
                 "theme_color": "#66bb6a",
                 "icons": [
-                    {
-                        "src": "./favicon192.png",
-                        "sizes": "192x192",
-                        "type": "image/png"
-                    },
-                    {
-                        "src": "./favicon512.png",
-                        "sizes": "512x512",
-                        "type": "image/png"
-                    }
+                    { "src": "./favicon192.png", "sizes": "192x192", "type": "image/png" },
+                    { "src": "./favicon512.png", "sizes": "512x512", "type": "image/png" }
                 ]
             };
 
-            // 3. 將 JSON 轉成 Blob 並產生虛擬網址
             const stringManifest = JSON.stringify(manifest);
             const blob = new Blob([stringManifest], { type: 'application/json' });
             const manifestURL = URL.createObjectURL(blob);
 
-            // 4. 動態插入 <link rel="manifest"> 到 head 中
             const link = document.createElement('link');
             link.rel = 'manifest';
             link.href = manifestURL;
             document.head.appendChild(link);
         })();
     </script>
-
 </head>
 <body>
 
-    <!-- Overlay for sidebar -->
-    <div id="overlay-bg" onclick="toggleSidebar()"></div>
+    <!-- 拒絕存取畫面 (密碼取消時顯示) -->
+    <div id="access-denied">
+        <h2>🔒 拒絕存取</h2>
+        <p>必須提供正確的資料庫名稱與密碼才能載入。</p>
+        <button onclick="location.reload()" style="padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px;">重新載入</button>
+    </div>
 
-    <!-- Sidebar: 多個清單列表 -->
-    <aside id="sidebar">
-        <div class="sidebar-header">
-            切換清單
-            <span class="close-sidebar" onclick="toggleSidebar()">✕</span>
-        </div>
-        <ul id="list-nav"></ul>
-        <div class="input-group" style="margin-top: auto; margin-bottom: 0;">
-            <input type="text" id="new-list-name" placeholder="新增分類...">
-            <button onclick="addNewList()">+</button>
-        </div>
-    </aside>
-
-    <header>
-        <button class="icon-btn" onclick="toggleSidebar()">☰</button>
-        <h1 id="main-title" contenteditable="true" onblur="updateListName()">載入中...</h1>
-        <button class="save-btn" onclick="forceSave()">保存</button>
-    </header>
-
-    <main>
-        <div class="input-group">
-            <input type="text" id="new-item-title" placeholder="新增待辦項目...">
-            <button onclick="addNewItem()">+</button>
-        </div>
+    <!-- 整個應用程式外殼 (初始隱藏，驗證成功後才顯示) -->
+    <div id="app-container" style="display: none;">
         
-        <ul id="todo-list"></ul>
-        <div class="divider">已完成</div>
-        <ul id="done-list"></ul>
-    </main>
+        <!-- Overlay for sidebar -->
+        <div id="overlay-bg" onclick="toggleSidebar()"></div>
 
-    <!-- 項目細節 Modal -->
-    <div id="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <strong>項目細節</strong>
-                <span class="close-sidebar" onclick="closeModal()">✕</span>
+        <!-- Sidebar: 多個清單列表 -->
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                切換清單
+                <span class="close-sidebar" onclick="toggleSidebar()">✕</span>
             </div>
-            <div class="modal-body">
-                <label>標題</label>
-                <input type="text" id="modal-title" onchange="updateItemData()">
-                
-                <label>時間</label>
-                <input type="datetime-local" id="modal-time" onchange="updateItemData()">
-                
-                <label>細節</label>
-                <textarea id="modal-details" onchange="updateItemData()"></textarea>
-                
-                <label>子項目</label>
-                <div class="sub-todo-list">
-                    <div class="input-group" style="margin-bottom: 10px;">
-                        <input type="text" id="new-sub-title" placeholder="新增子項目...">
-                        <button onclick="addSubItem()">+</button>
+            <ul id="list-nav"></ul>
+            
+            <div style="padding: 10px 0; border-top: 1px solid var(--border); margin-top: auto;">
+                <button onclick="changePassword()" style="width: 100%; background: var(--warning); color: var(--text); border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold;">🔑 修改資料庫密碼</button>
+            </div>
+
+            <div class="input-group" style="margin-top: 10px; margin-bottom: 0;">
+                <input type="text" id="new-list-name" placeholder="新增分類...">
+                <button onclick="addNewList()">+</button>
+            </div>
+        </aside>
+
+        <header>
+            <button class="icon-btn" onclick="toggleSidebar()">☰</button>
+            <h1 id="main-title" contenteditable="true" onblur="updateListName()">載入中...</h1>
+            <button class="save-btn" onclick="forceSave()">保存</button>
+        </header>
+
+        <main>
+            <div class="input-group">
+                <input type="text" id="new-item-title" placeholder="新增待辦項目...">
+                <button onclick="addNewItem()">+</button>
+            </div>
+            
+            <ul id="todo-list"></ul>
+            <div class="divider">已完成</div>
+            <ul id="done-list"></ul>
+        </main>
+
+        <!-- 項目細節 Modal -->
+        <div id="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <strong>項目細節</strong>
+                    <span class="close-sidebar" onclick="closeModal()">✕</span>
+                </div>
+                <div class="modal-body">
+                    <label>標題</label>
+                    <input type="text" id="modal-title" onchange="updateItemData()">
+                    
+                    <label>時間</label>
+                    <input type="datetime-local" id="modal-time" onchange="updateItemData()">
+                    
+                    <label>細節</label>
+                    <textarea id="modal-details" onchange="updateItemData()"></textarea>
+                    
+                    <label>子項目</label>
+                    <div class="sub-todo-list">
+                        <div class="input-group" style="margin-bottom: 10px;">
+                            <input type="text" id="new-sub-title" placeholder="新增子項目...">
+                            <button onclick="addSubItem()">+</button>
+                        </div>
+                        <ul id="modal-sub-list"></ul>
                     </div>
-                    <ul id="modal-sub-list"></ul>
                 </div>
             </div>
         </div>
-    </div>
+
+    </div> <!-- app-container 結束 -->
 
     <script>
         // --- 核心資料結構 ---
-        let appData = {
-            lists: [] // { id, name, items: [{id, title, time, details, completed, subItems: []}] }
-        };
+        let appData = { lists: [] };
         let activeListId = null;
         let activeItemId = null;
         let hasUnsavedChanges = false;
 
-        // --- 啟動與初始化 ---
+        // 停止並顯示拒絕存取
+        function denyAccess() {
+            document.getElementById('access-denied').style.display = 'block';
+        }
+
+// --- 啟動與初始化 ---
         window.onload = async () => {
-            // 1. 取得 DB 名稱
-            const urlParams = new URLSearchParams(window.location.search);
-            let dbId = urlParams.get('id');
-            //console.log(urlParams);
-            while (!dbId || dbId.trim() === '') {
-                dbId = prompt('請輸入清單資料庫 (DB) 名稱：');
+            // 1. 取得 DB 名稱 (強制迴圈)
+            let currentUrl = window.location.href;
+            let dbId = "";
+            
+            if (currentUrl.includes('id=')) {
+                dbId = currentUrl.split('id=')[1].split('&')[0];
+            } else if (currentUrl.includes('?')) {
+                dbId = currentUrl.split('?')[1].split('&')[0];
             }
+
+            while (!dbId || dbId.trim() === "") {
+                dbId = prompt('請輸入清單名稱：');
+                if (dbId === null) { denyAccess(); return; } // 使用者按取消
+            }
+            dbId = dbId.trim();
             setDbName(dbId);
             
-            // 2. 取得密碼解密
-            let pwd = prompt('請輸入密碼以解鎖資料：');
-            if (!pwd) { alert('拒絕存取，頁面將無法載入'); return; }
+            // 2. 取得密碼
+            let pwd = prompt(`請輸入密碼：`);
+            if (!pwd) { denyAccess(); return; } // 使用者按取消
             setDbKey(pwd);
 
-            // 3. 呼叫 API 載入資料
-            document.getElementById('main-title').innerText = "載入中...";
-            try {
+            // 3. 呼叫 API 載入資料 (無限重試迴圈)
+            while (true) {
                 let res = await getFromAPI();
-                let rawData = getContent(); 
-                if (rawData && rawData.startsWith('{')) {
-                    appData = JSON.parse(rawData);
-                } else {
-                    // 若無資料或解析失敗，初始化預設結構
-                    appData = {
-                        lists: [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }]
-                    };
+                
+                // 判斷是否為全新資料庫 (最優先攔截)
+                if (res && res.message === "Key not found") {
+                    console.log("偵測到新資料庫，初始化空白清單。");
+                    appData = { lists: [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }] };
+                    break;
                 }
-            } catch (e) {
-                console.error("解析資料失敗", e);
-                appData = { lists: [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }] };
+
+                let rawData = getContent(); 
+                let isDecryptionFailed = false;
+
+                // 判斷是否解密失敗 (不依賴文字，只要是 error 都判定為失敗)
+                if (res && res.status === "error") {
+                    isDecryptionFailed = true;
+                } else if (res && res.status === "success" && rawData && !rawData.startsWith('{')) {
+                    isDecryptionFailed = true; // 解出來的不是 JSON 格式（通常是密碼錯誤產生的亂碼）
+                }
+
+                if (isDecryptionFailed) {
+                    pwd = prompt('❌ 密碼錯誤或雲端資料非加密格式！\n請重新輸入密碼：');
+                    if (pwd === null) { denyAccess(); return; } // 取消直接結束
+                    setDbKey(pwd);
+                    continue; // 重新執行 while 迴圈再次抓取與解密
+                }
+
+                // 解密成功，解析資料
+                try {
+                    appData = JSON.parse(rawData);
+                    break; // 完全成功載入，跳出迴圈
+                } catch (e) {
+                    // 若看起來像 JSON 但實際上格式損壞
+                    pwd = prompt('❌ 資料解析失敗 (密碼可能錯誤)！\n請重新嘗試輸入密碼：');
+                    if (pwd === null) { denyAccess(); return; }
+                    setDbKey(pwd);
+                    continue;
+                }
             }
 
-            // 確保至少有一個清單
             if (!appData.lists || appData.lists.length === 0) {
                 appData.lists = [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }];
             }
             
             activeListId = appData.lists[0].id;
             
-            // 啟動定時保存 (10分鐘 = 600,000 毫秒)
+            // 驗證並載入成功，顯示主畫面 UI
+            document.getElementById('app-container').style.display = 'block';
+            
             setInterval(autoSave, 600000);
-
             renderAll();
         };
 
@@ -313,7 +351,7 @@
             });
         }
 
-        // --- 互動邏輯：清單(List) ---
+        // --- 互動邏輯 ---
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay-bg').style.display = document.getElementById('sidebar').classList.contains('open') ? 'block' : 'none';
@@ -358,21 +396,12 @@
             }
         }
 
-        // --- 互動邏輯：項目(Item) ---
         function addNewItem() {
             const titleInput = document.getElementById('new-item-title');
             const title = titleInput.value.trim();
             if(!title) return;
-
             const list = appData.lists.find(l => l.id === activeListId);
-            list.items.push({
-                id: 'item_' + Date.now(),
-                title: title,
-                time: '',
-                details: '',
-                completed: false,
-                subItems: []
-            });
+            list.items.push({ id: 'item_' + Date.now(), title: title, time: '', details: '', completed: false, subItems: [] });
             titleInput.value = '';
             markChanged();
             renderMain();
@@ -391,19 +420,16 @@
             const item = list.items.find(i => i.id === id);
             item.completed = !item.completed;
             markChanged();
-            renderMain(); // 自動移到已完成區
+            renderMain();
         }
 
-        // --- 互動邏輯：細節(Modal) 與 子項目(SubItem) ---
         function openModal(id) {
             activeItemId = id;
             const list = appData.lists.find(l => l.id === activeListId);
             const item = list.items.find(i => i.id === id);
-            
             document.getElementById('modal-title').value = item.title;
             document.getElementById('modal-time').value = item.time || '';
             document.getElementById('modal-details').value = item.details || '';
-            
             renderModalSubList(item);
             document.getElementById('modal-overlay').style.display = 'flex';
         }
@@ -411,14 +437,13 @@
         function closeModal() {
             document.getElementById('modal-overlay').style.display = 'none';
             activeItemId = null;
-            renderMain(); // 確保標題時間更新回列表
+            renderMain();
         }
 
         function updateItemData() {
             if(!activeItemId) return;
             const list = appData.lists.find(l => l.id === activeListId);
             const item = list.items.find(i => i.id === activeItemId);
-            
             item.title = document.getElementById('modal-title').value;
             item.time = document.getElementById('modal-time').value;
             item.details = document.getElementById('modal-details').value;
@@ -430,13 +455,10 @@
             const input = document.getElementById('new-sub-title');
             const title = input.value.trim();
             if(!title) return;
-
             const list = appData.lists.find(l => l.id === activeListId);
             const item = list.items.find(i => i.id === activeItemId);
-            
             if(!item.subItems) item.subItems = [];
             item.subItems.push({ title: title, completed: false });
-            
             input.value = '';
             markChanged();
             renderModalSubList(item);
@@ -462,21 +484,64 @@
         function markChanged() {
             hasUnsavedChanges = true;
             document.querySelector('.save-btn').innerText = "保存 *";
-            document.querySelector('.save-btn').style.background = "#ffd700";
+            document.querySelector('.save-btn').style.background = "var(--warning)";
+            document.querySelector('.save-btn').style.color = "var(--text)";
+        }
+
+        function changePassword() {
+            let newPwd = prompt("🔑 請輸入「新的」密碼：");
+            if (!newPwd) return;
+            let confirmPwd = prompt("🔑 請再次輸入新密碼以確認：");
+            if (newPwd !== confirmPwd) {
+                alert("❌ 兩次輸入的密碼不一致，修改失敗。");
+                return;
+            }
+            setDbKey(newPwd);
+            markChanged();
+            forceSave();
+            alert("✅ 密碼已更新！系統已開始使用新密碼加密並上傳至雲端。");
         }
 
         async function doActualSave() {
             if (!hasUnsavedChanges) return;
             
             const jsonStr = JSON.stringify(appData);
-            setContent(jsonStr); // 呼叫 keepMe.js 放入欲上傳內容
+            setContent(jsonStr); 
             
-            const res = await saveToAPI(); // 呼叫 keepMe.js 上傳加密
+            const res = await saveToAPI(); 
             if (res && res.status === "success") {
                 hasUnsavedChanges = false;
-                document.querySelector('.save-btn').innerText = "已保存";
-                document.querySelector('.save-btn').style.background = "white";
-                setTimeout(()=> { document.querySelector('.save-btn').innerText = "保存"; }, 2000);
+                const saveBtn = document.querySelector('.save-btn');
+                saveBtn.innerText = "已保存";
+                saveBtn.style.background = "white";
+                saveBtn.style.color = "var(--primary)";
+                setTimeout(()=> { if(!hasUnsavedChanges) saveBtn.innerText = "保存"; }, 2000);
+            } else if (res && res.message && res.message.includes("不匹配")) {
+                let userChoice = confirm("⚠️ 發現版本衝突！\n\n這份清單在其他裝置已經被修改過了。為了防止覆蓋別人的資料，請選擇：\n\n【確定】：強制覆蓋雲端資料 (以你現在畫面上的內容為主)\n【取消】：放棄你的修改，重新載入雲端的最新資料");
+                
+                if (userChoice) {
+                    const saveBtn = document.querySelector('.save-btn');
+                    saveBtn.innerText = "強制覆蓋中...";
+                    let fetchRes = await doGet(getDbName());
+                    if (fetchRes && fetchRes.status === "success") {
+                        setTag(fetchRes.tag);
+                        let forceRes = await saveToAPI(); 
+                        if (forceRes && forceRes.status === "success") {
+                            hasUnsavedChanges = false;
+                            saveBtn.innerText = "已覆蓋";
+                            saveBtn.style.background = "white";
+                            saveBtn.style.color = "var(--primary)";
+                            setTimeout(()=> { if(!hasUnsavedChanges) saveBtn.innerText = "保存"; }, 2000);
+                            alert("✅ 強制覆蓋成功！");
+                        } else {
+                            alert("❌ 覆蓋失敗，請檢查網路。");
+                        }
+                    } else {
+                        alert("❌ 無法獲取雲端最新狀態，覆蓋失敗。");
+                    }
+                } else {
+                    location.reload();
+                }
             } else {
                 alert("保存失敗，請檢查網路或密鑰狀態");
             }
@@ -494,7 +559,6 @@
             }
         }
 
-        // 監聽離開事件
         window.addEventListener('beforeunload', function (e) {
             if (hasUnsavedChanges) {
                 e.preventDefault();
@@ -504,13 +568,12 @@
 
         // 註冊 PWA Service Worker
         let offSW = true;
-
-        if (offSW === true){
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-            .then(() => console.log(''))
-            .catch(err => console.log('Service Worker 註冊失敗', err));
-        }
+        if (offSW === false){
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('Service Worker 已註冊'))
+                .catch(err => console.log('Service Worker 註冊失敗', err));
+            }
         }
     </script>
 </body>
