@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>加密 ToDo 列表</title>
+    <title>ToDo</title>
 
     <style>
         :root {
@@ -16,7 +16,7 @@
             --border: #c8e6c9;
             --danger: #e57373;
             --warning: #ffca28;
-            /* 改為綠色系的標示顏色 */
+            /* 綠色系的標示顏色 */
             --info-border: #2e7d32;
             --info-bg: #e8f5e9;
             --info-text: #1b5e20;
@@ -179,7 +179,8 @@
             <div class="modal">
                 <div class="modal-header">
                     <div class="modal-header-left">
-                        <button id="modal-back-btn" class="modal-back-btn" onclick="modalGoBack()" style="display:none;">⬅ 返回</button>
+                        <!-- 將原本的 style="display:none;" 移除，讓它預設顯示 -->
+                        <button id="modal-back-btn" class="modal-back-btn" onclick="modalGoBack()">⬅ 返回</button>
                         <strong>項目細節</strong>
                     </div>
                     <span class="close-sidebar" onclick="closeModal()">✕</span>
@@ -508,7 +509,7 @@
         function closeModal() {
             document.getElementById('modal-overlay').style.display = 'none';
             modalNavStack = [];
-            renderMain(); // 關閉時重新繪製主畫面，讓顏色標示可以即時更新
+            renderMain(); 
         }
 
         function drillDown(id) {
@@ -518,8 +519,12 @@
 
         function modalGoBack() {
             if (modalNavStack.length > 1) {
+                // 如果在子項目中，退回上一層
                 modalNavStack.pop(); 
                 renderModal();
+            } else {
+                // 如果已經在最上層，就關閉 Modal 回到主畫面
+                closeModal();
             }
         }
 
@@ -533,8 +538,9 @@
             document.getElementById('modal-time').value = item.time || '';
             document.getElementById('modal-details').value = item.details || '';
             
+            // 讓返回按鈕永遠顯示
             const backBtn = document.getElementById('modal-back-btn');
-            backBtn.style.display = (modalNavStack.length > 1) ? 'inline-block' : 'none';
+            backBtn.style.display = 'inline-block';
 
             renderModalSubList(item);
         }
@@ -546,7 +552,7 @@
             item.time = document.getElementById('modal-time').value;
             item.details = document.getElementById('modal-details').value;
             markChanged();
-            renderModalSubList(item); // 確保如果有細節變動，當下也可以更新樣式（若需要）
+            renderModalSubList(item);
         }
 
         function renderModalSubList(item) {
@@ -563,7 +569,6 @@
                 let extraClass = hasExtraInfo(sub) ? 'has-more-info' : '';
                 li.className = `sub-item-row ${extraClass}`;
                 
-                // 行內樣式裡的 color:#888 會優先蓋過外部 CSS，這樣完成時視覺才會正確變淡
                 let textStyle = sub.completed ? 'text-decoration:line-through; color:#888;' : '';
                 
                 li.innerHTML = `
