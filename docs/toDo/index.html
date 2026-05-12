@@ -210,17 +210,23 @@
             else if (currentUrl.includes('?')) dbId = currentUrl.split('?')[1].split('&')[0];
 
             const manifestName = dbId ? dbId : "待辦事項";
+            
+            // 將相對路徑轉為絕對路徑，避免 blob URL 解析錯誤
+            const startUrl = new URL(`./index.html${dbId ? '?id=' + dbId : ''}`, currentUrl).href;
+            const icon192Url = new URL('./favicon192.png', currentUrl).href;
+            const icon512Url = new URL('./favicon512.png', currentUrl).href;
+
             const manifest = {
                 "name": `ToDo - ${manifestName}`,
                 "short_name": manifestName,
                 "description": `待辦事項 (${manifestName})`,
-                "start_url": `./index.html${dbId ? '?id=' + dbId : ''}`,
+                "start_url": startUrl,  // 使用絕對路徑
                 "display": "standalone",
                 "background_color": "#f1f8f1",
                 "theme_color": "#66bb6a",
                 "icons": [
-                    { "src": "./favicon192.png", "sizes": "192x192", "type": "image/png" },
-                    { "src": "./favicon512.png", "sizes": "512x512", "type": "image/png" }
+                    { "src": icon192Url, "sizes": "192x192", "type": "image/png" }, // 使用絕對路徑
+                    { "src": icon512Url, "sizes": "512x512", "type": "image/png" }  // 使用絕對路徑
                 ]
             };
             const stringManifest = JSON.stringify(manifest);
@@ -231,6 +237,7 @@
             link.href = manifestURL;
             document.head.appendChild(link);
         })();
+        
     </script>
 </head>
 <body>
