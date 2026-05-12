@@ -16,6 +16,10 @@
             --border: #c8e6c9;
             --danger: #e57373;
             --warning: #ffca28;
+            /* 針對有內容的項目新增的顏色 */
+            --info-border: #ffa000;
+            --info-bg: #fff8e1;
+            --info-text: #e65100;
         }
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; background-color: var(--bg); color: var(--text); overflow-x: hidden; }
@@ -44,18 +48,24 @@
         
         /* Todo List */
         ul { list-style: none; padding: 0; margin: 0; }
-        .todo-card { background: var(--card); padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid transparent; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; transition: 0.2s; user-select: none; }
-        .todo-card.completed { opacity: 0.7; background: var(--bg); border: 1px dashed var(--border); }
+        .todo-card { background: var(--card); padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid transparent; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; transition: 0.2s; user-select: none; border-left: 4px solid transparent; }
+        .todo-card.completed { opacity: 0.7; background: var(--bg); border: 1px dashed var(--border); border-left: 4px solid transparent; }
         .todo-card.completed .todo-title { text-decoration: line-through; color: var(--text-light); }
         
-        /* 拖曳把手 - 手機版專用優化 */
-        .drag-handle { color: #b0bec5; font-size: 1.2rem; cursor: grab; padding: 5px; touch-action: none; /* 防止手機拖曳時畫面捲動 */ }
+        /* --- 新增：有子項目或細節的標示樣式 --- */
+        .todo-card.has-more-info { border-left: 4px solid var(--info-border); background-color: var(--info-bg); }
+        .todo-card.has-more-info .todo-title { color: var(--info-text); font-weight: 600; }
+        .todo-card.completed.has-more-info { border-left: 4px dashed var(--info-border); background-color: var(--bg); }
+        .todo-card.completed.has-more-info .todo-title { color: var(--text-light); font-weight: normal; }
+
+        /* 拖曳把手 */
+        .drag-handle { color: #b0bec5; font-size: 1.2rem; cursor: grab; padding: 5px; touch-action: none; }
         .drag-handle:active { cursor: grabbing; }
         .sortable-ghost { opacity: 0.4; background: var(--border); }
 
         .checkbox { width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary); flex-shrink: 0; }
         .todo-info { flex: 1; cursor: pointer; overflow: hidden; }
-        .todo-title { font-size: 1.1rem; font-weight: 500; margin-bottom: 4px; word-break: break-word; }
+        .todo-title { font-size: 1.1rem; font-weight: 500; margin-bottom: 4px; word-break: break-word; transition: color 0.2s; }
         .todo-time { font-size: 0.8rem; color: var(--text-light); }
         .delete-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 1.2rem; opacity: 0.7; transition: 0.2s; padding: 5px; }
         .delete-btn:hover { opacity: 1; }
@@ -73,10 +83,13 @@
         .modal-body input[type="text"], .modal-body input[type="datetime-local"], .modal-body textarea { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; color: var(--text); outline-color: var(--primary); }
         .modal-body textarea { height: 80px; resize: vertical; }
         .sub-todo-list { margin-top: 10px; border: 1px solid var(--border); border-radius: 5px; padding: 10px; background: var(--bg); }
-        .sub-item-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; padding: 5px; background: var(--card); border-radius: 4px; border: 1px solid var(--border); }
+        .sub-item-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; padding: 5px; background: var(--card); border-radius: 4px; border: 1px solid var(--border); border-left: 4px solid transparent; }
+        
+        /* 子項目中有細節時的標示 */
+        .sub-item-row.has-more-info { border-left: 4px solid var(--info-border); background-color: var(--info-bg); }
+        .sub-item-row.has-more-info .sub-title-text { color: var(--info-text); font-weight: 600; }
         
         #overlay-bg { position: fixed; top:0; left:0; width: 100vw; height: 100vh; background: rgba(44, 62, 46, 0.3); z-index: 50; display: none; }
-        
         #access-denied { display: none; text-align: center; margin-top: 20vh; color: var(--danger); }
     </style>
     
@@ -147,7 +160,6 @@
         <header>
             <button class="icon-btn" onclick="toggleSidebar()">☰</button>
             <h1 id="main-title" contenteditable="true" onblur="updateListName()">載入中...</h1>
-            <!-- 新增的刷新按鈕 -->
             <button class="icon-btn" onclick="refreshData()" title="重新載入" style="font-size: 1.1rem; margin-right: 5px;">🔄</button>
             <button class="save-btn" onclick="forceSave()">保存</button>
         </header>
@@ -163,7 +175,6 @@
             <ul id="done-list"></ul>
         </main>
 
-        <!-- 項目細節 Modal -->
         <div id="modal-overlay">
             <div class="modal">
                 <div class="modal-header">
@@ -231,6 +242,13 @@
             return findItemRecursive(list.items, currentId);
         }
 
+        // 檢查該項目是否含有細節或子項目
+        function hasExtraInfo(item) {
+            const hasDetails = item.details && item.details.trim() !== '';
+            const hasSubs = item.subItems && item.subItems.length > 0;
+            return hasDetails || hasSubs;
+        }
+
         window.onload = async () => {
             let currentUrl = window.location.href;
             let dbId = "";
@@ -251,7 +269,6 @@
             await initialLoad();
         };
 
-        // 將載入邏輯抽出來，方便「刷新按鈕」重複使用
         async function initialLoad() {
             while (true) {
                 let res = await getFromAPI();
@@ -291,7 +308,6 @@
                 appData.lists = [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }];
             }
             
-            // 如果原本選中的分類不存在了，就選第一個
             if (!activeListId || !appData.lists.find(l => l.id === activeListId)) {
                 activeListId = appData.lists[0].id;
             }
@@ -304,7 +320,6 @@
             renderAll();
         }
 
-        // --- 刷新按鈕邏輯 ---
         async function refreshData() {
             if (hasUnsavedChanges) {
                 if (!confirm("⚠️ 您有未保存的變更！\n重新載入會遺失您剛剛的修改。\n確定要放棄修改並重新載入嗎？")) {
@@ -329,7 +344,7 @@
                     renderAll();
                 } catch(e) {
                     alert("❌ 雲端資料解析失敗！");
-                    renderAll(); // 恢復原畫面標題
+                    renderAll(); 
                 }
             } else {
                 alert("❌ 重新載入失敗（可能是網路問題）");
@@ -367,10 +382,11 @@
 
             list.items.forEach(item => {
                 const li = document.createElement('li');
-                li.className = 'todo-card ' + (item.completed ? 'completed' : '');
+                // 判斷是否加上 has-more-info 標示類別
+                let extraClass = hasExtraInfo(item) ? 'has-more-info' : '';
+                li.className = `todo-card ${item.completed ? 'completed' : ''} ${extraClass}`;
                 li.setAttribute('data-id', item.id);
                 
-                // 加入 drag-handle 拖曳把手
                 li.innerHTML = `
                     <span class="drag-handle">⋮⋮</span>
                     <input type="checkbox" class="checkbox" ${item.completed ? 'checked' : ''} onclick="toggleItem('${item.id}')">
@@ -387,7 +403,7 @@
 
             if (sortableInstance) sortableInstance.destroy();
             sortableInstance = new Sortable(todoUl, {
-                handle: '.drag-handle', // 指定拖曳把手，解決手機滑動衝突
+                handle: '.drag-handle', 
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 onEnd: syncListOrder
@@ -492,7 +508,7 @@
         function closeModal() {
             document.getElementById('modal-overlay').style.display = 'none';
             modalNavStack = [];
-            renderMain(); 
+            renderMain(); // 關閉時重新繪製主畫面，讓顏色標示可以即時更新
         }
 
         function drillDown(id) {
@@ -530,6 +546,7 @@
             item.time = document.getElementById('modal-time').value;
             item.details = document.getElementById('modal-details').value;
             markChanged();
+            renderModalSubList(item); // 確保如果有細節變動，當下也可以更新樣式（若需要）
         }
 
         function renderModalSubList(item) {
@@ -542,11 +559,16 @@
                 if (!sub.subItems) sub.subItems = [];
 
                 const li = document.createElement('li');
-                li.className = 'sub-item-row';
+                // 如果子項目裡也有細節或更深層的子項目，同樣給予標示
+                let extraClass = hasExtraInfo(sub) ? 'has-more-info' : '';
+                li.className = `sub-item-row ${extraClass}`;
+                
+                // 行內樣式裡的 color:#888 會優先蓋過外部 CSS，這樣完成時視覺才會正確變淡
+                let textStyle = sub.completed ? 'text-decoration:line-through; color:#888;' : '';
                 
                 li.innerHTML = `
                     <input type="checkbox" class="checkbox" ${sub.completed ? 'checked' : ''} onchange="toggleSubItem('${sub.id}')">
-                    <span style="flex:1; cursor:pointer; font-weight:500; ${sub.completed ? 'text-decoration:line-through; color:#888;' : ''}" onclick="drillDown('${sub.id}')">
+                    <span class="sub-title-text" style="flex:1; cursor:pointer; ${textStyle}" onclick="drillDown('${sub.id}')">
                         ${sub.title}
                     </span>
                     <button class="icon-btn" style="color:var(--text-light); font-size:1.2rem; padding:0 5px;" onclick="drillDown('${sub.id}')">➡️</button>
@@ -658,7 +680,7 @@
                         alert("❌ 無法獲取雲端最新狀態，覆蓋失敗。");
                     }
                 } else {
-                    refreshData(); // 使用新寫的刷新函數取代 location.reload()
+                    refreshData(); 
                 }
             } else {
                 alert("保存失敗，請檢查網路或密鑰狀態");
