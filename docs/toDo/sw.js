@@ -1,4 +1,4 @@
-const CACHE_NAME = 'todo-pwa-v1.3'; // 升級版本號以強制更新
+const CACHE_NAME = 'todo-pwa-v1.5'; // 升級版本號以強制更新
 const urlsToCache = [
   './',
   './index.html',

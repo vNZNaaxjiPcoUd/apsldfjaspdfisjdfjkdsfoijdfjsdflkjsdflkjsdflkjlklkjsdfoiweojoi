@@ -2,8 +2,12 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ToDo</title>
+    <!-- 加入這兩行來確保各種設備都能抓到圖示 -->
+    <link rel="icon" type="image/png" sizes="192x192" href="./favicon192.png">
+    <link rel="apple-touch-icon" href="./favicon192.png">
 
     <style>
         :root {
@@ -225,8 +229,18 @@
                 "background_color": "#f1f8f1",
                 "theme_color": "#66bb6a",
                 "icons": [
-                    { "src": icon192Url, "sizes": "192x192", "type": "image/png" }, // 使用絕對路徑
-                    { "src": icon512Url, "sizes": "512x512", "type": "image/png" }  // 使用絕對路徑
+                    { 
+                        "src": icon192Url, 
+                        "sizes": "192x192", 
+                        "type": "image/png",
+                        "purpose": "any maskable" // 加入這行
+                    },
+                    { 
+                        "src": icon512Url, 
+                        "sizes": "512x512", 
+                        "type": "image/png",
+                        "purpose": "any maskable" // 加入這行
+                    }
                 ]
             };
             const stringManifest = JSON.stringify(manifest);
@@ -237,7 +251,7 @@
             link.href = manifestURL;
             document.head.appendChild(link);
         })();
-        
+
     </script>
 </head>
 <body>
