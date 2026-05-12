@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ToDo</title>
+    <title>加密 ToDo 列表</title>
 
     <style>
         :root {
@@ -16,7 +16,6 @@
             --border: #c8e6c9;
             --danger: #e57373;
             --warning: #ffca28;
-            /* 綠色系的標示顏色 */
             --info-border: #2e7d32;
             --info-bg: #e8f5e9;
             --info-text: #1b5e20;
@@ -24,13 +23,49 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { margin: 0; background-color: var(--bg); color: var(--text); overflow-x: hidden; }
         
+        /* 登入畫面 */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .login-card { background: var(--card); padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; border: 1px solid var(--border); }
+        .login-card h2 { margin-top: 0; color: var(--primary-dark); margin-bottom: 20px; }
+        .login-card .input-group-login { margin-bottom: 15px; text-align: left; }
+        .login-card label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-light); font-size: 0.9rem; }
+        .login-card input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; color: var(--text); outline-color: var(--primary); }
+        .login-card button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .login-card button:hover { background: var(--primary-dark); }
+        .login-card button:disabled { background: var(--border); cursor: not-allowed; }
+        .login-error { color: var(--danger); font-size: 0.9rem; margin-top: 10px; min-height: 20px; }
+
+        /* Toast 底部輕提示 */
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(44, 62, 46, 0.9); color: white; padding: 12px 24px;
+            border-radius: 50px; font-size: 0.95rem; z-index: 9999;
+            opacity: 0; pointer-events: none; transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); white-space: nowrap; max-width: 90%;
+        }
+        #toast.show { opacity: 1; bottom: 50px; }
+
+        /* Custom Dialog (取代 Confirm 和 Prompt) */
+        #custom-dialog-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 3000; display: none; justify-content: center; align-items: center; }
+        .custom-dialog-box { background: var(--card); padding: 25px 20px; border-radius: 12px; width: 90%; max-width: 350px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+        #custom-dialog-msg { margin-bottom: 20px; font-size: 1.05rem; color: var(--text); white-space: pre-wrap; line-height: 1.4; font-weight: 500; }
+        #custom-dialog-input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 20px; font-size: 1rem; outline-color: var(--primary); display: none; }
+        .custom-dialog-btns { display: flex; justify-content: flex-end; gap: 10px; }
+        .custom-dialog-btns button { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.2s; }
+        #custom-dialog-cancel { background: #e0e0e0; color: var(--text); }
+        #custom-dialog-cancel:hover { background: #d5d5d5; }
+        #custom-dialog-ok { background: var(--primary); color: white; }
+        #custom-dialog-ok:hover { background: var(--primary-dark); }
+        #custom-dialog-ok.danger { background: var(--danger); }
+        #custom-dialog-ok.danger:hover { background: #d32f2f; }
+
         /* Navbar */
         header { display: flex; align-items: center; background: var(--primary); color: white; padding: 10px 15px; position: sticky; top: 0; z-index: 10; transition: background 0.3s; }
         header h1 { flex: 1; margin: 0 10px; font-size: 1.2rem; outline: none; padding: 5px; border-bottom: 1px dashed rgba(255,255,255,0.5); }
         .icon-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 5px; }
         .save-btn { background: white; color: var(--primary); border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         
-        /* Sidebar (Lists Manager) */
+        /* Sidebar */
         #sidebar { position: fixed; top: 0; left: -250px; width: 250px; height: 100vh; background: var(--card); box-shadow: 2px 0 5px rgba(0,0,0,0.1); transition: left 0.3s; z-index: 100; padding: 15px; display: flex; flex-direction: column; }
         #sidebar.open { left: 0; }
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px; color: var(--primary-dark); }
@@ -52,13 +87,11 @@
         .todo-card.completed { opacity: 0.7; background: var(--bg); border: 1px dashed var(--border); border-left: 4px solid transparent; }
         .todo-card.completed .todo-title { text-decoration: line-through; color: var(--text-light); }
         
-        /* 有子項目或細節的標示樣式 */
         .todo-card.has-more-info { border-left: 4px solid var(--info-border); background-color: var(--info-bg); }
         .todo-card.has-more-info .todo-title { color: var(--info-text); font-weight: 600; }
         .todo-card.completed.has-more-info { border-left: 4px dashed var(--info-border); background-color: var(--bg); }
         .todo-card.completed.has-more-info .todo-title { color: var(--text-light); font-weight: normal; }
 
-        /* 拖曳把手 */
         .drag-handle { color: #b0bec5; font-size: 1.2rem; cursor: grab; padding: 5px; touch-action: none; }
         .drag-handle:active { cursor: grabbing; }
         .sortable-ghost { opacity: 0.4; background: var(--border); }
@@ -85,12 +118,10 @@
         .sub-todo-list { margin-top: 10px; border: 1px solid var(--border); border-radius: 5px; padding: 10px; background: var(--bg); }
         .sub-item-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; padding: 5px; background: var(--card); border-radius: 4px; border: 1px solid var(--border); border-left: 4px solid transparent; }
         
-        /* 子項目中有細節時的標示 */
         .sub-item-row.has-more-info { border-left: 4px solid var(--info-border); background-color: var(--info-bg); }
         .sub-item-row.has-more-info .sub-title-text { color: var(--info-text); font-weight: 600; }
         
         #overlay-bg { position: fixed; top:0; left:0; width: 100vw; height: 100vh; background: rgba(44, 62, 46, 0.3); z-index: 50; display: none; }
-        #access-denied { display: none; text-align: center; margin-top: 20vh; color: var(--danger); }
     </style>
     
     <script src="https://h.jwint.net/static/crypto-js.min.js"></script>
@@ -98,6 +129,75 @@
     <script src="keepMe.js"></script>
 
     <script>
+        // --- 覆寫原生 alert 為 Toast ---
+        let toastTimer;
+        window.alert = function(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        };
+
+        // --- 實作自訂的 Confirm 與 Prompt (非同步 Promise) ---
+        function showCustomDialog({ msg, isPrompt = false, okText = "確定", cancelText = "取消", danger = false, inputType = "text" }) {
+            return new Promise(resolve => {
+                const overlay = document.getElementById('custom-dialog-overlay');
+                const msgEl = document.getElementById('custom-dialog-msg');
+                const inputEl = document.getElementById('custom-dialog-input');
+                const btnCancel = document.getElementById('custom-dialog-cancel');
+                const btnOk = document.getElementById('custom-dialog-ok');
+
+                msgEl.innerText = msg;
+                btnCancel.innerText = cancelText;
+                btnOk.innerText = okText;
+                
+                if (danger) btnOk.classList.add('danger');
+                else btnOk.classList.remove('danger');
+
+                if (isPrompt) {
+                    inputEl.style.display = 'block';
+                    inputEl.type = inputType;
+                    inputEl.value = '';
+                    setTimeout(() => inputEl.focus(), 100);
+                } else {
+                    inputEl.style.display = 'none';
+                }
+
+                overlay.style.display = 'flex';
+
+                const cleanup = () => {
+                    overlay.style.display = 'none';
+                    btnCancel.onclick = null;
+                    btnOk.onclick = null;
+                    inputEl.onkeydown = null;
+                };
+
+                btnCancel.onclick = () => { cleanup(); resolve(null); };
+                btnOk.onclick = () => { 
+                    cleanup(); 
+                    resolve(isPrompt ? inputEl.value : true); 
+                };
+                inputEl.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        cleanup();
+                        resolve(inputEl.value);
+                    }
+                };
+            });
+        }
+
+        function customConfirm(msg, okText = "確定", cancelText = "取消", danger = false) {
+            return showCustomDialog({ msg, isPrompt: false, okText, cancelText, danger });
+        }
+
+        function customPrompt(msg, inputType = "text") {
+            return showCustomDialog({ msg, isPrompt: true, okText: "確認", cancelText: "取消", inputType });
+        }
+
+        // PWA Manifest
         (function() {
             let currentUrl = window.location.href;
             let dbId = "";
@@ -130,10 +230,36 @@
 </head>
 <body>
 
-    <div id="access-denied">
-        <h2>🔒 拒絕存取</h2>
-        <p>必須提供正確的資料庫名稱與密碼才能載入。</p>
-        <button onclick="location.reload()" style="padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px;">重新載入</button>
+    <!-- 全域 Toast 提示框 -->
+    <div id="toast"></div>
+
+    <!-- 自訂對話框 (取代 alert/confirm/prompt) -->
+    <div id="custom-dialog-overlay">
+        <div class="custom-dialog-box">
+            <div id="custom-dialog-msg"></div>
+            <input type="text" id="custom-dialog-input" autocomplete="off">
+            <div class="custom-dialog-btns">
+                <button id="custom-dialog-cancel">取消</button>
+                <button id="custom-dialog-ok">確定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 登入畫面 -->
+    <div id="login-screen">
+        <div class="login-card">
+            <h2>🔒 加密 ToDo</h2>
+            <div class="input-group-login">
+                <label>資料庫名稱 (ID)</label>
+                <input type="text" id="login-db-name" placeholder="輸入資料庫名稱" onkeydown="if(event.key === 'Enter') document.getElementById('login-password').focus()">
+            </div>
+            <div class="input-group-login">
+                <label>解密密碼</label>
+                <input type="password" id="login-password" placeholder="輸入密碼" onkeydown="if(event.key === 'Enter') attemptLogin()">
+            </div>
+            <button id="login-btn" onclick="attemptLogin()">登入</button>
+            <div id="login-error" class="login-error"></div>
+        </div>
     </div>
 
     <div id="app-container" style="display: none;">
@@ -179,7 +305,6 @@
             <div class="modal">
                 <div class="modal-header">
                     <div class="modal-header-left">
-                        <!-- 將原本的 style="display:none;" 移除，讓它預設顯示 -->
                         <button id="modal-back-btn" class="modal-back-btn" onclick="modalGoBack()">⬅ 返回</button>
                         <strong>項目細節</strong>
                     </div>
@@ -220,10 +345,6 @@
             return 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
         }
 
-        function denyAccess() {
-            document.getElementById('access-denied').style.display = 'block';
-        }
-
         function findItemRecursive(items, targetId) {
             if (!items) return null;
             for (let i = 0; i < items.length; i++) {
@@ -243,67 +364,87 @@
             return findItemRecursive(list.items, currentId);
         }
 
-        // 檢查該項目是否含有細節或子項目
         function hasExtraInfo(item) {
             const hasDetails = item.details && item.details.trim() !== '';
             const hasSubs = item.subItems && item.subItems.length > 0;
             return hasDetails || hasSubs;
         }
 
-        window.onload = async () => {
+        window.onload = () => {
             let currentUrl = window.location.href;
             let dbId = "";
             if (currentUrl.includes('id=')) dbId = currentUrl.split('id=')[1].split('&')[0];
             else if (currentUrl.includes('?')) dbId = currentUrl.split('?')[1].split('&')[0];
 
-            while (!dbId || dbId.trim() === "") {
-                dbId = prompt('請輸入清單名稱：');
-                if (dbId === null) { denyAccess(); return; }
-            }
-            dbId = dbId.trim();
-            setDbName(dbId);
+            const dbNameInput = document.getElementById('login-db-name');
+            const pwdInput = document.getElementById('login-password');
             
-            let pwd = prompt(`請輸入密碼：`);
-            if (!pwd) { denyAccess(); return; }
-            setDbKey(pwd);
-
-            await initialLoad();
+            dbNameInput.value = dbId;
+            
+            if (dbId) {
+                pwdInput.focus();
+            } else {
+                dbNameInput.focus();
+            }
         };
 
-        async function initialLoad() {
-            while (true) {
-                let res = await getFromAPI();
-                if (res && res.message === "Key not found") {
-                    appData = { lists: [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }] };
-                    break;
-                }
+        async function attemptLogin() {
+            const dbNameInput = document.getElementById('login-db-name').value.trim();
+            const pwdInput = document.getElementById('login-password').value;
+            const errorMsg = document.getElementById('login-error');
+            const loginBtn = document.getElementById('login-btn');
 
-                let rawData = getContent(); 
-                let isDecryptionFailed = false;
-
-                if (res && res.status === "error") {
-                    isDecryptionFailed = true;
-                } else if (res && res.status === "success" && rawData && !rawData.startsWith('{')) {
-                    isDecryptionFailed = true;
-                }
-
-                if (isDecryptionFailed) {
-                    let pwd = prompt('❌ 密碼錯誤或雲端資料非加密格式！\n請重新輸入密碼：');
-                    if (pwd === null) { denyAccess(); return; }
-                    setDbKey(pwd);
-                    continue;
-                }
-
-                try {
-                    appData = JSON.parse(rawData);
-                    break;
-                } catch (e) {
-                    let pwd = prompt('❌ 資料解析失敗 (密碼可能錯誤)！\n請重新嘗試輸入密碼：');
-                    if (pwd === null) { denyAccess(); return; }
-                    setDbKey(pwd);
-                    continue;
-                }
+            if (!dbNameInput || !pwdInput) {
+                errorMsg.innerText = "請完整輸入資料庫名稱與密碼！";
+                return;
             }
+
+            document.title = `Todo ${dbNameInput}`;
+
+            errorMsg.innerText = "";
+            loginBtn.innerText = "載入中...";
+            loginBtn.disabled = true;
+
+            setDbName(dbNameInput);
+            setDbKey(pwdInput);
+
+            let res = await getFromAPI();
+            
+            if (res && res.message === "Key not found") {
+                appData = { lists: [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }] };
+                finishLoginSetup();
+                return;
+            }
+
+            let rawData = getContent(); 
+            let isDecryptionFailed = false;
+
+            if (res && res.status === "error") {
+                isDecryptionFailed = true;
+            } else if (res && res.status === "success" && rawData && !rawData.startsWith('{')) {
+                isDecryptionFailed = true;
+            }
+
+            if (isDecryptionFailed) {
+                errorMsg.innerText = "❌ 密碼錯誤或雲端資料非加密格式！";
+                loginBtn.innerText = "登入";
+                loginBtn.disabled = false;
+                return;
+            }
+
+            try {
+                appData = JSON.parse(rawData);
+                finishLoginSetup();
+            } catch (e) {
+                errorMsg.innerText = "❌ 資料解析失敗 (密碼可能錯誤)！";
+                loginBtn.innerText = "登入";
+                loginBtn.disabled = false;
+            }
+        }
+
+        function finishLoginSetup() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-container').style.display = 'block';
 
             if (!appData.lists || appData.lists.length === 0) {
                 appData.lists = [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }];
@@ -313,19 +454,16 @@
                 activeListId = appData.lists[0].id;
             }
             
-            document.getElementById('app-container').style.display = 'block';
             hasUnsavedChanges = false;
             updateSaveBtnUI();
-            
             setInterval(autoSave, 600000);
             renderAll();
         }
 
         async function refreshData() {
             if (hasUnsavedChanges) {
-                if (!confirm("⚠️ 您有未保存的變更！\n重新載入會遺失您剛剛的修改。\n確定要放棄修改並重新載入嗎？")) {
-                    return;
-                }
+                let ans = await customConfirm("⚠️ 您有未保存的變更！\n重新載入會遺失您剛剛的修改。\n\n確定要放棄修改並重新載入嗎？", "放棄修改", "取消", true);
+                if (!ans) return;
             }
             
             document.getElementById('main-title').innerText = "載入中...";
@@ -343,6 +481,7 @@
                         activeListId = appData.lists[0].id;
                     }
                     renderAll();
+                    alert("✅ 重新載入成功");
                 } catch(e) {
                     alert("❌ 雲端資料解析失敗！");
                     renderAll(); 
@@ -383,7 +522,6 @@
 
             list.items.forEach(item => {
                 const li = document.createElement('li');
-                // 判斷是否加上 has-more-info 標示類別
                 let extraClass = hasExtraInfo(item) ? 'has-more-info' : '';
                 li.className = `todo-card ${item.completed ? 'completed' : ''} ${extraClass}`;
                 li.setAttribute('data-id', item.id);
@@ -452,10 +590,12 @@
             renderAll();
         }
 
-        function deleteList(id, e) {
+        async function deleteList(id, e) {
             e.stopPropagation();
             if(appData.lists.length <= 1) { alert("至少需保留一個清單"); return; }
-            if(confirm("確定刪除此分類清單嗎？內部項目將一併消失。")) {
+            
+            let ans = await customConfirm("確定刪除此分類清單嗎？\n內部項目將一併消失。", "刪除", "取消", true);
+            if(ans) {
                 appData.lists = appData.lists.filter(l => l.id !== id);
                 if(activeListId === id) activeListId = appData.lists[0].id;
                 markChanged();
@@ -484,8 +624,10 @@
             renderMain();
         }
 
-        function deleteItem(id) {
-            if(!confirm("確定刪除此項目？")) return;
+        async function deleteItem(id) {
+            let ans = await customConfirm("確定刪除此項目？", "刪除", "取消", true);
+            if(!ans) return;
+
             const list = appData.lists.find(l => l.id === activeListId);
             list.items = list.items.filter(i => i.id !== id);
             markChanged();
@@ -519,11 +661,9 @@
 
         function modalGoBack() {
             if (modalNavStack.length > 1) {
-                // 如果在子項目中，退回上一層
                 modalNavStack.pop(); 
                 renderModal();
             } else {
-                // 如果已經在最上層，就關閉 Modal 回到主畫面
                 closeModal();
             }
         }
@@ -538,7 +678,6 @@
             document.getElementById('modal-time').value = item.time || '';
             document.getElementById('modal-details').value = item.details || '';
             
-            // 讓返回按鈕永遠顯示
             const backBtn = document.getElementById('modal-back-btn');
             backBtn.style.display = 'inline-block';
 
@@ -565,7 +704,6 @@
                 if (!sub.subItems) sub.subItems = [];
 
                 const li = document.createElement('li');
-                // 如果子項目裡也有細節或更深層的子項目，同樣給予標示
                 let extraClass = hasExtraInfo(sub) ? 'has-more-info' : '';
                 li.className = `sub-item-row ${extraClass}`;
                 
@@ -607,8 +745,10 @@
             }
         }
 
-        function deleteSubItem(subId) {
-            if(!confirm("確定刪除此子項目？")) return;
+        async function deleteSubItem(subId) {
+            let ans = await customConfirm("確定刪除此子項目？", "刪除", "取消", true);
+            if(!ans) return;
+            
             const item = getCurrentModalItem();
             item.subItems = item.subItems.filter(s => s.id !== subId);
             markChanged();
@@ -633,18 +773,22 @@
             updateSaveBtnUI();
         }
 
-        function changePassword() {
-            let newPwd = prompt("🔑 請輸入「新的」密碼：");
+        async function changePassword() {
+            let newPwd = await customPrompt("🔑 請輸入「新的」密碼：", "text");
             if (!newPwd) return;
-            let confirmPwd = prompt("🔑 請再次輸入新密碼以確認：");
+            
+            let confirmPwd = await customPrompt("🔑 請再次輸入新密碼以確認：", "text");
+            if (!confirmPwd) return;
+
             if (newPwd !== confirmPwd) {
                 alert("❌ 兩次輸入的密碼不一致，修改失敗。");
                 return;
             }
+            
             setDbKey(newPwd);
             markChanged();
             forceSave();
-            alert("✅ 密碼已更新！系統已開始使用新密碼加密並上傳至雲端。");
+            alert("✅ 密碼已更新！系統已開始使用新密碼加密上傳。");
         }
 
         async function doActualSave() {
@@ -662,7 +806,7 @@
                 saveBtn.style.color = "var(--primary)";
                 setTimeout(()=> { if(!hasUnsavedChanges) updateSaveBtnUI(); }, 2000);
             } else if (res && res.message && res.message.includes("不匹配")) {
-                let userChoice = confirm("⚠️ 發現版本衝突！\n\n這份清單在其他裝置已經被修改過了。為了防止覆蓋別人的資料，請選擇：\n\n【確定】：強制覆蓋雲端資料 (以你現在畫面上的內容為主)\n【取消】：放棄你的修改，重新載入雲端的最新資料");
+                let userChoice = await customConfirm("⚠️ 發現版本衝突！\n\n這份清單在其他裝置已經被修改過了。為了防止覆蓋別人的資料，請選擇：\n\n【強制覆蓋】：以現在畫面上的內容為主\n【放棄修改】：重新載入雲端的最新資料", "強制覆蓋", "放棄修改", true);
                 
                 if (userChoice) {
                     const saveBtn = document.querySelector('.save-btn');
@@ -688,7 +832,7 @@
                     refreshData(); 
                 }
             } else {
-                alert("保存失敗，請檢查網路或密鑰狀態");
+                alert("❌ 保存失敗，請檢查網路或密鑰狀態");
             }
         }
 
@@ -699,7 +843,7 @@
 
         function autoSave() {
             if (hasUnsavedChanges) {
-                console.log("觸發 10 分鐘自動保存...");
+                console.log("觸發自動保存...");
                 doActualSave();
             }
         }
