@@ -471,8 +471,8 @@
             hasUnsavedChanges = false;
             updateSaveBtnUI();
             
-            // 每三分鐘觸發一次自動檢查與儲存機制
-            setInterval(syncWithCloud, 180000); 
+            // 每十分鐘觸發一次自動檢查與儲存機制
+            setInterval(syncWithCloud, 600000); 
             renderAll();
         }
 
@@ -1014,7 +1014,7 @@
         }
     });    
 
-    
+
     </script>
 </body>
 </html>
