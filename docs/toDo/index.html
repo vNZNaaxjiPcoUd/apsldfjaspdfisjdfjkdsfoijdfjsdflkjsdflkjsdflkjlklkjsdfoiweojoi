@@ -352,8 +352,13 @@
         let appData = { lists: [] };
         let activeListId = null;
         let modalNavStack = []; 
+
         let hasUnsavedChanges = false;
         let sortableInstance = null; 
+        
+        let isSaving = false;
+        let isSyncing = false;        
+        let lastModifiedTime = 0; // [新增] 用來記錄最後一次修改的時間戳記
 
         function generateId() {
             return 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
@@ -469,6 +474,7 @@
             }
             
             hasUnsavedChanges = false;
+            lastModifiedTime = 0; // [新增] 重置修改時間
             updateSaveBtnUI();
             
             // 每十分鐘觸發一次自動檢查與儲存機制
@@ -476,40 +482,57 @@
             renderAll();
         }
 
-        // --- 三分鐘同步與自動更新邏輯 ---
+        function forceSave() {
+            if (isSaving) return; // 如果已經在存檔中，防止連點
+            document.querySelector('.save-btn').innerText = "保存中...";
+            doActualSave();
+        }
+
         async function syncWithCloud() {
-            if (hasUnsavedChanges) {
-                console.log("觸發三分鐘自動保存...");
-                doActualSave();
-            } else {
-                console.log("觸發三分鐘自動檢查更新...");
-                let oldTag = typeof getTag === 'function' ? getTag() : null;
-                let res = await getFromAPI();
-                let newTag = typeof getTag === 'function' ? getTag() : null;
-                
-                // 如果 tag 更新了代表雲端有新資料
-                if (res && res.status === "success" && oldTag !== newTag) {
-                    let rawData = getContent();
-                    if (rawData && rawData.startsWith('{')) {
-                        try {
-                            appData = JSON.parse(rawData);
-                            
-                            // 確保選中的清單 ID 仍然存在，否則退回第一個
-                            if (!appData.lists.find(l => l.id === activeListId)) {
-                                activeListId = appData.lists[0].id;
+            // 如果正在同步或正在存檔，就不要重複執行
+            if (isSyncing || isSaving) return;
+
+            // [新增] 判斷是否有未保存修改，且距離最後一次修改不到 3 分鐘 (180000 毫秒)
+            if (hasUnsavedChanges && (Date.now() - lastModifiedTime < 180000)) {
+                console.log("三分鐘內有修改動作，跳過此次十分鐘同步。");
+                return;
+            }
+
+            isSyncing = true; // 上鎖
+            
+            try {
+                if (hasUnsavedChanges) {
+                    console.log("觸發自動保存...");
+                    await doActualSave(); 
+                } else {
+                    console.log("觸發自動檢查更新...");
+                    let oldTag = typeof getTag === 'function' ? getTag() : null;
+                    let res = await getFromAPI();
+                    let newTag = typeof getTag === 'function' ? getTag() : null;
+                    
+                    if (res && res.status === "success" && oldTag !== newTag) {
+                        let rawData = getContent();
+                        if (rawData && rawData.startsWith('{')) {
+                            try {
+                                appData = JSON.parse(rawData);
+                                
+                                if (!appData.lists.find(l => l.id === activeListId)) {
+                                    activeListId = appData.lists[0].id;
+                                }
+                                renderAll();
+                                
+                                if (document.getElementById('modal-overlay').style.display === 'flex') {
+                                    renderModal();
+                                }
+                                showToast("🔄 已自動同步雲端最新內容");
+                            } catch(e) {
+                                console.error("自動更新：雲端資料解析失敗", e);
                             }
-                            renderAll();
-                            
-                            // 若此時 modal 開啟著，也一併更新內部資料避免覆蓋錯誤
-                            if (document.getElementById('modal-overlay').style.display === 'flex') {
-                                renderModal();
-                            }
-                            showToast("🔄 已自動同步雲端最新內容");
-                        } catch(e) {
-                            console.error("自動更新：雲端資料解析失敗", e);
                         }
                     }
                 }
+            } finally {
+                isSyncing = false; // 解鎖
             }
         }
 
@@ -528,6 +551,7 @@
                 try {
                     appData = JSON.parse(rawData);
                     hasUnsavedChanges = false;
+                    lastModifiedTime = 0; // [新增] 重置時間
                     updateSaveBtnUI();
                     
                     if (!appData.lists.find(l => l.id === activeListId)) {
@@ -832,6 +856,7 @@
 
         function markChanged() {
             hasUnsavedChanges = true;
+            lastModifiedTime = Date.now(); // [新增] 更新最後修改時間
             updateSaveBtnUI();
         }
 
@@ -854,54 +879,59 @@
         }
 
         async function doActualSave() {
-            if (!hasUnsavedChanges) return;
+            // 如果沒有未保存變更，或「正在保存中」，就不要重複執行
+            if (!hasUnsavedChanges || isSaving) return;
             
-            const jsonStr = JSON.stringify(appData);
-            setContent(jsonStr); 
+            isSaving = true; // 上鎖
             
-            const res = await saveToAPI(); 
-            if (res && res.status === "success") {
-                hasUnsavedChanges = false;
-                const saveBtn = document.querySelector('.save-btn');
-                saveBtn.innerText = "已保存";
-                saveBtn.style.background = "white";
-                saveBtn.style.color = "var(--primary)";
-                setTimeout(()=> { if(!hasUnsavedChanges) updateSaveBtnUI(); }, 2000);
-            } else if (res && res.message && res.message.includes("不匹配")) {
-                let userChoice = await customConfirm("⚠️ 發現版本衝突！\n\n這份清單在其他裝置已經被修改過了。為了防止覆蓋別人的資料，請選擇：\n\n【強制覆蓋】：以現在畫面上的內容為主，存入雲端", "強制覆蓋", "取消", true);
+            try {
+                const jsonStr = JSON.stringify(appData);
+                setContent(jsonStr); 
                 
-                if (userChoice) {
+                const res = await saveToAPI(); 
+                if (res && res.status === "success") {
+                    hasUnsavedChanges = false;
+                    lastModifiedTime = 0; // [新增] 保存成功後重置時間
                     const saveBtn = document.querySelector('.save-btn');
-                    saveBtn.innerText = "強制覆蓋中...";
-                    let fetchRes = await doGet(getDbName());
-                    if (fetchRes && fetchRes.status === "success") {
-                        setTag(fetchRes.tag);
-                        let forceRes = await saveToAPI(); 
-                        if (forceRes && forceRes.status === "success") {
-                            hasUnsavedChanges = false;
-                            saveBtn.innerText = "已覆蓋";
-                            saveBtn.style.background = "white";
-                            saveBtn.style.color = "var(--primary)";
-                            setTimeout(()=> { if(!hasUnsavedChanges) updateSaveBtnUI(); }, 2000);
-                            showToast("✅ 強制覆蓋成功！");
+                    saveBtn.innerText = "已保存";
+                    saveBtn.style.background = "white";
+                    saveBtn.style.color = "var(--primary)";
+                    setTimeout(()=> { if(!hasUnsavedChanges) updateSaveBtnUI(); }, 2000);
+                } else if (res && res.message && res.message.includes("不匹配")) {
+                    let userChoice = await customConfirm("⚠️ 發現版本衝突！\n\n這份清單在其他裝置已經被修改過了。為了防止覆蓋別人的資料，請選擇：\n\n【強制覆蓋】：以現在畫面上的內容為主，存入雲端", "強制覆蓋", "取消", true);
+                    
+                    if (userChoice) {
+                        const saveBtn = document.querySelector('.save-btn');
+                        saveBtn.innerText = "強制覆蓋中...";
+                        let fetchRes = await doGet(getDbName());
+                        if (fetchRes && fetchRes.status === "success") {
+                            setTag(fetchRes.tag);
+                            let forceRes = await saveToAPI(); 
+                            if (forceRes && forceRes.status === "success") {
+                                hasUnsavedChanges = false;
+                                lastModifiedTime = 0; // [新增] 覆蓋成功後重置時間
+                                saveBtn.innerText = "已覆蓋";
+                                saveBtn.style.background = "white";
+                                saveBtn.style.color = "var(--primary)";
+                                setTimeout(()=> { if(!hasUnsavedChanges) updateSaveBtnUI(); }, 2000);
+                                showToast("✅ 強制覆蓋成功！");
+                            } else {
+                                showToast("❌ 覆蓋失敗，請檢查網路。");
+                            }
                         } else {
-                            showToast("❌ 覆蓋失敗，請檢查網路。");
+                            showToast("❌ 無法獲取雲端最新狀態，覆蓋失敗。");
                         }
                     } else {
-                        showToast("❌ 無法獲取雲端最新狀態，覆蓋失敗。");
+                        refreshData(); 
                     }
                 } else {
-                    refreshData(); 
+                    showToast("❌ 保存失敗，請檢查網路或密鑰狀態");
                 }
-            } else {
-                showToast("❌ 保存失敗，請檢查網路或密鑰狀態");
+            } finally {
+                isSaving = false; // 無論成功失敗，最後都解鎖
             }
         }
 
-        function forceSave() {
-            document.querySelector('.save-btn').innerText = "保存中...";
-            doActualSave();
-        }
 
         function exportData() {
             try {
