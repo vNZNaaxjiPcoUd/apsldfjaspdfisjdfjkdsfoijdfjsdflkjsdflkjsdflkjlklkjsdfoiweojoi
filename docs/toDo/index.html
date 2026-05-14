@@ -996,6 +996,25 @@
             return;
         }
     });
+
+    // 監聽應用程式從背景回到前景的狀態
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            console.log("APP 回到前景，立即執行同步與檢查！");
+            // 延遲一點點執行，避免畫面還沒渲染完就卡住
+            setTimeout(() => {
+                syncWithCloud();
+            }, 500); 
+        } else {
+            // (可選) 當 APP 退到背景的瞬間，如果還有未保存的變更，強制保存
+            if (hasUnsavedChanges) {
+                console.log("APP 退入背景，嘗試執行最後的保存...");
+                doActualSave();
+            }
+        }
+    });    
+
+    
     </script>
 </body>
 </html>
