@@ -16,6 +16,7 @@
 // if (res && res.message && res.message.includes("不匹配")) 
 // if (res && res.status === "success")
 
+// function getTag()
 
 // 加密
 
