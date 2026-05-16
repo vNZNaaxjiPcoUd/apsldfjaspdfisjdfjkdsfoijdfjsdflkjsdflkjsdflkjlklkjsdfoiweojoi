@@ -123,7 +123,7 @@ async function callApi(params) {
     const finalUrl = `${API_URL}?${queryString}`;
     //console.log("最終 API URL:", finalUrl);
     try {
-        const response = await fetch(finalUrl);
+        const response = await fetch(finalUrl, {keepalive: true});
         //console.log("API 請求結果:",response);
         const result = await response.json();
         //console.log("API 回應解析後的結果:", result);
@@ -142,7 +142,8 @@ async function callApiPost(params) {
       await fetch(API_URL, {
           method: "POST", 
           redirect: 'follow', 
-          body: JSON.stringify({ ...params, token })
+          body: JSON.stringify({ ...params, token }), 
+          keepalive: true
       })
       .then(res => res.json())
       .then(data => {
