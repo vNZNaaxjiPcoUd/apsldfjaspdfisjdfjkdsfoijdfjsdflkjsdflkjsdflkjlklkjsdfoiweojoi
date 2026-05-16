@@ -111,7 +111,6 @@
                 console.log("baseUrl",baseUrl);
                 return jsonData;           
             }catch(e){
-                console.log("error password");
                 return null;
             }
         }
@@ -120,7 +119,8 @@
             if (statePsCheck) return;
 
             if (e.key.length === 1) {
-                buffer.push(e.key.toLowerCase()); 
+                //buffer.push(e.key.toLowerCase()); 
+                buffer.push(e.key); 
 
                 if (buffer.length > MAX_BUFFER) {
                     buffer.shift();
@@ -149,15 +149,19 @@
             if (!statePsCheck) {
                 mobileInput.style.display = 'block';
                 mobileInput.focus(); // 喚起手機虛擬鍵盤
+                statePsCheck = true;
+                console.log("show mobileInput");
             }
         });
 
         // 監聽手機輸入框的內容變化
         mobileInput.addEventListener('input', async (e) => {
             // 手機鍵盤有時會自動大寫字首，所以統一轉小寫進行驗證
-            const val = e.target.value.toLowerCase();
-            if (await checkPassword(val, SALT, PASSWORD)) {
+            //const val = e.target.value.toLowerCase();
+            const val = e.target.value;
+            if (await decContent(CONTENT,val)) {
                 showContent();
+                statePsCheck = false;
             }
         });
 
