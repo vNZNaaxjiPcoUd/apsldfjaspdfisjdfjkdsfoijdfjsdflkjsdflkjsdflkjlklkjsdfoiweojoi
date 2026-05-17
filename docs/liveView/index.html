@@ -68,38 +68,38 @@
 <body>
 
     <div class="grid-container">
-        <!-- 1. CamFL -->
-        <div class="video-box">
-            <div class="camera-label">CamFL</div>
-            <video id="cam-fl" controls autoplay muted playsinline></video>
-        </div>
-
         <!-- 2. CamFront -->
         <div class="video-box">
-            <div class="camera-label">CamFront</div>
+            <!--div class="camera-label">CamFront</div-->
             <video id="cam-front" controls autoplay muted playsinline></video>
         </div>
 
         <!-- 3. CamDoor -->
         <div class="video-box">
-            <div class="camera-label">CamDoor</div>
+            <!--div class="camera-label">CamDoor</div-->
             <video id="cam-door" controls autoplay muted playsinline></video>
         </div>
 
         <!-- 4. CamGarage -->
         <div class="video-box">
-            <div class="camera-label">CamGarage</div>
+            <!--div class="camera-label">CamGarage</div-->
             <video id="cam-garage" controls autoplay muted playsinline></video>
         </div>
+        <!-- 1. CamFL -->
+        <div class="video-box">
+            <!--div class="camera-label">CamFL</div-->
+            <video id="cam-fl" controls autoplay muted playsinline></video>
+        </div>
+
     </div>
 
     <script>
         // 定義 4 台攝影機的 HLS 串流網址 (對應你的 MediaMTX 設定)
         const cameras = [
-            { id: 'cam-fl', src: 'http://localhost:8888/CamFL/index.m3u8' },
             { id: 'cam-front', src: 'http://localhost:8888/CamFront/index.m3u8' },
             { id: 'cam-door', src: 'http://localhost:8888/CamDoor/index.m3u8' },
-            { id: 'cam-garage', src: 'http://localhost:8888/CamGarage/index.m3u8' }
+            { id: 'cam-garage', src: 'http://localhost:8888/CamGarage/index.m3u8' },
+            { id: 'cam-fl', src: 'http://localhost:8888/CamFL/index.m3u8' }
         ];
 
         // 初始化並播放每一台攝影機
