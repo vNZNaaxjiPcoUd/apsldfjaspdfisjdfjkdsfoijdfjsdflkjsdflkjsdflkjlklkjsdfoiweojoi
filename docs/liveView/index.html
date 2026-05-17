@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四分割監控畫面 LIVEVIEW</title>
+    <!-- 引入 HLS.js 播放器套件 -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        /* 移除瀏覽器預設邊距，並讓網頁呈現滿版黑底 */
+        * {
+            box-sizing: border-box;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden; /* 防止出現滾動條 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        /* 2x2 四分割網格佈局 */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            width: 100vw;
+            height: 100vh;
+            gap: 2px; /* 畫面與畫面之間的黑線間隔，不需要可改為 0 */
+        }
+
+        /* 每個單獨的攝影機視窗 */
+        .video-box {
+            position: relative;
+            background: #111;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* 讓影片完全填滿格子，並保持比例裁剪（不拉伸變形） */
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            display: block;
+        }
+
+        /* 攝影機名稱標籤 */
+        .camera-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            pointer-events: none; /* 讓標籤不影響滑鼠點擊影片 */
+            z-index: 10;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-container">
+        <!-- 1. CamFL -->
+        <div class="video-box">
+            <div class="camera-label">CamFL</div>
+            <video id="cam-fl" controls autoplay muted playsinline></video>
+        </div>
+
+        <!-- 2. CamFront -->
+        <div class="video-box">
+            <div class="camera-label">CamFront</div>
+            <video id="cam-front" controls autoplay muted playsinline></video>
+        </div>
+
+        <!-- 3. CamDoor -->
+        <div class="video-box">
+            <div class="camera-label">CamDoor</div>
+            <video id="cam-door" controls autoplay muted playsinline></video>
+        </div>
+
+        <!-- 4. CamGarage -->
+        <div class="video-box">
+            <div class="camera-label">CamGarage</div>
+            <video id="cam-garage" controls autoplay muted playsinline></video>
+        </div>
+    </div>
+
+    <script>
+        // 定義 4 台攝影機的 HLS 串流網址 (對應你的 MediaMTX 設定)
+        const cameras = [
+            { id: 'cam-fl', src: 'http://localhost:8888/CamFL/index.m3u8' },
+            { id: 'cam-front', src: 'http://localhost:8888/CamFront/index.m3u8' },
+            { id: 'cam-door', src: 'http://localhost:8888/CamDoor/index.m3u8' },
+            { id: 'cam-garage', src: 'http://localhost:8888/CamGarage/index.m3u8' }
+        ];
+
+        // 初始化並播放每一台攝影機
+        function initPlayer(cam) {
+            const videoElement = document.getElementById(cam.id);
+            
+            if (Hls.isSupported()) {
+                const hls = new Hls({
+                    manifestLoadingMaxRetry: 10, // 增加重試次數，防止因攝影機斷線導致網頁報錯
+                    lowLatencyMode: true        // 開啟低延遲模式
+                });
+                hls.loadSource(cam.src);
+                hls.attachMedia(videoElement);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    videoElement.play().catch(e => console.log("自動播放被瀏覽器阻擋:", e));
+                });
+            } 
+            // 針對原生支援 HLS 的瀏覽器（如 Mac 上的 Safari 或 iPhone）
+            else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                videoElement.src = cam.src;
+                videoElement.addEventListener('loadedmetadata', function() {
+                    videoElement.play();
+                });
+            }
+        }
+
+        // 當網頁載入完成，開始依序播放
+        window.addEventListener('DOMContentLoaded', () => {
+            cameras.forEach(initPlayer);
+        });
+    </script>
+</body>
+</html>
