@@ -108,8 +108,14 @@
             
             if (Hls.isSupported()) {
                 const hls = new Hls({
-                    manifestLoadingMaxRetry: 10, // 增加重試次數，防止因攝影機斷線導致網頁報錯
-                    lowLatencyMode: true        // 開啟低延遲模式
+                    enableWorker: true,
+                    lowLatencyMode: true,          // 開啟低延遲模式
+                    backBufferLength: 0,           // 不保留過去的快取快照
+                    maxBufferLength: 1,            // 最大只快取 1 秒的影片
+                    maxMaxBufferLength: 2,
+                    manifestLoadingMaxRetry: 10,
+                    liveSyncDurationCount: 1.5,    // 強迫播放器緊跟在直播源後面 1.5 個切片的距離
+                    liveMaxLatencyDurationCount: 3
                 });
                 hls.loadSource(cam.src);
                 hls.attachMedia(videoElement);
