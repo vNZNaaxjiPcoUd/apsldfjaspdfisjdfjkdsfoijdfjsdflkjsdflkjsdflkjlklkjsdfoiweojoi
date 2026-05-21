@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AES-GCM</title>
+<style>
+body{font-family:sans-serif;background:#1e1e2f;color:#d1d1e0;padding:20px;max-width:650px;margin:auto}
+.container{background:#2b2b40;padding:25px;border-radius:10px}
+h2{color:#fff;text-align:center;margin-top:0;border-bottom:2px solid #3f3f5a;padding-bottom:15px}
+.form-group{margin-bottom:20px}
+label{display:block;margin-bottom:8px;font-weight:bold}
+input,textarea{width:100%;padding:12px;background:#1e1e2f;border:1px solid #4a4a6a;color:#fff;border-radius:6px;box-sizing:border-box}
+textarea{color:#0cf;font-family:monospace;resize:vertical}
+.button-group{display:flex;gap:15px;margin-top:15px}
+button{flex:1;color:#fff;border:none;padding:14px;border-radius:6px;cursor:pointer;font-weight:bold}
+button:disabled{opacity:.5}
+.btn-encrypt{background:linear-gradient(135deg,#ff416c,#ff4b2b)}
+.btn-decrypt{background:linear-gradient(135deg,#11998e,#38ef7d)}
+.status-bar{margin-top:25px;padding:15px;border-radius:6px;text-align:center;background:#3f3f5a}
+.status-error{background:#4a2025;color:#f99}
+.status-success{background:#1b3a2a;color:#a8ffcc}
+.status-loading{background:#3a3a20;color:#ffe699}
+</style>
+</head>
+<body>
+<div class="container">
+<h2>AES-GCM</h2>
+<div class="form-group">
+<label for="key">密碼:</label>
+<input type="text" id="key" value="123">
+</div>
+<div class="form-group">
+<label for="txt">內容:</label>
+<textarea id="txt" rows="8">hello</textarea>
+</div>
+<div class="button-group">
+<button id="bE" class="btn-encrypt" onclick="enc()">加密</button>
+<button id="bD" class="btn-decrypt" onclick="dec()">解密</button>
+</div>
+<div id="sts" class="status-bar">就緒</div>
+</div>
+<script>
+const B2H=b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+const H2B=h=>new Uint8Array(h.match(/.{1,2}/g).map(x=>parseInt(x,16))).buffer;
+const TE=new TextEncoder(),TD=new TextDecoder();
+async function gK(p){return crypto.subtle.importKey("raw",TE.encode(p),{name:"PBKDF2"},!1,["deriveKey"])}
+async function dK(k,s){return crypto.subtle.deriveKey({name:"PBKDF2",salt:s,iterations:1e5,hash:"SHA-256"},k,{name:"AES-GCM",length:256},!1,["encrypt","decrypt"])}
+async function eG(t,p){
+  const s=crypto.getRandomValues(new Uint8Array(16)),i=crypto.getRandomValues(new Uint8Array(12));
+  const c=await crypto.subtle.encrypt({name:"AES-GCM",iv:i},await dK(await gK(p),s),TE.encode(t));
+  const r=new Uint8Array(28+c.byteLength);
+  r.set(s,0);r.set(i,16);r.set(new Uint8Array(c),28);
+  return B2H(r);
+}
+async function dG(h,p){
+  const d=new Uint8Array(H2B(h));
+  if(d.length<28)throw new Error("格式錯誤");
+  const s=d.slice(0,16),i=d.slice(16,28),c=d.slice(28);
+  return TD.decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:i},await dK(await gK(p),s),c));
+}
+function uS(m,t=''){const s=document.getElementById('sts');s.innerText=m;s.className='status-bar '+t;}
+function tB(d){document.getElementById('bE').disabled=document.getElementById('bD').disabled=d;}
+async function enc(){
+  const t=document.getElementById("txt"),k=document.getElementById("key").value;
+  if(!t.value||!k)return uS("錯誤","status-error");
+  try{uS("加密中","status-loading");tB(!0);t.value=await eG(t.value,k);uS("成功","status-success");}
+  catch(e){uS("失敗","status-error");}finally{tB(!1);}
+}
+async function dec(){
+  const t=document.getElementById("txt"),k=document.getElementById("key").value;
+  if(!t.value||!k)return uS("錯誤","status-error");
+  try{uS("解密中","status-loading");tB(!0);t.value=await dG(t.value.replace(/\s+/g,''),k);uS("成功","status-success");}
+  catch(e){uS("失敗","status-error");}finally{tB(!1);}
+}
+</script>
+</body>
+</html>
