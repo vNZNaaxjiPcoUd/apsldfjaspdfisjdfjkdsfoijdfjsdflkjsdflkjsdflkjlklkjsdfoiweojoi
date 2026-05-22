@@ -1,209 +1,142 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LiveView</title>
+    <meta http-equiv="refresh" content="1200">
+    <title>LIVEVIEW</title>
+    <!-- 引入 HLS.js 播放器套件 -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
+        /* 移除瀏覽器預設邊距，並讓網頁呈現滿版黑底 */
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
         body, html {
+            margin: 0;
+            padding: 0;
             width: 100%;
             height: 100%;
-            background-color: #121212;
+            background-color: #000;
+            overflow: hidden; /* 防止出現滾動條 */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            overflow: hidden;
         }
-        /* 2x2 網格佈局 */
-        .container {
+
+        /* 2x2 四分割網格佈局 */
+        .grid-container {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: repeat(2, 1fr);
             width: 100vw;
             height: 100vh;
-            gap: 4px; /* 監視器之間的黑邊縫隙 */
-            padding: 4px;
+            gap: 2px; /* 畫面與畫面之間的黑線間隔，不需要可改為 0 */
         }
-        /* 每個攝影機的外框 */
-        .cam-box {
+
+        /* 每個單獨的攝影機視窗 */
+        .video-box {
             position: relative;
-            background-color: #000;
-            border: 1px solid #2d2d2d;
-            border-radius: 4px;
+            background: #111;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
-        /* 影片元素 */
+
+        /* 讓影片完全填滿格子，並保持比例裁剪（不拉伸變形） */
         video {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* 保持原影片比例，不拉伸 */
+            object-fit: cover; 
+            display: block;
         }
-        /* 攝影機標籤 */
-        .cam-title {
+
+        /* 攝影機名稱標籤 */
+        .camera-label {
             position: absolute;
-            top: 2px;
-            left: 2px;
-            background: rgba(0, 0, 0, 0.3);
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 5px;
-            z-index: 10;
-            pointer-events: none; /* 防止擋住點擊事件 */
-            letter-spacing: 1px;
-        }
-        /* 連線狀態提示 */
-        .status {
-            position: absolute;
-            bottom: 10px;
+            top: 10px;
             left: 10px;
-            color: #ffb74d;
-            font-size: 5px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2px 6px;
-            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            pointer-events: none; /* 讓標籤不影響滑鼠點擊影片 */
             z-index: 10;
-        }
-        /* 右下角全螢幕按鈕 */
-        .fullscreen-btn {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 1px;
-            cursor: pointer;
-            z-index: 10;
-            font-size: 5px;
-            transition: background 0.2s;
-        }
-        .fullscreen-btn:hover {
-            background: rgba(255, 255, 255, 0.4);
+            letter-spacing: 1px;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- 1. 前左 -->
-        <div class="cam-box" id="box-FLH">
-            <div class="cam-title">前左</div>
-            <div class="status" id="status-FLH">連線中...</div>
-            <video id="video-FLH" autoplay controls playsinline muted></video>
-            <button class="fullscreen-btn" onclick="toggleFullscreen('video-FLH')">全螢幕</button>
+    <div class="grid-container">
+        <!-- 2. CamFront -->
+        <div class="video-box">
+            <!--div class="camera-label">CamFront</div-->
+            <video id="cam-front" controls autoplay muted playsinline></video>
         </div>
 
-        <!-- 2. 正前 -->
-        <div class="cam-box" id="box-FrontH">
-            <div class="cam-title">正前</div>
-            <div class="status" id="status-FrontH">連線中...</div>
-            <video id="video-FrontH" autoplay controls playsinline muted></video>
-            <button class="fullscreen-btn" onclick="toggleFullscreen('video-FrontH')">全螢幕</button>
+        <!-- 3. CamDoor -->
+        <div class="video-box">
+            <!--div class="camera-label">CamDoor</div-->
+            <video id="cam-door" controls autoplay muted playsinline></video>
         </div>
 
-        <!-- 3. 門前 -->
-        <div class="cam-box" id="box-DoorH">
-            <div class="cam-title">門前</div>
-            <div class="status" id="status-DoorH">連線中...</div>
-            <video id="video-DoorH" autoplay controls playsinline muted></video>
-            <button class="fullscreen-btn" onclick="toggleFullscreen('video-DoorH')">全螢幕</button>
+        <!-- 4. CamGarage -->
+        <div class="video-box">
+            <!--div class="camera-label">CamGarage</div-->
+            <video id="cam-garage" controls autoplay muted playsinline></video>
+        </div>
+        <!-- 1. CamFL -->
+        <div class="video-box">
+            <!--div class="camera-label">CamFL</div-->
+            <video id="cam-fl" controls autoplay muted playsinline></video>
         </div>
 
-        <!-- 4. 車庫 -->
-        <div class="cam-box" id="box-GarageH">
-            <div class="cam-title">車庫</div>
-            <div class="status" id="status-GarageH">連線中...</div>
-            <video id="video-GarageH" autoplay controls playsinline muted></video>
-            <button class="fullscreen-btn" onclick="toggleFullscreen('video-GarageH')">全螢幕</button>
-        </div>
     </div>
 
     <script>
-        // 設定 4 支攝影機的 WHEP API 連線資訊
-        const camosConfig = [
-            { id: 'FLH', url: 'http://192.168.86.45:8889/CamFLH/whep' },
-            { id: 'FrontH', url: 'http://192.168.86.45:8889/CamFrontH/whep' },
-            { id: 'DoorH', url: 'http://192.168.86.45:8889/CamDoorH/whep' },
-            { id: 'GarageH', url: 'http://192.168.86.45:8889/CamGarageH/whep' }
+        // 定義 4 台攝影機的 HLS 串流網址 (對應你的 MediaMTX 設定)
+        const cameras = [
+            { id: 'cam-front', src: 'http://192.168.86.45:8888/CamFront/index.m3u8' },
+            { id: 'cam-door', src: 'http://192.168.86.45:8888/CamDoor/index.m3u8' },
+            { id: 'cam-garage', src: 'http://192.168.86.45:8888/CamGarage/index.m3u8' },
+            { id: 'cam-fl', src: 'http://192.168.86.45:8888/CamFL/index.m3u8' }
         ];
 
-        // 初始化單一 WebRTC 連線的函式
-        async function connectCam(cam) {
-            const videoEl = document.getElementById(`video-${cam.id}`);
-            const statusEl = document.getElementById(`status-${cam.id}`);
-
-            try {
-                // 1. 建立連線
-                const pc = new RTCPeerConnection({
-                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        // 初始化並播放每一台攝影機
+        function initPlayer(cam) {
+            const videoElement = document.getElementById(cam.id);
+            
+            if (Hls.isSupported()) {
+                const hls = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true,          // 開啟低延遲模式
+                    backBufferLength: 0,           // 不保留過去的快取快照
+                    maxBufferLength: 1,            // 最大只快取 1 秒的影片
+                    maxMaxBufferLength: 2,
+                    manifestLoadingMaxRetry: 10,
+                    liveSyncDurationCount: 1.5,    // 強迫播放器緊跟在直播源後面 1.5 個切片的距離
+                    liveMaxLatencyDurationCount: 3
                 });
-
-                // 2. 監聽視訊軌道
-                pc.ontrack = (event) => {
-                    if (videoEl.srcObject !== event.streams[0]) {
-                        videoEl.srcObject = event.streams[0];
-                        statusEl.style.color = '#66bb6a'; // 綠色代表成功
-                        statusEl.innerText = "● 實時";
-                    }
-                };
-
-                // 3. 要求接收影音
-                pc.addTransceiver('video', { direction: 'recvonly' });
-                pc.addTransceiver('audio', { direction: 'recvonly' });
-
-                // 4. SDP Offer 握手
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-
-                const response = await fetch(cam.url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/sdp' },
-                    body: offer.sdp
+                hls.loadSource(cam.src);
+                hls.attachMedia(videoElement);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    videoElement.play().catch(e => console.log("自動播放被瀏覽器阻擋:", e));
                 });
-
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-                const answerSdp = await response.text();
-                await pc.setRemoteDescription(new RTCSessionDescription({
-                    type: 'answer',
-                    sdp: answerSdp
-                }));
-
-            } catch (error) {
-                console.error(`攝影機 [${cam.id}] 連線失敗:`, error);
-                statusEl.style.color = '#ef5350'; // 紅色代表失敗
-                statusEl.innerText = "斷線或不支援";
+            } 
+            // 針對原生支援 HLS 的瀏覽器（如 Mac 上的 Safari 或 iPhone）
+            else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                videoElement.src = cam.src;
+                videoElement.addEventListener('loadedmetadata', function() {
+                    videoElement.play();
+                });
             }
         }
 
-        // 獨立控制單一視訊全螢幕的功能
-        function toggleFullscreen(videoId) {
-            const video = document.getElementById(videoId);
-            if (!document.fullscreenElement) {
-                if (video.requestFullscreen) {
-                    video.requestFullscreen();
-                } else if (video.webkitRequestFullscreen) { /* Safari */
-                    video.webkitRequestFullscreen();
-                }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-        }
-
-        // 網頁載入時，併發啟動 4 支 Cam 的 WebRTC 連線
-        window.onload = () => {
-            camosConfig.forEach(cam => connectCam(cam));
-        };
+        // 當網頁載入完成，開始依序播放
+        window.addEventListener('DOMContentLoaded', () => {
+            cameras.forEach(initPlayer);
+        });
     </script>
 </body>
 </html>
