@@ -21,6 +21,13 @@ button:disabled{opacity:.5}
 .status-error{background:#4a2025;color:#f99}
 .status-success{background:#1b3a2a;color:#a8ffcc}
 .status-loading{background:#3a3a20;color:#ffe699}
+
+/* 新增：內容區塊標題列與小按鈕樣式 */
+.txt-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}
+.txt-header label{margin-bottom:0}
+.mini-btn-group{display:flex;gap:8px}
+.btn-mini{padding:5px 12px;font-size:0.85em;background:#3f3f5a;color:#d1d1e0;flex:none}
+.btn-mini:hover{background:#4a4a6a;color:#fff}
 </style>
 </head>
 <body>
@@ -31,7 +38,14 @@ button:disabled{opacity:.5}
 <input type="text" id="key" value="123">
 </div>
 <div class="form-group">
-<label for="txt">內容:</label>
+<!-- 新增：將 Label 與複製/貼上按鈕排在同一列 -->
+<div class="txt-header">
+  <label for="txt">內容:</label>
+  <div class="mini-btn-group">
+    <button class="btn-mini" onclick="pst()">貼上</button>
+    <button class="btn-mini" onclick="cpy()">複製</button>
+  </div>
+</div>
 <textarea id="txt" rows="8">hello</textarea>
 </div>
 <div class="button-group">
@@ -72,6 +86,30 @@ async function dec(){
   if(!t.value||!k)return uS("錯誤","status-error");
   try{uS("解密中","status-loading");tB(!0);t.value=await dG(t.value.replace(/\s+/g,''),k);uS("成功","status-success");}
   catch(e){uS("失敗","status-error");}finally{tB(!1);}
+}
+
+// 新增：複製功能
+async function cpy(){
+  const t=document.getElementById("txt");
+  if(!t.value) return;
+  try {
+    await navigator.clipboard.writeText(t.value);
+    uS("已複製到剪貼簿","status-success");
+  } catch(e) {
+    uS("複製失敗","status-error");
+  }
+}
+
+// 新增：貼上功能
+async function pst(){
+  const t=document.getElementById("txt");
+  try {
+    const text = await navigator.clipboard.readText();
+    t.value = text;
+    uS("已貼上內容","status-success");
+  } catch(e) {
+    uS("貼上失敗 (瀏覽器可能阻擋權限)","status-error");
+  }
 }
 </script>
 </body>
