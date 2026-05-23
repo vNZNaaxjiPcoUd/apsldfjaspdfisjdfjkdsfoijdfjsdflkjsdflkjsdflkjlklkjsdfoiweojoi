@@ -451,6 +451,8 @@
                 return;
             }
 
+            //console.log("rawData:", rawData);
+            
             try {
                 appData = JSON.parse(rawData);
                 finishLoginSetup();
@@ -458,6 +460,7 @@
                 errorMsg.innerText = "❌ 資料解析失敗 (密碼可能錯誤)！";
                 loginBtn.innerText = "登入";
                 loginBtn.disabled = false;
+                console.log("appData 解析失敗", rawData, e);
             }
         }
 

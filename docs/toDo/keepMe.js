@@ -20,18 +20,49 @@
 
 // 加密
 
-function encData(content, key){
+function genLabl(){
+            // 直接呼叫瀏覽器原生 API 產生 UUID 字串
+            const newUuid = crypto.randomUUID();
+            return newUuid;
+}
+
+let labelNew = "";
+function setNewLabel(T){
+    labelNew = T;
+    return labelNew;
+}
+function getNewLabel(){
+    //console.log("NewLabel:", labelNew);
+    return labelNew;
+}
+
+let labelOld = "";
+function setOldLabel(T){
+    labelOld = T;
+    return labelOld;
+}   
+function getOldLabel(){
+    //console.log("OldLabel:", labelOld);
+    return labelOld;
+}
+
+
+
+function encData(inContent, key){
     if (!key || key.trim() === "") { console.log("無密鑰", 'error'); return false; }
-    if (!content || content.trim() === "") { console.log("無內容", 'error'); return false; }
+    if (!inContent || inContent.trim() === "") { console.log("無內容", 'error'); return false; }
+    let content = {value:inContent,label:genLabl()};
+    setNewLabel(content.label);
+
     let encryptedContent;
     try {
         const keyHash = key;
-        const encrypted = CryptoJS.AES.encrypt(content, keyHash).toString();
+        const encrypted = CryptoJS.AES.encrypt(JSON.stringify(content), keyHash).toString();
         encryptedContent = encrypted;
         return encryptedContent;
     } catch (e) { 
         console.log("加密失敗: " + e.message, 'error'); 
-        return "";
+        return false;
     }
     return encryptedContent;
 }
@@ -49,18 +80,34 @@ function decData(key, encryptedText){
         //console.log("開始解密...",encryptedText);
         if (!encryptedText) { console.log("無密文內容", 'error'); return false; }
 
+        let originalText="";
         try {
             const keyHash = key;
             const bytes = CryptoJS.AES.decrypt(encryptedText, keyHash);
-            const originalText = bytes.toString(CryptoJS.enc.Utf8);
-            ret.value = originalText;
-            ret.status = "success";
+            originalText = bytes.toString(CryptoJS.enc.Utf8);
         } catch (e) {
             ret.message = e.message;
             ret.status = "error";
         
             console.log("解密失敗: " + e.message, 'error');
+            return ret;
         }
+
+        let jDec={};
+        try {
+            jDec = JSON.parse(originalText);
+            if (!jDec.value || !jDec.label) {
+                console.log("is original Json data");
+                jDec = { value:originalText, label:""};
+            }
+        } catch (e) {
+            jDec = { value:originalText, label:""};
+            console.log("not json, is raw text", originalText);
+        }
+        setOldLabel(jDec.label);
+        ret.value = jDec.value;
+        ret.message = "解密成功"
+        ret.status = "success";
         return ret;
 }
 
@@ -152,7 +199,7 @@ async function callApiPost(params) {
           if(data.status === "success") {
             //console.log(`上傳成功！`);
           } else {
-            console.log( "上傳失敗: ");
+            console.log( "上傳失敗: ",data.message);
             console.log(data);
           }
       })
@@ -169,12 +216,14 @@ async function callApiPost(params) {
 }
 
 // 1. 儲存資料 (Save)
-async function doSave(key, inV, tag ) {
+async function doSave(key, inV, tag ,oldLabel="", newLabel="") {
     const newV = {
         action: "save",
         key: key,
         value: inV,
-        tag: tag
+        tag: tag,
+        oldLabel: oldLabel,
+        newLabel: newLabel
     };
     const res = await callApiPost(newV);
     let newRes = null;
@@ -240,10 +289,10 @@ function getContent(){
 
 async function saveToAPI() {
     let key = getDbKey();
-    let res;
     let content = getContent();
     let dbName = getDbName();
 
+    let res;
     if (!content.trim()) { 
         console.log("筆記無內容可上傳", 'error'); 
         res = { status: "error", message: "沒有內容" }; 
@@ -258,11 +307,17 @@ async function saveToAPI() {
             //updateStatus("加密成功");
 
             // 2. 這裡必須上傳 encContent (密文) ！！！
-            res = await doSave(dbName, encContent, getTag());
+            res = await doSave(dbName, encContent, getTag(), getOldLabel(), getNewLabel());
+            //res = await doSave(dbName, encContent, getTag(), "dfdfd", getNewLabel());
             
             if (res.status === "success") {
                 //updateStatus(`已上傳 ${dbName}`, 'success');
                 setTag(res.tag);
+                setOldLabel(getNewLabel());
+                //console.log("message:", res.message);
+                //console.log("key:", res.key);
+                //console.log("value:", res.value);
+                //console.log("tag:", res.tag);
             } else {
                 const regex = new RegExp(`Tag mismatch!`, 's');
                 const match = res.message.match(regex);
