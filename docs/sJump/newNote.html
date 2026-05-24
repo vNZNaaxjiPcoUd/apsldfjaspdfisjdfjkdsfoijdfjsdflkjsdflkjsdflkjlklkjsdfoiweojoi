@@ -13,6 +13,12 @@
             background-color: #222;
             gap: 15px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 16px;
+            color: #fff;
+        }
+        a{
+            color: #fff;
+            text-decoration: none;
         }
         
         .url-input {
@@ -76,7 +82,7 @@
     <input type="text" id="urlInput" class="url-input" value="" placeholder="書名"  onkeydown="if(event.key === 'Enter') openLiveView()">
     
     <button class="launch-btn" onclick="openLiveView()">打開</button>
-    <div><a href="newNoteList.html">List</a></div>
+    <div><a href="newNoteList.html" target="_blank">List</a></div>
 
     <div id="statusMessage" class="status-info" ></div>
 
