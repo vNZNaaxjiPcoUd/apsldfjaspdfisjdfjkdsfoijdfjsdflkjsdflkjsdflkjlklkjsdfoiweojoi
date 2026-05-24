@@ -63,14 +63,16 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            padding: 3px 10px;
+            padding: 0px 10px;
             text-align: center;
-            font-size: 12px;
-            font-weight: bold;
+            font-size: 14px;
+            font-weight: normal;
             background-color: #b9d68bfa;
-            border-top: 1px solid #ccc;
+            border-top: 0px solid #ccc;
             z-index: 1000;
             box-sizing: border-box;
+            color: #000;
+        
         }
 
     </style>
@@ -82,7 +84,7 @@
     <input type="text" id="urlInput" class="url-input" value="" placeholder="書名"  onkeydown="if(event.key === 'Enter') openLiveView()">
     
     <button class="launch-btn" onclick="openLiveView()">打開</button>
-    <div><a href="newNoteList.html" target="_blank">List</a></div>
+    <div><a href="newNoteList.html" target="_blank">表</a></div>
 
     <div id="statusMessage" class="status-info" ></div>
 
