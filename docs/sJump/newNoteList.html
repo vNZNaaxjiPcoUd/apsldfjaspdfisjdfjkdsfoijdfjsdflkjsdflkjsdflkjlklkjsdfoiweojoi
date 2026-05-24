@@ -5,14 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>列表</title>
   <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background-color: #f4f4f9;
-      color: #333;
-      max-width: 1200px;
-      margin: 40px auto;
-      padding: 20px;
-    }
+
+            body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+            background-color: #222;
+            gap: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
     .login-container {
       background: #fff;
       padding: 20px;
@@ -76,8 +79,8 @@
 <body>
 
   <div class="login-container" id="login-section">
-    <h2>輸入密碼</h2>
-    <input type="password" id="password-input" placeholder="請輸入密碼" onkeydown="if(event.key === 'Enter') fetchList()">
+    <h2>輸入</h2>
+    <input type="password" id="password-input" placeholder="" onkeydown="if(event.key === 'Enter') fetchList()">
     <br>
     <button onclick="fetchList()">確認</button>
     <div id="status-message" class="message"></div>
@@ -100,7 +103,7 @@
       const linksWrapper = document.getElementById('links-wrapper');
 
       if (!password) {
-        statusMsg.textContent = '密碼不能為空！';
+        statusMsg.textContent = '不能為空！';
         return;
       }
 
