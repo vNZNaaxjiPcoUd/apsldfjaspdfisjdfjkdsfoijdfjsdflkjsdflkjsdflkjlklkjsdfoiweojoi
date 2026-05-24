@@ -89,7 +89,7 @@ function decData(key, encryptedText){
             ret.message = e.message;
             ret.status = "error";
         
-            console.log("解密失敗: " + e.message, 'error');
+            //console.log("解密失敗: " + e.message, 'error');
             return ret;
         }
 
@@ -139,24 +139,95 @@ function getDbName(){
     return "toDo-"+dbName;  
 }
 
-let dbKey = "";
 
 function hashKey(rawKey){
     return CryptoJS.SHA512(rawKey+"Sy8ai12PJ4EEX9DmHWabqZRCMJEInt1pQh").toString();
 }
 
-function setDbKey(key){
-    dbKey = key;
+function newHashKey(rawKey){
+    // 1. 生成隨機的動態鹽值 (每個使用者或每次加密都應不同)
+    var salt = getSalt(); 
+    //var salt = CryptoJS.lib.WordArray.random(128 / 8);
+
+    // 2. 使用 PBKDF2 衍生出精確的 256-bit (32 Bytes) 金鑰，迭代次數設為 210,000 次
+    var key = CryptoJS.PBKDF2(rawKey, salt, { 
+        keySize: 256 / 32, 
+        iterations: 1000,
+        hasher: CryptoJS.algo.SHA512 
+    });
+    return key.toString();
+} 
+
+let salt="";
+function genSalt(){
+    salt = CryptoJS.lib.WordArray.random(128 / 8).toString();
+}
+function getSalt(){
+    if(!salt) {
+        genSalt();
+    }
+    return salt;
+}
+function setSalt(s){
+    salt = s;
 }
 
-function getDbKey(){
+
+let rawKey="";
+let oldKey = "";
+let newKey = "";
+
+function setDbKey(key){
+    rawKey = key;
+    oldKey = "";
+    newKey = "";
+}
+
+function genDbKey(key){
+    let dbKey = key;
     if(dbKey === "") {
         dbKey = "EEX9DmHWabqZRCMJEInt1pQ";
         console.log("no dbKey, initialize to:.....");
     }
-    return hashKey(dbKey);  
+    oldKey = hashKey(dbKey);
+    newKey = newHashKey(dbKey);
+}
+
+function getDbKey(){
+    if(oldKey === "") {
+        let dbKey = rawKey;
+        if(dbKey === "") {
+            dbKey = "EEX9DmHWabqZRCMJEInt1pQ";
+            console.log("no dbKey, initialize to:.....");
+        }
+        oldKey = hashKey(dbKey);
+    }
+    return oldKey; 
+}
+
+function getNewDbKey(){
+    if(newKey === ""){
+        let dbKey = rawKey;
+        if(dbKey === "") {
+            dbKey = "EEX9DmHWabqZRCMJEInt1pQ";
+            console.log("no rawKey, initialize to:.....");
+        }
+        newKey = newHashKey(dbKey);
+    }
+    return newKey; 
 }
  
+function generateNewDbKey(){
+    genSalt();
+        let dbKey = rawKey;
+        if(dbKey === "") {
+            dbKey = "EEX9DmHWabqZRCMJEInt1pQ";
+            console.log("no rawKey, initialize to:.....");
+        }
+        newKey = newHashKey(dbKey);
+    return newKey; 
+}
+
 async function callApi(params) {
     //console.log("準備呼叫 API，參數:", params);
     const token = generateToken();
@@ -231,7 +302,7 @@ async function doSave(key, inV, tag ,oldLabel="", newLabel="") {
         //console.log(`File "${res.key}" doSave successfully!`, res);
         newRes = { status: res.status, message: res.message, key: res.key, value: res.value, tag: res.tag };
     } else {
-        console.log(`Error saving file: ${res.message}`);
+        //console.log(`Error saving file: ${res.message}`);
         newRes = { status: res.status, message: res.message, key: null, value: null, tag: null };
     }   
     return newRes;
@@ -286,9 +357,32 @@ function getContent(){
     return nowContent;
 }
 
+function attachSalt(txt){
+    let ret = {};
+    ret.txt = txt;
+    ret.salt = getSalt();
+    let jsonString = JSON.stringify(ret);
+    //console.log("attach:", jsonString);
+    return jsonString;
+}
+
+function detachSalt(jTxt){
+    try{
+    let ret = JSON.parse(jTxt);
+    setSalt(ret.salt);
+    //console.log("deattach:", ret.txt, ret.salt);
+    return ret.txt;
+    }catch(e){
+        //console.log("jTxt:",jTxt);
+        return jTxt;
+    }
+}
+
 
 async function saveToAPI() {
-    let key = getDbKey();
+
+    let key = generateNewDbKey();
+    //console.log("key:", key);
     let content = getContent();
     let dbName = getDbName();
 
@@ -298,7 +392,8 @@ async function saveToAPI() {
         res = { status: "error", message: "沒有內容" }; 
     } else {
         // 1. 取得加密後的結果，並存入 encContent 變數
-        let encContent = encData(content, key); 
+        //console.log(">>key:", key);
+        let encContent = attachSalt(encData(content, key)); 
         
         if(!encContent) {
             updateStatus(`加密失敗，請確認 AES 密鑰是否正確`, 'error');
@@ -366,14 +461,23 @@ async function getFromAPI() {
     if (res.status === "success" && res.value) {
         setTag(res.tag);
 
-        encryptedContentValue = res.value;
+        encryptedContentValue = detachSalt(res.value);
         //updateStatus("已將 API 讀取的內容放入密文區:", encryptedContentValue);
 
-        let key = getDbKey();
+        let key = getNewDbKey();
+        //console.log("getFromAPI>key:", key);
         res = await decData(key, encryptedContentValue);
         if (res.status !== "success") { // 改成 res
-            alert("解密失敗！密碼錯誤或雲端資料非加密格式。"); // 加上 alert 讓提示更明顯
-            updateStatus(`解密失敗，請確認 AES 密鑰是否正確`, 'error');
+            let key = getDbKey();
+            //console.log("old>key:", key);
+            res = await decData(key, encryptedContentValue);
+            if (res.status !== "success") { 
+                alert("解密失敗！密碼錯誤或雲端資料非加密格式。"); // 加上 alert 讓提示更明顯
+                updateStatus(`解密失敗，請確認 AES 密鑰是否正確`, 'error');
+            }else{
+                //updateStatus(`解密成功，內容已載入`, 'success');
+                setContent(res.value);
+            }
         }else{
             //updateStatus(`解密成功，內容已載入`, 'success');
             setContent(res.value);

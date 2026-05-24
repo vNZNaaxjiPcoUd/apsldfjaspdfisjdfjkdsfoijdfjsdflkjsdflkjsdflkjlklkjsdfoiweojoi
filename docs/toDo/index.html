@@ -488,6 +488,7 @@
         function forceSave() {
             if (isSaving) return; // 如果已經在存檔中，防止連點
             document.querySelector('.save-btn').innerText = "保存中...";
+            console.log("觸發自動保存...");
             doActualSave();
         }
 
