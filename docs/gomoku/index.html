@@ -287,7 +287,7 @@
             }
         });
 
-        // 電腦 AI 下棋邏輯
+/*        // 電腦 AI 下棋邏輯
         function makeComputerMove() {
             if (isGameOver) return;
 
@@ -371,6 +371,131 @@
                 else if (consecutive === 2 && blocks === 0) totalScore += 100;
                 else if (consecutive === 2 && blocks === 1) totalScore += 10;
                 else if (consecutive === 1 && blocks === 0) totalScore += 5;
+            }
+            return totalScore;
+        }
+
+        */
+
+// [升級版] 電腦 AI 下棋邏輯
+        function makeComputerMove() {
+            if (isGameOver) return;
+
+            let maxScore = -1;
+            let bestMoves = [];
+
+            // 優化：只搜尋有相鄰棋子的空位，提高效能
+            let searchSpaces = getRelevantEmptySpots();
+
+            for (let spot of searchSpaces) {
+                let score = evaluatePosition(spot.x, spot.y);
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestMoves = [spot];
+                } else if (score === maxScore) {
+                    bestMoves.push(spot);
+                }
+            }
+
+            if (bestMoves.length > 0) {
+                // 隨機選擇同分的最佳位置
+                let move = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+                placePiece(move.x, move.y, 2);
+            }
+            isComputerThinking = false;
+        }
+
+        // [新增] 只回傳周圍 2 格內有棋子的空位，避免全盤盲搜
+        function getRelevantEmptySpots() {
+            let spots = [];
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (board[i][j] === 0) {
+                        if (hasNeighbor(i, j, 2)) {
+                            spots.push({x: i, y: j});
+                        }
+                    }
+                }
+            }
+            // 如果棋盤全空（電腦先手），下在正中間
+            if (spots.length === 0) {
+                let center = Math.floor(gridSize / 2);
+                spots.push({x: center, y: center});
+            }
+            return spots;
+        }
+
+        // [新增] 檢查周圍 radius 格內是否有棋子
+        function hasNeighbor(x, y, radius) {
+            for (let i = Math.max(0, x - radius); i <= Math.min(gridSize - 1, x + radius); i++) {
+                for (let j = Math.max(0, y - radius); j <= Math.min(gridSize - 1, y + radius); j++) {
+                    if (board[i][j] !== 0) return true;
+                }
+            }
+            return false;
+        }
+
+        // [升級版] 評估特定位置的分數
+        function evaluatePosition(x, y) {
+            let myScore = getDirectionalScore(x, y, 2);    // 電腦下這步的攻擊力
+            let enemyScore = getDirectionalScore(x, y, 1); // 玩家下這步的威脅度
+
+            // 判斷絕對優先權：
+            // 1. 如果電腦下這步能直接贏 (五子)，給予無限大分數
+            if (myScore >= 100000) return 200000;
+            // 2. 如果玩家下這步能贏 (五子)，必須立刻死守
+            if (enemyScore >= 100000) return 150000;
+            // 3. 如果電腦能製造活四
+            if (myScore >= 10000) return 120000;
+            // 4. 如果玩家能製造活四，必須防守
+            if (enemyScore >= 10000) return 110000;
+
+            // 若無絕對致命威脅，則綜合考量攻防 (防守權重稍微拉高以求穩)
+            return myScore * 1.0 + enemyScore * 1.2;
+        }
+
+        // [升級版] 計算四個方向的連線分數 (精細區分活棋與死棋)
+        function getDirectionalScore(x, y, player) {
+            let totalScore = 0;
+            const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
+            
+            for (let [dx, dy] of directions) {
+                let consecutive = 1; 
+                let blocks = 0;
+                
+                // 正向檢查
+                for (let i = 1; i < 5; i++) {
+                    let nx = x + dx * i, ny = y + dy * i;
+                    if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize || (board[nx][ny] !== 0 && board[nx][ny] !== player)) {
+                        blocks++; 
+                        break;
+                    } else if (board[nx][ny] === player) {
+                        consecutive++;
+                    } else {
+                        break; // 遇到空格
+                    }
+                }
+                // 反向檢查
+                for (let i = 1; i < 5; i++) {
+                    let nx = x - dx * i, ny = y - dy * i;
+                    if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize || (board[nx][ny] !== 0 && board[nx][ny] !== player)) {
+                        blocks++; 
+                        break;
+                    } else if (board[nx][ny] === player) {
+                        consecutive++;
+                    } else {
+                        break; // 遇到空格
+                    }
+                }
+                
+                // 更精準的五子棋型權重表
+                if (consecutive >= 5) totalScore += 100000;                  // 成五
+                else if (consecutive === 4 && blocks === 0) totalScore += 10000;  // 活四 (兩邊都沒擋住)
+                else if (consecutive === 4 && blocks === 1) totalScore += 1000;   // 衝四 (一邊被擋住)
+                else if (consecutive === 3 && blocks === 0) totalScore += 1000;   // 活三
+                else if (consecutive === 3 && blocks === 1) totalScore += 100;    // 眠三
+                else if (consecutive === 2 && blocks === 0) totalScore += 100;    // 活二
+                else if (consecutive === 2 && blocks === 1) totalScore += 10;     // 眠二
             }
             return totalScore;
         }
