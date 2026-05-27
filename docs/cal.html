@@ -7,59 +7,67 @@
 <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
     table { border-collapse: collapse; margin-top: 10px; user-select: none; }
-    th, td { border: 1px solid #ccc; padding: 0; }
-    th { background-color: #f8f9fa; padding: 5px; min-width: 50px; text-align: center; color: #333; }
+    th, td { border: 1px solid #ccc; padding: 0; vertical-align: top; }
+    th { background-color: #f8f9fa; padding: 5px; min-width: 50px; text-align: center; color: #333; height: 28px;}
     td { position: relative; }
-    input {
+    
+    /* 替換為 textarea 以支援換行與動態尺寸 */
+    textarea {
         border: 2px solid transparent; 
         outline: none;
         padding: 8px;
         font-size: 14px;
         box-sizing: border-box;
-        min-width: 80px;
-        width: 100%;
         background-color: transparent; 
+        resize: none;
+        font-family: inherit;
+        line-height: 1.5;
+        margin: 0;
+        display: block;
     }
-    input:focus { 
+    textarea:focus { 
         background-color: #fff; 
         border: 2px solid #1a73e8; 
         z-index: 10;
         position: relative;
     }
+
+    /* ====== 呈現模式 ====== */
+    /* 1. 蓋住 (Clip) - 預設 */
+    .mode-clip textarea {
+        width: 100%; min-width: 80px; height: 38px;
+        white-space: nowrap; overflow: hidden; text-overflow: clip;
+    }
+    /* 2. 強制換行 (Wrap) */
+    .mode-wrap textarea {
+        width: 100%; min-width: 80px; min-height: 38px;
+        white-space: normal; word-break: break-all; overflow: hidden;
+        field-sizing: content; /* 讓 textarea 隨內容長高 */
+    }
+    /* 3. 文字延伸 (Extend) */
+    .mode-extend textarea {
+        min-width: 80px; height: 38px;
+        white-space: nowrap; overflow: hidden;
+        field-sizing: content; /* 讓 textarea 隨內容變寬 */
+    }
+
     .selecting { border: 2px dashed #ff9800 !important; background-color: #fff3e0 !important; z-index: 5; position: relative;}
     .selected-range { background-color: #e8f0fe !important; } 
 
-    .controls { margin-bottom: 15px; display: flex; gap: 10px; }
-    button { padding: 6px 12px; cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; }
+    .controls { margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;}
+    button, select { padding: 6px 12px; cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;}
     button:hover { background-color: #e0e0e0; }
 
     /* ====== 狀態泡泡 (Toast) 樣式 ====== */
     #toast {
-        visibility: hidden;
-        min-width: 250px;
-        background-color: #323232;
-        color: #fff;
-        text-align: center;
-        border-radius: 8px;
-        padding: 12px 16px;
-        position: fixed;
-        z-index: 1000;
-        left: 50%;
-        bottom: 30px;
-        transform: translateX(-50%);
-        font-size: 15px;
-        box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
-        opacity: 0;
-        transition: opacity 0.3s ease, bottom 0.3s ease;
+        visibility: hidden; min-width: 250px; background-color: #323232; color: #fff;
+        text-align: center; border-radius: 8px; padding: 12px 16px; position: fixed;
+        z-index: 1000; left: 50%; bottom: 30px; transform: translateX(-50%);
+        font-size: 15px; box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+        opacity: 0; transition: opacity 0.3s ease, bottom 0.3s ease;
     }
-    #toast.show {
-        visibility: visible;
-        opacity: 1;
-        bottom: 50px;
-    }
-    #toast.error {
-        background-color: #d32f2f;
-    }
+    #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+    #toast.error { background-color: #d32f2f; }
 </style>
 </head>
 <body>
@@ -68,9 +76,14 @@
     <div class="controls">
         <button onclick="saveData()">💾 儲存至本機</button>
         <button onclick="loadData()">📂 從本機讀取</button>
+        <select onchange="document.getElementById('spreadsheet').className = this.value">
+            <option value="mode-clip">呈現：超出蓋住 (Clip)</option>
+            <option value="mode-wrap">呈現：強制換行 (Wrap)</option>
+            <option value="mode-extend">呈現：隨文字延伸 (Extend)</option>
+        </select>
     </div>
 
-    <table id="spreadsheet"></table>
+    <table id="spreadsheet" class="mode-clip"></table>
 
     <div id="toast"></div>
 
@@ -176,11 +189,11 @@
             for (let c = 0; c < COLS; c++) {
                 const id = getCellId(c, r);
                 data[id] = data[id] || ''; 
-                tr.innerHTML += `<td><input type="text" id="${id}" 
+                tr.innerHTML += `<td><textarea id="${id}" rows="1" 
                     onfocus="handleFocus(this)" 
                     onblur="handleBlur(this)" 
                     oninput="handleInput(this)"
-                    onkeydown="handleKeyDown(event, this)"></td>`;
+                    onkeydown="handleKeyDown(event, this)"></textarea></td>`;
             }
             table.appendChild(tr);
         }
@@ -227,7 +240,7 @@
         }
 
         table.addEventListener('mousedown', (e) => {
-            if (selectMode.active && selectMode.sourceInput && e.target.tagName === 'INPUT' && e.target !== selectMode.sourceInput) {
+            if (selectMode.active && selectMode.sourceInput && e.target.tagName === 'TEXTAREA' && e.target !== selectMode.sourceInput) {
                 e.preventDefault(); 
                 const targetId = e.target.id;
                 selectMode.sourceInput.value = selectMode.baseVal + targetId;
@@ -240,19 +253,25 @@
                 return;
             }
 
-            if (e.target.tagName === 'INPUT') {
+            if (e.target.tagName === 'TEXTAREA') {
                 const pos = parseCellId(e.target.id);
                 if (pos) {
-                    isDragging = true;
-                    selectionStart = pos;
-                    selectionEnd = pos;
-                    drawSelection();
+                    if (e.shiftKey && selectionStart) {
+                        e.preventDefault(); // 避免焦點跑掉
+                        selectionEnd = pos;
+                        drawSelection();
+                    } else {
+                        isDragging = true;
+                        selectionStart = pos;
+                        selectionEnd = pos;
+                        drawSelection();
+                    }
                 }
             }
         });
 
         table.addEventListener('mouseover', (e) => {
-            if (isDragging && e.target.tagName === 'INPUT') {
+            if (isDragging && e.target.tagName === 'TEXTAREA') {
                 const pos = parseCellId(e.target.id);
                 if (pos) {
                     selectionEnd = pos;
@@ -303,7 +322,8 @@
             const pos = parseCellId(cell.id);
             if (!pos) return;
 
-            if (e.key === 'Enter') {
+            // Shift + Enter 可以換行，一般的 Enter 則往下移動
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 cell.blur(); 
                 focusCell(pos.col, pos.row + 1); 
@@ -329,10 +349,39 @@
                 }
 
                 const cursorPosition = cell.selectionStart;
-                if (e.key === 'ArrowUp') { e.preventDefault(); focusCell(pos.col, pos.row - 1); }
-                if (e.key === 'ArrowDown') { e.preventDefault(); focusCell(pos.col, pos.row + 1); }
-                if (e.key === 'ArrowLeft' && cursorPosition === 0) { e.preventDefault(); focusCell(pos.col - 1, pos.row); }
-                if (e.key === 'ArrowRight' && cursorPosition === cell.value.length) { e.preventDefault(); focusCell(pos.col + 1, pos.row); }
+                const textLen = cell.value.length;
+
+                // 處理 Shift 範圍選取
+                if (e.shiftKey) {
+                    let shouldExpand = false;
+                    // 上下鍵一律擴大儲存格範圍；左右鍵則需在文字邊緣才會觸發跨欄擴大
+                    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') shouldExpand = true;
+                    if (e.key === 'ArrowLeft' && cursorPosition === 0) shouldExpand = true;
+                    if (e.key === 'ArrowRight' && cursorPosition === textLen) shouldExpand = true;
+
+                    if (shouldExpand) {
+                        e.preventDefault();
+                        let endCol = selectionEnd ? selectionEnd.col : pos.col;
+                        let endRow = selectionEnd ? selectionEnd.row : pos.row;
+
+                        if (e.key === 'ArrowUp') endRow = Math.max(1, endRow - 1);
+                        if (e.key === 'ArrowDown') endRow = Math.min(ROWS, endRow + 1);
+                        if (e.key === 'ArrowLeft') endCol = Math.max(0, endCol - 1);
+                        if (e.key === 'ArrowRight') endCol = Math.min(COLS - 1, endCol + 1);
+
+                        selectionEnd = { col: endCol, row: endRow };
+                        drawSelection();
+                        return;
+                    }
+                }
+
+                // 未按 Shift 且游標在邊緣時，移動焦點
+                if (!e.shiftKey) {
+                    if (e.key === 'ArrowUp') { e.preventDefault(); focusCell(pos.col, pos.row - 1); }
+                    if (e.key === 'ArrowDown') { e.preventDefault(); focusCell(pos.col, pos.row + 1); }
+                    if (e.key === 'ArrowLeft' && cursorPosition === 0) { e.preventDefault(); focusCell(pos.col - 1, pos.row); }
+                    if (e.key === 'ArrowRight' && cursorPosition === textLen) { e.preventDefault(); focusCell(pos.col + 1, pos.row); }
+                }
             }
         }
 
@@ -341,8 +390,7 @@
             const isMultiSelect = selectedElements.length > 1 && selectionStart && selectionEnd;
             const active = document.activeElement;
 
-            // 修正 1：確保在多重選取時，不會因為意外反白到第一格的文字而中斷複製流程
-            if (!isMultiSelect && active && active.tagName === 'INPUT' && active.selectionStart !== active.selectionEnd) {
+            if (!isMultiSelect && active && active.tagName === 'TEXTAREA' && active.selectionStart !== active.selectionEnd) {
                 return; 
             }
 
@@ -353,7 +401,7 @@
                 maxC = Math.max(selectionStart.col, selectionEnd.col);
                 minR = Math.min(selectionStart.row, selectionEnd.row);
                 maxR = Math.max(selectionStart.row, selectionEnd.row);
-            } else if (active && active.tagName === 'INPUT' && active.id) {
+            } else if (active && active.tagName === 'TEXTAREA' && active.id) {
                 const pos = parseCellId(active.id);
                 minC = maxC = pos.col;
                 minR = maxR = pos.row;
@@ -368,7 +416,6 @@
                     const id = getCellId(c, r);
                     const inputEl = document.getElementById(id);
                     
-                    // 修正 2：如果正在處理的格子就是目前游標所在的格子，直接抓畫面上尚未 blur 的 value
                     const formula = (active === inputEl) ? inputEl.value : (data[id] || '');
                     
                     clipboardRangeData.cells.push({ 
@@ -393,7 +440,7 @@
         document.addEventListener('paste', (e) => {
             const active = document.activeElement;
             
-            if (active && active.tagName === 'INPUT' && active.id && clipboardRangeData && clipboardRangeData.cells.length > 0) {
+            if (active && active.tagName === 'TEXTAREA' && active.id && clipboardRangeData && clipboardRangeData.cells.length > 0) {
                 e.preventDefault(); 
                 const pos = parseCellId(active.id);
                 
@@ -409,7 +456,6 @@
                         const shiftedFormula = shiftFormula(cell.formula, colOffset, rowOffset);
                         data[targetId] = shiftedFormula;
                         
-                        // 修正 3：防止貼上的第一格被失焦覆寫，強制同步更新當前焦點的 input 值
                         if (targetId === active.id) {
                             active.value = shiftedFormula;
                         }
