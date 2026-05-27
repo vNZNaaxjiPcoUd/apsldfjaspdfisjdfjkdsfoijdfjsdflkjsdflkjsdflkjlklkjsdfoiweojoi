@@ -74,6 +74,7 @@
 
     <h2>試算表</h2>
     <div class="controls">
+        <button onclick="addRow()">增加十列</button>
         <button onclick="saveData()">💾 儲存</button>
         <button onclick="loadData()">📂 讀取</button>
         <select onchange="document.getElementById('spreadsheet').className = this.value">
@@ -89,7 +90,7 @@
 
     <script>
         let COLS = 26; //A-Z 
-        let ROWS = 39; //1-60
+        let ROWS = 29; //1-60
 
         const table = document.getElementById('spreadsheet');
         const data = {}; 
@@ -199,6 +200,11 @@
             table.appendChild(tr);
         }
 
+        function addRow() {
+            //ROWS++;
+            ROWS += 10;
+            createRowDOM(ROWS);
+        }
         function getCellId(colIndex, rowIndex) {
             return String.fromCharCode(65 + colIndex) + rowIndex;
         }
