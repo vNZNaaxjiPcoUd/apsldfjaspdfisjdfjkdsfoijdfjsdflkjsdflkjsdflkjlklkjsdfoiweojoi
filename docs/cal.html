@@ -6,12 +6,11 @@
 <title>試算表</title>
 <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
-    table { border-collapse: collapse; margin-top: 10px; user-select: none; }
+    table { border-collapse: collapse; margin-top: 10px; user-select: none; table-layout: fixed; }
     th, td { border: 1px solid #ccc; padding: 0; vertical-align: top; }
-    th { background-color: #f8f9fa; padding: 5px; min-width: 50px; text-align: center; color: #333; height: 28px;}
+    th { background-color: #f8f9fa; padding: 5px; min-width: 40px; text-align: center; color: #333; height: 28px; position: relative; }
     td { position: relative; }
     
-    /* 替換為 textarea 以支援換行與動態尺寸 */
     textarea {
         border: 2px solid transparent; 
         outline: none;
@@ -32,23 +31,33 @@
         position: relative;
     }
 
-    /* ====== 呈現模式 ====== */
-    /* 1. 蓋住 (Clip) - 預設 */
+    .resizer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 5px;
+        height: 100%;
+        cursor: col-resize;
+        user-select: none;
+        z-index: 1;
+    }
+    .resizer:hover, .resizer.resizing {
+        background-color: #1a73e8;
+    }
+
     .mode-clip textarea {
-        width: 100%; min-width: 80px; height: 38px;
+        width: 100%; height: 38px;
         white-space: nowrap; overflow: hidden; text-overflow: clip;
     }
-    /* 2. 強制換行 (Wrap) */
     .mode-wrap textarea {
-        width: 100%; min-width: 80px; min-height: 38px;
+        width: 100%; min-height: 38px;
         white-space: normal; word-break: break-all; overflow: hidden;
-        field-sizing: content; /* 讓 textarea 隨內容長高 */
+        field-sizing: content; 
     }
-    /* 3. 文字延伸 (Extend) */
     .mode-extend textarea {
-        min-width: 80px; height: 38px;
+        height: 38px;
         white-space: nowrap; overflow: hidden;
-        field-sizing: content; /* 讓 textarea 隨內容變寬 */
+        field-sizing: content; 
     }
 
     .selecting { border: 2px dashed #ff9800 !important; background-color: #fff3e0 !important; z-index: 5; position: relative;}
@@ -58,7 +67,6 @@
     button, select { padding: 6px 12px; cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;}
     button:hover { background-color: #e0e0e0; }
 
-    /* ====== 狀態泡泡 (Toast) 樣式 ====== */
     #toast {
         visibility: hidden; min-width: 250px; background-color: #323232; color: #fff;
         text-align: center; border-radius: 8px; padding: 12px 16px; position: fixed;
@@ -72,7 +80,6 @@
 </head>
 <body>
 
-    
     <div class="controls">
         <h2>試算表</h2>
         <button onclick="addRow()">增加十列</button>
@@ -91,7 +98,7 @@
 
     <script>
         let COLS = 26; //A-Z 
-        let ROWS = 29; //1-60
+        let ROWS = 29; 
 
         const table = document.getElementById('spreadsheet');
         const data = {}; 
@@ -142,7 +149,7 @@
             }
         }
 
-        async function loadData() {
+        async function old_1_loadData() {
             try {
                 if (!dbInstance) await openDB();
                 const tx = dbInstance.transaction(STORE_NAME, 'readonly');
@@ -165,16 +172,84 @@
             }
         }
 
+        async function loadData() {
+            try {
+                if (!dbInstance) await openDB();
+                const tx = dbInstance.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.get('sheet_1');
+                
+                request.onsuccess = () => {
+                    const result = request.result;
+                    if (result && result.cells) {
+                        
+                        // 1. 設定表格的「最小底線」
+                        // 假設欄位最少維持 A~Z (26欄，index 0~25)，列數最少維持 1 列
+                        let maxCol = 25; 
+                        let maxRow = 1;
+
+                        // 2. 找出存檔資料中，"真正有文字"的最大欄位與列數
+                        Object.keys(result.cells).forEach(key => {
+                            const cellValue = result.cells[key];
+                            // 只有當格子裡面真的有資料（不是純空白）才計算進範圍
+                            if (cellValue && cellValue.toString().trim() !== '') {
+                                const pos = parseCellId(key);
+                                if (pos) {
+                                    if (pos.col > maxCol) maxCol = pos.col;
+                                    if (pos.row > maxRow) maxRow = pos.row;
+                                }
+                            }
+                        });
+
+                        // 3. 直接更新全域變數為實際所需的精準大小
+                        COLS = maxCol + 1;
+                        ROWS = maxRow;
+
+                        // 4. 將資料載入記憶體
+                        Object.keys(data).forEach(key => delete data[key]);
+                        Object.assign(data, result.cells);
+
+                        // 5. 強制清空並重新建立表格 DOM（不論放大或縮小都重建）
+                        let headerRow = '<tr id="header-row"><th style="width: 40px;"></th>'; 
+                        for (let c = 0; c < COLS; c++) {
+                            headerRow += `<th style="width: 80px;">${String.fromCharCode(65 + c)}<div class="resizer"></div></th>`;
+                        }
+                        headerRow += '</tr>';
+                        table.innerHTML = headerRow;
+
+                        // 根據新的 ROWS 精準建立列數，不會再有額外的空白列
+                        for (let r = 1; r <= ROWS; r++) {
+                            createRowDOM(r);
+                        }
+
+                        // 6. 將資料實際填入 DOM 並計算公式
+                        computeAll();
+                        showToast(`📂 資料讀取成功！(表格已調整為 ${ROWS} 列)`);
+                    } else {
+                        showToast('本機沒有找到已儲存的資料。', true);
+                    }
+                };
+                request.onerror = () => showToast('讀取失敗！', true);
+            } catch (error) {
+                showToast('讀取發生錯誤。', true);
+            }
+        }  
+        
+        
         let clipboardRangeData = null; 
         let selectMode = { active: false, baseVal: '', targetCol: -1, targetRow: -1, sourceInput: null };
         let isDragging = false;
         let selectionStart = null;
         let selectionEnd = null;
 
+        let resizingCol = null;
+        let startX = 0;
+        let startWidth = 0;
+
         function initTable() {
-            let headerRow = '<tr id="header-row"><th></th>';
+            let headerRow = '<tr id="header-row"><th style="width: 40px;"></th>'; 
             for (let c = 0; c < COLS; c++) {
-                headerRow += `<th>${String.fromCharCode(65 + c)}</th>`;
+                headerRow += `<th style="width: 80px;">${String.fromCharCode(65 + c)}<div class="resizer"></div></th>`;
             }
             headerRow += '</tr>';
             table.innerHTML = headerRow;
@@ -202,10 +277,15 @@
         }
 
         function addRow() {
-            //ROWS++;
-            ROWS += 10;
-            createRowDOM(ROWS);
+            const startRow = ROWS + 1; // 記錄要從哪一行開始新增
+            ROWS += 10;                // 更新總列數
+            
+            // 利用 for 迴圈，把新增的 10 列依序建立出來
+            for (let r = startRow; r <= ROWS; r++) {
+                createRowDOM(r);
+            }
         }
+
         function getCellId(colIndex, rowIndex) {
             return String.fromCharCode(65 + colIndex) + rowIndex;
         }
@@ -248,6 +328,15 @@
         }
 
         table.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('resizer')) {
+                resizingCol = e.target.parentElement;
+                startX = e.pageX;
+                startWidth = resizingCol.offsetWidth;
+                e.target.classList.add('resizing');
+                e.preventDefault(); 
+                return;
+            }
+
             if (selectMode.active && selectMode.sourceInput && e.target.tagName === 'TEXTAREA' && e.target !== selectMode.sourceInput) {
                 e.preventDefault(); 
                 const targetId = e.target.id;
@@ -265,7 +354,7 @@
                 const pos = parseCellId(e.target.id);
                 if (pos) {
                     if (e.shiftKey && selectionStart) {
-                        e.preventDefault(); // 避免焦點跑掉
+                        e.preventDefault(); 
                         selectionEnd = pos;
                         drawSelection();
                     } else {
@@ -288,7 +377,21 @@
             }
         });
 
+        document.addEventListener('mousemove', (e) => {
+            if (resizingCol) {
+                const newWidth = startWidth + (e.pageX - startX);
+                if (newWidth > 30) {
+                    resizingCol.style.width = newWidth + 'px';
+                    resizingCol.style.minWidth = newWidth + 'px';
+                }
+            }
+        });
+
         document.addEventListener('mouseup', () => {
+            if (resizingCol) {
+                resizingCol.querySelector('.resizer').classList.remove('resizing');
+                resizingCol = null;
+            }
             isDragging = false;
         });
 
@@ -330,7 +433,6 @@
             const pos = parseCellId(cell.id);
             if (!pos) return;
 
-            // Shift + Enter 可以換行，一般的 Enter 則往下移動
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 cell.blur(); 
@@ -359,10 +461,8 @@
                 const cursorPosition = cell.selectionStart;
                 const textLen = cell.value.length;
 
-                // 處理 Shift 範圍選取
                 if (e.shiftKey) {
                     let shouldExpand = false;
-                    // 上下鍵一律擴大儲存格範圍；左右鍵則需在文字邊緣才會觸發跨欄擴大
                     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') shouldExpand = true;
                     if (e.key === 'ArrowLeft' && cursorPosition === 0) shouldExpand = true;
                     if (e.key === 'ArrowRight' && cursorPosition === textLen) shouldExpand = true;
@@ -383,7 +483,6 @@
                     }
                 }
 
-                // 未按 Shift 且游標在邊緣時，移動焦點
                 if (!e.shiftKey) {
                     if (e.key === 'ArrowUp') { e.preventDefault(); focusCell(pos.col, pos.row - 1); }
                     if (e.key === 'ArrowDown') { e.preventDefault(); focusCell(pos.col, pos.row + 1); }
@@ -445,43 +544,69 @@
         document.addEventListener('copy', (e) => handleCopyCut(e, false));
         document.addEventListener('cut', (e) => handleCopyCut(e, true));
 
+        // ====== 修改後的貼上邏輯：支援一格貼多格並動態更新參數 ======
         document.addEventListener('paste', (e) => {
             const active = document.activeElement;
-            
-            if (active && active.tagName === 'TEXTAREA' && active.id && clipboardRangeData && clipboardRangeData.cells.length > 0) {
-                e.preventDefault(); 
-                const pos = parseCellId(active.id);
+            if (!active || active.tagName !== 'TEXTAREA' || !active.id || !clipboardRangeData || clipboardRangeData.cells.length === 0) return;
+
+            e.preventDefault(); 
+            const pos = parseCellId(active.id);
+            const selectedElements = document.querySelectorAll('.selected-range');
+
+            // 核心功能：如果剪貼簿只有 1 格，且使用者在畫面上選取了超過 1 格
+            if (clipboardRangeData.cells.length === 1 && selectedElements.length > 1) {
+                const sourceCell = clipboardRangeData.cells[0];
                 
-                const colOffset = pos.col - clipboardRangeData.originCol;
-                const rowOffset = pos.row - clipboardRangeData.originRow;
-                
-                clipboardRangeData.cells.forEach(cell => {
-                    const targetCol = pos.col + cell.dCol;
-                    const targetRow = pos.row + cell.dRow;
-                    
-                    if (targetCol >= 0 && targetCol < COLS && targetRow >= 1 && targetRow <= ROWS) {
-                        const targetId = getCellId(targetCol, targetRow);
-                        const shiftedFormula = shiftFormula(cell.formula, colOffset, rowOffset);
-                        data[targetId] = shiftedFormula;
+                selectedElements.forEach(el => {
+                    const targetPos = parseCellId(el.id);
+                    if (targetPos) {
+                        // 計算目前這個目的地儲存格，相對於原複製點的行列位移
+                        const colOffset = targetPos.col - clipboardRangeData.originCol;
+                        const rowOffset = targetPos.row - clipboardRangeData.originRow;
                         
-                        if (targetId === active.id) {
-                            active.value = shiftedFormula;
-                        }
+                        // 動態計算並修正新公式的參數
+                        const shiftedFormula = shiftFormula(sourceCell.formula, colOffset, rowOffset);
+                        data[el.id] = shiftedFormula;
+                        el.value = shiftedFormula; 
                     }
                 });
                 
                 computeAll();
-                showToast(`已貼上 ${clipboardRangeData.cells.length} 個儲存格資料`);
-                
-                const maxDCol = Math.max(...clipboardRangeData.cells.map(c => c.dCol));
-                const maxDRow = Math.max(...clipboardRangeData.cells.map(c => c.dRow));
-                selectionStart = pos;
-                selectionEnd = { 
-                    col: Math.min(pos.col + maxDCol, COLS - 1), 
-                    row: Math.min(pos.row + maxDRow, ROWS) 
-                };
-                drawSelection();
+                showToast(`已將 1 個儲存格資料複製到 ${selectedElements.length} 個目的儲存格`);
+                return;
             }
+
+            // 預設功能：一般的單格對單格，或是多格範圍對多格範圍貼上
+            const colOffset = pos.col - clipboardRangeData.originCol;
+            const rowOffset = pos.row - clipboardRangeData.originRow;
+            
+            clipboardRangeData.cells.forEach(cell => {
+                const targetCol = pos.col + cell.dCol;
+                const targetRow = pos.row + cell.dRow;
+                
+                if (targetCol >= 0 && targetCol < COLS && targetRow >= 1 && targetRow <= ROWS) {
+                    const targetId = getCellId(targetCol, targetRow);
+                    const shiftedFormula = shiftFormula(cell.formula, colOffset, rowOffset);
+                    data[targetId] = shiftedFormula;
+                    
+                    const targetEl = document.getElementById(targetId);
+                    if (targetEl) {
+                        targetEl.value = shiftedFormula;
+                    }
+                }
+            });
+            
+            computeAll();
+            showToast(`已貼上 ${clipboardRangeData.cells.length} 個儲存格資料`);
+            
+            const maxDCol = Math.max(...clipboardRangeData.cells.map(c => c.dCol));
+            const maxDRow = Math.max(...clipboardRangeData.cells.map(c => c.dRow));
+            selectionStart = pos;
+            selectionEnd = { 
+                col: Math.min(pos.col + maxDCol, COLS - 1), 
+                row: Math.min(pos.row + maxDRow, ROWS) 
+            };
+            drawSelection();
         });
 
         function shiftFormula(formula, colOffset, rowOffset) {
@@ -534,6 +659,19 @@
             if (parsedFormula.trim() === '') return '';
             return new Function('return ' + parsedFormula)();
         }
+
+        // ====== 快捷鍵儲存功能 (Ctrl+S / Cmd+S / Alt+S) ======
+        document.addEventListener('keydown', function(e) {
+            // 檢查是否按下了 'S' 或 's' 鍵
+            if (e.key === 's' || e.key === 'S') {
+                // 檢查是否同時按下了 Ctrl (Windows), Meta (Mac 的 Command 鍵), 或 Alt
+                if (e.ctrlKey || e.metaKey || e.altKey) {
+                    e.preventDefault(); // 強制阻擋瀏覽器預設的「儲存網頁」視窗
+                    saveData();         // 呼叫試算表的儲存函數
+                }
+            }
+        });        
+
 
         initTable();
     </script>
