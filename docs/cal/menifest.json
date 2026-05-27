@@ -1,0 +1,21 @@
+{
+  "name": "試算表",
+  "short_name": "試算表",
+  "description": "試算表",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4fbf6",
+  "theme_color": "#43b581",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
