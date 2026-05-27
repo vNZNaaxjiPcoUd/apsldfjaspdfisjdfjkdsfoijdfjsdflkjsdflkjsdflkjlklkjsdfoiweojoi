@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>進階網頁試算表 - 滑鼠選取版</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; margin-top: 10px; user-select: none; }
+    th, td { border: 1px solid #ccc; padding: 0; }
+    th { background-color: #f8f9fa; padding: 5px; min-width: 50px; text-align: center; color: #333; }
+    td { position: relative; }
+    input {
+        border: 2px solid transparent; 
+        outline: none;
+        padding: 8px;
+        font-size: 14px;
+        box-sizing: border-box;
+        min-width: 80px;
+        width: 100%;
+    }
+    input:focus { 
+        background-color: #fff; 
+        border: 2px solid #1a73e8; 
+        z-index: 10;
+        position: relative;
+    }
+    .selecting { border: 2px dashed #ff9800 !important; background-color: #fff3e0; }
+    .controls { margin-bottom: 15px; }
+    button { padding: 6px 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+    <h2>進階 Web 試算表</h2>
+    <div class="controls">
+        <button onclick="addRow()">向下增加一列</button>
+        <p style="font-size: 13px; color: #666;">
+            功能支援：方向鍵導覽、Enter 輸入、<strong>輸入 `=` 或運算子後，可使用「滑鼠點擊」或「方向鍵」選取其他欄位</strong>、複製貼上自動更新相對位置。
+        </p>
+    </div>
+
+    <table id="spreadsheet"></table>
+
+    <script>
+        let COLS = 10; // A 到 J
+        let ROWS = 20; // 1 到 10
+        const table = document.getElementById('spreadsheet');
+        const data = {}; 
+
+        // 剪貼簿與選取狀態紀錄
+        let clipboardData = { formula: '', col: 0, row: 0 };
+        let selectMode = { active: false, baseVal: '', targetCol: -1, targetRow: -1, sourceInput: null };
+
+        function initTable() {
+            let headerRow = '<tr id="header-row"><th></th>';
+            for (let c = 0; c < COLS; c++) {
+                headerRow += `<th>${String.fromCharCode(65 + c)}</th>`;
+            }
+            headerRow += '</tr>';
+            table.innerHTML = headerRow;
+
+            for (let r = 1; r <= ROWS; r++) {
+                createRowDOM(r);
+            }
+            computeAll();
+        }
+
+        function createRowDOM(r) {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<th>${r}</th>`;
+            for (let c = 0; c < COLS; c++) {
+                const id = getCellId(c, r);
+                data[id] = data[id] || ''; 
+                tr.innerHTML += `<td><input type="text" id="${id}" 
+                    onfocus="handleFocus(this)" 
+                    onblur="handleBlur(this)" 
+                    oninput="handleInput(this)"
+                    onkeydown="handleKeyDown(event, this)"></td>`;
+            }
+            table.appendChild(tr);
+        }
+
+        function addRow() {
+            ROWS++;
+            createRowDOM(ROWS);
+        }
+
+        function getCellId(colIndex, rowIndex) {
+            return String.fromCharCode(65 + colIndex) + rowIndex;
+        }
+
+        function parseCellId(id) {
+            const match = id.match(/^([A-Z]+)(\d+)$/);
+            if (!match) return null;
+            return { col: match[1].charCodeAt(0) - 65, row: parseInt(match[2]) };
+        }
+
+        function handleFocus(cell) {
+            cell.value = data[cell.id] || '';
+            selectMode.active = false;
+            selectMode.sourceInput = cell;
+            clearSelectHighlight();
+        }
+
+        function handleBlur(cell) {
+            // 如果是被滑鼠選取攔截，不執行 blur 儲存
+            if (selectMode.active && document.activeElement === selectMode.sourceInput) return;
+            
+            data[cell.id] = cell.value.toUpperCase();
+            selectMode.active = false;
+            clearSelectHighlight();
+            computeAll();
+        }
+
+        // 監聽輸入內容，判斷是否進入「選取模式」
+        function handleInput(cell) {
+            const val = cell.value;
+            const lastChar = val.slice(-1);
+            if (['=', '+', '-', '*', '/', '('].includes(lastChar)) {
+                selectMode.active = true;
+                selectMode.baseVal = val;
+                selectMode.sourceInput = cell;
+                const pos = parseCellId(cell.id);
+                selectMode.targetCol = pos.col;
+                selectMode.targetRow = pos.row;
+            } else {
+                selectMode.active = false;
+                clearSelectHighlight();
+            }
+        }
+
+        // ====== 滑鼠點擊選取功能 ======
+        table.addEventListener('mousedown', (e) => {
+            // 如果目前正在選取模式，且點擊的是另一個輸入框
+            if (selectMode.active && selectMode.sourceInput && e.target.tagName === 'INPUT' && e.target !== selectMode.sourceInput) {
+                e.preventDefault(); // 阻止焦點轉移，保持在原來的儲存格
+                
+                const targetId = e.target.id;
+                
+                // 將點擊的儲存格 ID 附加到原本的公式後面
+                selectMode.sourceInput.value = selectMode.baseVal + targetId;
+                
+                // 加上視覺提示
+                clearSelectHighlight();
+                e.target.classList.add('selecting');
+                
+                // 更新基準值，允許使用者按下運算子後繼續點選其他儲存格
+                // 這裡暫時關閉選取模式，直到使用者再次輸入運算子
+                selectMode.active = false; 
+                
+                // 確保焦點與游標位置在最後面
+                selectMode.sourceInput.focus();
+                const len = selectMode.sourceInput.value.length;
+                selectMode.sourceInput.setSelectionRange(len, len);
+            }
+        });
+
+        function focusCell(col, row) {
+            if (col < 0 || col >= COLS || row < 1 || row > ROWS) return;
+            const target = document.getElementById(getCellId(col, row));
+            if (target) target.focus();
+        }
+
+        function clearSelectHighlight() {
+            document.querySelectorAll('.selecting').forEach(el => el.classList.remove('selecting'));
+        }
+
+        // ====== 鍵盤導覽與選取功能 ======
+        function handleKeyDown(e, cell) {
+            const pos = parseCellId(cell.id);
+            if (!pos) return;
+
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                cell.blur(); 
+                focusCell(pos.col, pos.row + 1); 
+                return;
+            }
+
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                if (selectMode.active) {
+                    e.preventDefault(); 
+                    clearSelectHighlight();
+                    
+                    if (e.key === 'ArrowUp') selectMode.targetRow = Math.max(1, selectMode.targetRow - 1);
+                    if (e.key === 'ArrowDown') selectMode.targetRow = Math.min(ROWS, selectMode.targetRow + 1);
+                    if (e.key === 'ArrowLeft') selectMode.targetCol = Math.max(0, selectMode.targetCol - 1);
+                    if (e.key === 'ArrowRight') selectMode.targetCol = Math.min(COLS - 1, selectMode.targetCol + 1);
+
+                    const targetId = getCellId(selectMode.targetCol, selectMode.targetRow);
+                    const targetInput = document.getElementById(targetId);
+                    if (targetInput) targetInput.classList.add('selecting');
+
+                    cell.value = selectMode.baseVal + targetId;
+                    return;
+                }
+
+                const cursorPosition = cell.selectionStart;
+                if (e.key === 'ArrowUp') { e.preventDefault(); focusCell(pos.col, pos.row - 1); }
+                if (e.key === 'ArrowDown') { e.preventDefault(); focusCell(pos.col, pos.row + 1); }
+                if (e.key === 'ArrowLeft' && cursorPosition === 0) { e.preventDefault(); focusCell(pos.col - 1, pos.row); }
+                if (e.key === 'ArrowRight' && cursorPosition === cell.value.length) { e.preventDefault(); focusCell(pos.col + 1, pos.row); }
+            }
+        }
+
+        // ====== 複製與貼上 (相對位置更新) ======
+        document.addEventListener('copy', (e) => {
+            const active = document.activeElement;
+            if (active && active.tagName === 'INPUT' && active.id) {
+                const pos = parseCellId(active.id);
+                clipboardData = { formula: data[active.id] || active.value, col: pos.col, row: pos.row };
+            }
+        });
+
+        document.addEventListener('paste', (e) => {
+            const active = document.activeElement;
+            if (active && active.tagName === 'INPUT' && active.id && clipboardData.formula) {
+                e.preventDefault(); 
+                const pos = parseCellId(active.id);
+                const colOffset = pos.col - clipboardData.col;
+                const rowOffset = pos.row - clipboardData.row;
+                const shiftedFormula = shiftFormula(clipboardData.formula, colOffset, rowOffset);
+                active.value = shiftedFormula;
+                data[active.id] = shiftedFormula;
+                computeAll();
+            }
+        });
+
+        function shiftFormula(formula, colOffset, rowOffset) {
+            if (!formula.startsWith('=')) return formula; 
+            return formula.replace(/([A-Z]+)([0-9]+)/g, (match, colStr, rowStr) => {
+                let newColCode = colStr.charCodeAt(0) + colOffset;
+                let newRow = parseInt(rowStr) + rowOffset;
+                if (newColCode < 65 || newRow < 1) return match;
+                return String.fromCharCode(newColCode) + newRow;
+            });
+        }
+
+        // ====== 核心計算 ======
+        function computeAll() {
+            for (let r = 1; r <= ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const id = getCellId(c, r);
+                    const cell = document.getElementById(id);
+                    if (document.activeElement !== cell) {
+                        const val = data[id];
+                        if (val && val.startsWith('=')) {
+                            try { cell.value = evaluateFormula(val.substring(1)); } 
+                            catch (e) { cell.value = '#ERROR'; }
+                        } else {
+                            cell.value = val;
+                        }
+                    }
+                }
+            }
+        }
+
+        function evaluateFormula(formula) {
+            let parsedFormula = formula.replace(/[A-Z]+[0-9]+/g, (match) => {
+                let cellVal = data[match];
+                if (cellVal && cellVal.startsWith('=')) return evaluateFormula(cellVal.substring(1));
+                const num = parseFloat(cellVal);
+                return isNaN(num) ? 0 : num; 
+            });
+            if (parsedFormula.trim() === '') return '';
+            return new Function('return ' + parsedFormula)();
+        }
+
+        initTable();
+    </script>
+</body>
+</html>
