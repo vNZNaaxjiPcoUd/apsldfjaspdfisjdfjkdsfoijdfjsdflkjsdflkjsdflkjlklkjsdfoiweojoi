@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>進階網頁試算表 - 滑鼠選取版</title>
+<title>試算表</title>
 <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
     table { border-collapse: collapse; margin-top: 10px; user-select: none; }
@@ -18,6 +18,7 @@
         box-sizing: border-box;
         min-width: 80px;
         width: 100%;
+        background-color: transparent; 
     }
     input:focus { 
         background-color: #fff; 
@@ -25,32 +26,134 @@
         z-index: 10;
         position: relative;
     }
-    .selecting { border: 2px dashed #ff9800 !important; background-color: #fff3e0; }
-    .controls { margin-bottom: 15px; }
-    button { padding: 6px 12px; cursor: pointer; }
+    .selecting { border: 2px dashed #ff9800 !important; background-color: #fff3e0 !important; z-index: 5; position: relative;}
+    .selected-range { background-color: #e8f0fe !important; } 
+
+    .controls { margin-bottom: 15px; display: flex; gap: 10px; }
+    button { padding: 6px 12px; cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; }
+    button:hover { background-color: #e0e0e0; }
+
+    /* ====== 狀態泡泡 (Toast) 樣式 ====== */
+    #toast {
+        visibility: hidden;
+        min-width: 250px;
+        background-color: #323232;
+        color: #fff;
+        text-align: center;
+        border-radius: 8px;
+        padding: 12px 16px;
+        position: fixed;
+        z-index: 1000;
+        left: 50%;
+        bottom: 30px;
+        transform: translateX(-50%);
+        font-size: 15px;
+        box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+        opacity: 0;
+        transition: opacity 0.3s ease, bottom 0.3s ease;
+    }
+    #toast.show {
+        visibility: visible;
+        opacity: 1;
+        bottom: 50px;
+    }
+    #toast.error {
+        background-color: #d32f2f;
+    }
 </style>
 </head>
 <body>
 
-    <h2>進階 Web 試算表</h2>
+    <h2>試算表</h2>
     <div class="controls">
-        <button onclick="addRow()">向下增加一列</button>
-        <p style="font-size: 13px; color: #666;">
-            功能支援：方向鍵導覽、Enter 輸入、<strong>輸入 `=` 或運算子後，可使用「滑鼠點擊」或「方向鍵」選取其他欄位</strong>、複製貼上自動更新相對位置。
-        </p>
+        <button onclick="saveData()">💾 儲存至本機</button>
+        <button onclick="loadData()">📂 從本機讀取</button>
     </div>
 
     <table id="spreadsheet"></table>
 
+    <div id="toast"></div>
+
     <script>
-        let COLS = 10; // A 到 J
-        let ROWS = 30; // 1 到 10
+        let COLS = 10; 
+        let ROWS = 50; 
         const table = document.getElementById('spreadsheet');
         const data = {}; 
 
-        // 剪貼簿與選取狀態紀錄
-        let clipboardData = { formula: '', col: 0, row: 0 };
+        let toastTimeout;
+        function showToast(message, isError = false) {
+            const toast = document.getElementById("toast");
+            toast.textContent = message;
+            if (isError) toast.classList.add("error");
+            else toast.classList.remove("error");
+            
+            toast.classList.add("show");
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => toast.classList.remove("show"), 3000);
+        }
+
+        const DB_NAME = 'SpreadsheetDB';
+        const STORE_NAME = 'sheets';
+        let dbInstance = null;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    dbInstance = e.target.result;
+                    resolve(dbInstance);
+                };
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveData() {
+            try {
+                if (!dbInstance) await openDB();
+                const tx = dbInstance.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                store.put({ id: 'sheet_1', cells: data });
+                tx.oncomplete = () => showToast('💾 資料已成功儲存至瀏覽器！');
+                tx.onerror = () => showToast('儲存失敗！', true);
+            } catch (error) {
+                showToast('儲存發生錯誤，請查看控制台。', true);
+            }
+        }
+
+        async function loadData() {
+            try {
+                if (!dbInstance) await openDB();
+                const tx = dbInstance.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.get('sheet_1');
+                request.onsuccess = () => {
+                    const result = request.result;
+                    if (result && result.cells) {
+                        Object.keys(data).forEach(key => delete data[key]);
+                        Object.assign(data, result.cells);
+                        computeAll();
+                        showToast('📂 資料讀取成功！');
+                    } else {
+                        showToast('本機沒有找到已儲存的資料。', true);
+                    }
+                };
+                request.onerror = () => showToast('讀取失敗！', true);
+            } catch (error) {
+                showToast('讀取發生錯誤，請查看控制台。', true);
+            }
+        }
+
+        let clipboardRangeData = null; 
         let selectMode = { active: false, baseVal: '', targetCol: -1, targetRow: -1, sourceInput: null };
+        let isDragging = false;
+        let selectionStart = null;
+        let selectionEnd = null;
 
         function initTable() {
             let headerRow = '<tr id="header-row"><th></th>';
@@ -64,6 +167,7 @@
                 createRowDOM(r);
             }
             computeAll();
+            openDB(); 
         }
 
         function createRowDOM(r) {
@@ -81,19 +185,14 @@
             table.appendChild(tr);
         }
 
-        function addRow() {
-            ROWS++;
-            createRowDOM(ROWS);
-        }
-
         function getCellId(colIndex, rowIndex) {
             return String.fromCharCode(65 + colIndex) + rowIndex;
         }
 
         function parseCellId(id) {
-            const match = id.match(/^([A-Z]+)(\d+)$/);
+            const match = id.match(/^([A-Za-z]+)(\d+)$/);
             if (!match) return null;
-            return { col: match[1].charCodeAt(0) - 65, row: parseInt(match[2]) };
+            return { col: match[1].toUpperCase().charCodeAt(0) - 65, row: parseInt(match[2]) };
         }
 
         function handleFocus(cell) {
@@ -104,16 +203,13 @@
         }
 
         function handleBlur(cell) {
-            // 如果是被滑鼠選取攔截，不執行 blur 儲存
             if (selectMode.active && document.activeElement === selectMode.sourceInput) return;
-            
-            data[cell.id] = cell.value.toUpperCase();
+            data[cell.id] = cell.value;
             selectMode.active = false;
             clearSelectHighlight();
             computeAll();
         }
 
-        // 監聽輸入內容，判斷是否進入「選取模式」
         function handleInput(cell) {
             const val = cell.value;
             const lastChar = val.slice(-1);
@@ -130,43 +226,79 @@
             }
         }
 
-        // ====== 滑鼠點擊選取功能 ======
         table.addEventListener('mousedown', (e) => {
-            // 如果目前正在選取模式，且點擊的是另一個輸入框
             if (selectMode.active && selectMode.sourceInput && e.target.tagName === 'INPUT' && e.target !== selectMode.sourceInput) {
-                e.preventDefault(); // 阻止焦點轉移，保持在原來的儲存格
-                
+                e.preventDefault(); 
                 const targetId = e.target.id;
-                
-                // 將點擊的儲存格 ID 附加到原本的公式後面
                 selectMode.sourceInput.value = selectMode.baseVal + targetId;
-                
-                // 加上視覺提示
                 clearSelectHighlight();
                 e.target.classList.add('selecting');
-                
-                // 更新基準值，允許使用者按下運算子後繼續點選其他儲存格
-                // 這裡暫時關閉選取模式，直到使用者再次輸入運算子
                 selectMode.active = false; 
-                
-                // 確保焦點與游標位置在最後面
                 selectMode.sourceInput.focus();
                 const len = selectMode.sourceInput.value.length;
                 selectMode.sourceInput.setSelectionRange(len, len);
+                return;
+            }
+
+            if (e.target.tagName === 'INPUT') {
+                const pos = parseCellId(e.target.id);
+                if (pos) {
+                    isDragging = true;
+                    selectionStart = pos;
+                    selectionEnd = pos;
+                    drawSelection();
+                }
             }
         });
 
-        function focusCell(col, row) {
-            if (col < 0 || col >= COLS || row < 1 || row > ROWS) return;
-            const target = document.getElementById(getCellId(col, row));
-            if (target) target.focus();
+        table.addEventListener('mouseover', (e) => {
+            if (isDragging && e.target.tagName === 'INPUT') {
+                const pos = parseCellId(e.target.id);
+                if (pos) {
+                    selectionEnd = pos;
+                    drawSelection();
+                }
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        function drawSelection() {
+            document.querySelectorAll('.selected-range').forEach(el => el.classList.remove('selected-range'));
+            if (!selectionStart || !selectionEnd) return;
+
+            const minC = Math.min(selectionStart.col, selectionEnd.col);
+            const maxC = Math.max(selectionStart.col, selectionEnd.col);
+            const minR = Math.min(selectionStart.row, selectionEnd.row);
+            const maxR = Math.max(selectionStart.row, selectionEnd.row);
+
+            for (let r = minR; r <= maxR; r++) {
+                for (let c = minC; c <= maxC; c++) {
+                    const id = getCellId(c, r);
+                    const el = document.getElementById(id);
+                    if (el) el.classList.add('selected-range');
+                }
+            }
         }
 
         function clearSelectHighlight() {
             document.querySelectorAll('.selecting').forEach(el => el.classList.remove('selecting'));
         }
 
-        // ====== 鍵盤導覽與選取功能 ======
+        function focusCell(col, row) {
+            if (col < 0 || col >= COLS || row < 1 || row > ROWS) return;
+            const target = document.getElementById(getCellId(col, row));
+            if (target) {
+                target.focus();
+                const pos = parseCellId(target.id);
+                selectionStart = pos;
+                selectionEnd = pos;
+                drawSelection();
+            }
+        }
+
         function handleKeyDown(e, cell) {
             const pos = parseCellId(cell.id);
             if (!pos) return;
@@ -204,52 +336,134 @@
             }
         }
 
-        // ====== 複製與貼上 (相對位置更新) ======
-        document.addEventListener('copy', (e) => {
+        function handleCopyCut(e, isCut) {
+            const selectedElements = document.querySelectorAll('.selected-range');
+            const isMultiSelect = selectedElements.length > 1 && selectionStart && selectionEnd;
             const active = document.activeElement;
-            if (active && active.tagName === 'INPUT' && active.id) {
-                const pos = parseCellId(active.id);
-                clipboardData = { formula: data[active.id] || active.value, col: pos.col, row: pos.row };
+
+            // 修正 1：確保在多重選取時，不會因為意外反白到第一格的文字而中斷複製流程
+            if (!isMultiSelect && active && active.tagName === 'INPUT' && active.selectionStart !== active.selectionEnd) {
+                return; 
             }
-        });
+
+            let minC, maxC, minR, maxR;
+            
+            if (isMultiSelect) {
+                minC = Math.min(selectionStart.col, selectionEnd.col);
+                maxC = Math.max(selectionStart.col, selectionEnd.col);
+                minR = Math.min(selectionStart.row, selectionEnd.row);
+                maxR = Math.max(selectionStart.row, selectionEnd.row);
+            } else if (active && active.tagName === 'INPUT' && active.id) {
+                const pos = parseCellId(active.id);
+                minC = maxC = pos.col;
+                minR = maxR = pos.row;
+            } else {
+                return;
+            }
+
+            clipboardRangeData = { originCol: minC, originRow: minR, cells: [] };
+            
+            for (let r = minR; r <= maxR; r++) {
+                for (let c = minC; c <= maxC; c++) {
+                    const id = getCellId(c, r);
+                    const inputEl = document.getElementById(id);
+                    
+                    // 修正 2：如果正在處理的格子就是目前游標所在的格子，直接抓畫面上尚未 blur 的 value
+                    const formula = (active === inputEl) ? inputEl.value : (data[id] || '');
+                    
+                    clipboardRangeData.cells.push({ 
+                        dCol: c - minC, 
+                        dRow: r - minR, 
+                        formula: formula 
+                    });
+                    
+                    if (isCut) {
+                        data[id] = '';
+                        if (inputEl) inputEl.value = '';
+                    }
+                }
+            }
+            if (isCut) computeAll();
+            showToast(`已${isCut ? '剪下' : '複製'} ${clipboardRangeData.cells.length} 個儲存格`);
+        }
+
+        document.addEventListener('copy', (e) => handleCopyCut(e, false));
+        document.addEventListener('cut', (e) => handleCopyCut(e, true));
 
         document.addEventListener('paste', (e) => {
             const active = document.activeElement;
-            if (active && active.tagName === 'INPUT' && active.id && clipboardData.formula) {
+            
+            if (active && active.tagName === 'INPUT' && active.id && clipboardRangeData && clipboardRangeData.cells.length > 0) {
                 e.preventDefault(); 
                 const pos = parseCellId(active.id);
-                const colOffset = pos.col - clipboardData.col;
-                const rowOffset = pos.row - clipboardData.row;
-                const shiftedFormula = shiftFormula(clipboardData.formula, colOffset, rowOffset);
-                active.value = shiftedFormula;
-                data[active.id] = shiftedFormula;
+                
+                const colOffset = pos.col - clipboardRangeData.originCol;
+                const rowOffset = pos.row - clipboardRangeData.originRow;
+                
+                clipboardRangeData.cells.forEach(cell => {
+                    const targetCol = pos.col + cell.dCol;
+                    const targetRow = pos.row + cell.dRow;
+                    
+                    if (targetCol >= 0 && targetCol < COLS && targetRow >= 1 && targetRow <= ROWS) {
+                        const targetId = getCellId(targetCol, targetRow);
+                        const shiftedFormula = shiftFormula(cell.formula, colOffset, rowOffset);
+                        data[targetId] = shiftedFormula;
+                        
+                        // 修正 3：防止貼上的第一格被失焦覆寫，強制同步更新當前焦點的 input 值
+                        if (targetId === active.id) {
+                            active.value = shiftedFormula;
+                        }
+                    }
+                });
+                
                 computeAll();
+                showToast(`已貼上 ${clipboardRangeData.cells.length} 個儲存格資料`);
+                
+                const maxDCol = Math.max(...clipboardRangeData.cells.map(c => c.dCol));
+                const maxDRow = Math.max(...clipboardRangeData.cells.map(c => c.dRow));
+                selectionStart = pos;
+                selectionEnd = { 
+                    col: Math.min(pos.col + maxDCol, COLS - 1), 
+                    row: Math.min(pos.row + maxDRow, ROWS) 
+                };
+                drawSelection();
             }
         });
 
         function shiftFormula(formula, colOffset, rowOffset) {
             if (!formula.startsWith('=')) return formula; 
-            return formula.replace(/([A-Z]+)([0-9]+)/g, (match, colStr, rowStr) => {
-                let newColCode = colStr.charCodeAt(0) + colOffset;
+            return formula.replace(/([A-Za-z]+)([0-9]+)/g, (match, colStr, rowStr) => {
+                let newColCode = colStr.toUpperCase().charCodeAt(0) + colOffset;
                 let newRow = parseInt(rowStr) + rowOffset;
                 if (newColCode < 65 || newRow < 1) return match;
                 return String.fromCharCode(newColCode) + newRow;
             });
         }
 
-        // ====== 核心計算 ======
         function computeAll() {
+            for (let r = 1; r <= ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const id = getCellId(c, r);
+                    const cell = document.getElementById(id);
+                    if (cell && document.activeElement !== cell) {
+                         cell.value = ''; 
+                    }
+                }
+            }
+
             for (let r = 1; r <= ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
                     const id = getCellId(c, r);
                     const cell = document.getElementById(id);
                     if (document.activeElement !== cell) {
                         const val = data[id];
-                        if (val && val.startsWith('=')) {
-                            try { cell.value = evaluateFormula(val.substring(1)); } 
-                            catch (e) { cell.value = '#ERROR'; }
-                        } else {
-                            cell.value = val;
+                        if (val) {
+                            if (val.startsWith('=')) {
+                                try { cell.value = evaluateFormula(val.substring(1)); } 
+                                catch (e) { cell.value = '#ERROR'; }
+                            } else {
+                                cell.value = val;
+                            }
                         }
                     }
                 }
@@ -257,8 +471,8 @@
         }
 
         function evaluateFormula(formula) {
-            let parsedFormula = formula.replace(/[A-Z]+[0-9]+/g, (match) => {
-                let cellVal = data[match];
+            let parsedFormula = formula.replace(/[A-Za-z]+[0-9]+/g, (match) => {
+                let cellVal = data[match.toUpperCase()];
                 if (cellVal && cellVal.startsWith('=')) return evaluateFormula(cellVal.substring(1));
                 const num = parseFloat(cellVal);
                 return isNaN(num) ? 0 : num; 
