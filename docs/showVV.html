@@ -82,7 +82,8 @@
   
         <div id="list-by-url" class="inline-list">載入資料中...</div>
 
-        <div style="display: none;">
+        <br><br><br><br><h2><span>按名字</span></h2><br>
+        <div style="display: block;">
             <div id="list-by-name" class="inline-list">載入資料中...</div>
         </div>
     </div>
@@ -107,8 +108,6 @@
                 const jsonData = JSON.parse(originalHTML);
                 jsonUrl= jsonData.src;
                 baseUrl= jsonData.base;
-                console.log("jsonUrl",jsonUrl);
-                console.log("baseUrl",baseUrl);
                 return jsonData;           
             }catch(e){
                 return null;
@@ -186,9 +185,13 @@
                 .replace(/\*(.*?)\*/g, '<em>$1</em>');                        
         }
 
-        function renderInlineList(elementId, items) {
+        // 修改後的渲染函數：支援傳入首字母提取邏輯
+        function renderInlineList(elementId, items, getCompareChar) {
             const container = document.getElementById(elementId);
-            const linksHtml = items.map(item => {
+            let htmlOutput = '';
+            let lastChar = '';
+
+            items.forEach((item, index) => {
                 const nameHtml = parseMarkdown(item.name);
                 let href = '#';
                 if (item.url) {
@@ -198,9 +201,20 @@
                         href = baseUrl + item.url;
                     }
                 }
-                return `<a href="${href}" target="_blank">${nameHtml}</a>`;
+
+                if (getCompareChar) {
+                    const currentChar = getCompareChar(item);
+                    // 比較首字母，若不同且不是第一個元素，則加入換行
+                    if (index > 0 && currentChar !== lastChar && currentChar !== '') {
+                        htmlOutput += '<br><br>';
+                    }
+                    lastChar = currentChar;
+                }
+
+                htmlOutput += `<a href="${href}" target="_blank">${nameHtml}</a> `;
             });
-            container.innerHTML = linksHtml.join(' ');
+
+            container.innerHTML = htmlOutput;
         }
 
         function loadData() {
@@ -222,7 +236,10 @@
                         const urlB = (b.url || '').toString().toLowerCase();
                         return urlA.localeCompare(urlB, 'zh-TW');
                     });
-                    renderInlineList('list-by-url', sortedByUrl);
+                    
+                    // 提取 URL 首字母的邏輯 (忽略開頭的斜線)
+                    const getUrlFirstChar = item => (item.url || '').replace(/^\/+/, '').charAt(0).toLowerCase();
+                    renderInlineList('list-by-url', sortedByUrl, getUrlFirstChar);
 
                     // 按 name 排序
                     const sortedByName = [...data].sort((a, b) => {
@@ -230,7 +247,10 @@
                         const nameB = (b.name || '').toString().toLowerCase();
                         return nameA.localeCompare(nameB, 'zh-TW'); 
                     });
-                    renderInlineList('list-by-name', sortedByName);
+                    
+                    // 提取 Name 首字母的邏輯
+                    const getNameFirstChar = item => (item.name || '').charAt(0).toLowerCase();
+                    renderInlineList('list-by-name', sortedByName, getNameFirstChar);
                 })
                 .catch(error => {
                     console.error('獲取資料失敗:', error);
@@ -239,7 +259,6 @@
                     document.getElementById('list-by-url').innerHTML = errorMsg;
                 });
         }
-
 
     </script>
 
