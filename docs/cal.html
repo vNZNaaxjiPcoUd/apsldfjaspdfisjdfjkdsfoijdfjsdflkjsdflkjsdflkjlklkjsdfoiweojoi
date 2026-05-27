@@ -16,7 +16,7 @@
         border: 2px solid transparent; 
         outline: none;
         padding: 8px;
-        font-size: 14px;
+        font-size: 16px;
         box-sizing: border-box;
         background-color: transparent; 
         resize: none;
@@ -55,7 +55,7 @@
     .selected-range { background-color: #e8f0fe !important; } 
 
     .controls { margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;}
-    button, select { padding: 6px 12px; cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;}
+    button, select { padding: 6px 12px; cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;}
     button:hover { background-color: #e0e0e0; }
 
     /* ====== 狀態泡泡 (Toast) 樣式 ====== */
@@ -63,7 +63,7 @@
         visibility: hidden; min-width: 250px; background-color: #323232; color: #fff;
         text-align: center; border-radius: 8px; padding: 12px 16px; position: fixed;
         z-index: 1000; left: 50%; bottom: 30px; transform: translateX(-50%);
-        font-size: 15px; box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+        font-size: 16px; box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
         opacity: 0; transition: opacity 0.3s ease, bottom 0.3s ease;
     }
     #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
@@ -133,7 +133,7 @@
                 const tx = dbInstance.transaction(STORE_NAME, 'readwrite');
                 const store = tx.objectStore(STORE_NAME);
                 store.put({ id: 'sheet_1', cells: data });
-                tx.oncomplete = () => showToast('💾 資料已成功儲存至瀏覽器！');
+                tx.oncomplete = () => showToast('💾 資料已成功儲存！');
                 tx.onerror = () => showToast('儲存失敗！', true);
             } catch (error) {
                 showToast('儲存發生錯誤，請查看控制台。', true);
@@ -159,7 +159,7 @@
                 };
                 request.onerror = () => showToast('讀取失敗！', true);
             } catch (error) {
-                showToast('讀取發生錯誤，請查看控制台。', true);
+                showToast('讀取發生錯誤。', true);
             }
         }
 
