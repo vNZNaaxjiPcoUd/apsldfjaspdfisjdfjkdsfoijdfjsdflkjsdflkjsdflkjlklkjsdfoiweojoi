@@ -186,7 +186,7 @@
                         // 1. 設定表格的「最小底線」
                         // 假設欄位最少維持 A~Z (26欄，index 0~25)，列數最少維持 1 列
                         let maxCol = 25; 
-                        let maxRow = 1;
+                        let maxRow = 10;
 
                         // 2. 找出存檔資料中，"真正有文字"的最大欄位與列數
                         Object.keys(result.cells).forEach(key => {
@@ -203,7 +203,7 @@
 
                         // 3. 直接更新全域變數為實際所需的精準大小
                         COLS = maxCol + 1;
-                        ROWS = maxRow;
+                        ROWS = maxRow + 1;
 
                         // 4. 將資料載入記憶體
                         Object.keys(data).forEach(key => delete data[key]);
