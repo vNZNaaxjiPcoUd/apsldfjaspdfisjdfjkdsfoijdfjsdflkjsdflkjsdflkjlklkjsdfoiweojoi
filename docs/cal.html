@@ -74,12 +74,12 @@
 
     <h2>試算表</h2>
     <div class="controls">
-        <button onclick="saveData()">💾 儲存至本機</button>
-        <button onclick="loadData()">📂 從本機讀取</button>
+        <button onclick="saveData()">💾 儲存</button>
+        <button onclick="loadData()">📂 讀取</button>
         <select onchange="document.getElementById('spreadsheet').className = this.value">
-            <option value="mode-clip">呈現：超出蓋住 (Clip)</option>
-            <option value="mode-wrap">呈現：強制換行 (Wrap)</option>
-            <option value="mode-extend">呈現：隨文字延伸 (Extend)</option>
+            <option value="mode-clip">超出蓋住</option>
+            <option value="mode-wrap">強制換行</option>
+            <option value="mode-extend">隨文字延伸</option>
         </select>
     </div>
 
