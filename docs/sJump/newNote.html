@@ -84,7 +84,7 @@
     <input type="text" id="urlInput" class="url-input" value="" placeholder="書名"  onkeydown="if(event.key === 'Enter') openLiveView()">
     
     <button class="launch-btn" onclick="openLiveView()">打開</button>
-    <div><a href="newNoteList.html" target="_blank">舊</a></div>
+    <div><a id="nowReadLink" href="list.html" target="_blank"></a> <a id="nowEditLink" href="list.html" target="_blank"></a> | <a href="newNoteList.html" target="_blank">舊</a></div>
 
     <div id="statusMessage" class="status-info" ></div>
 
@@ -137,19 +137,29 @@
             //const windowFeatures = 'width=375,height=800,left=100,top=100,toolbar=no,menubar=no,scrollbars=no,resizable=yes,location=no,status=no';
             const windowFeatures = 'toolbar=no,menubar=yes,scrollbars=yes,resizable=yes';
 
-
-            targetUrl = `https://n.jwint.net/r?${bookName}`;
-            if(await sLink(pwd, "QN_"+bookName, targetUrl, "quickN:"+bookName)){
+            const redirectUrl = `https://n.jwint.net/r?${bookName}`;
+            if(await sLink(pwd, "QN_"+bookName, redirectUrl, "quickN:"+bookName)){
                 console.log("url saved");
             }else{
                 console.log("url save failed");
                 updateStatus("鑰匙錯了！", "error");
                 return;
             }   
-            targetUrl = `https://n.jwint.net/?${bookName}=YfbMlmGq0j5WrCekCbqpn7tocCbNEbid0HCVjQB1xLBSkU3GqjKBtq8a7sQh2Zt`;
-            window.open(targetUrl, windowName, windowFeatures);
+            const nowReadLink = document.getElementById('nowReadLink'); 
+            //將它的名字換成bookName, 它的href換成targetUrl
+            nowReadLink.href = redirectUrl;
+            nowReadLink.innerHTML = "唯讀-"+bookName;
 
-            updateStatus("已開啟！", "success");
+
+            const editorUrl = `https://n.jwint.net/?${bookName}=YfbMlmGq0j5WrCekCbqpn7tocCbNEbid0HCVjQB1xLBSkU3GqjKBtq8a7sQh2Zt`;
+            console.log(editorUrl);
+
+            const nowEditLink = document.getElementById('nowEditLink'); 
+            nowEditLink.href = editorUrl;
+            nowEditLink.innerHTML = "編輯-"+bookName;
+
+            //window.open(editorUrl, "_blank");
+            updateStatus("完成！", "success");
             inputElement.value = '';
         }
     </script>
