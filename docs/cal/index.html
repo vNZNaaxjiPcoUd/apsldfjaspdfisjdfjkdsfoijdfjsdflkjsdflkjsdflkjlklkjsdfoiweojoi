@@ -299,24 +299,24 @@
 <body>
 
     <div class="controls">
-        <button onclick="addRow()">➕</button>
-        <button onclick="saveData()">💾</button>
-        <button onclick="loadData()">📂</button>
-        <select onchange="document.getElementById('spreadsheet').className = this.value">
-            <option value="mode-clip">蓋住</option>
-            <option value="mode-wrap">換行</option>
+        <button onclick="addRow()" title="下面增加十行">➕</button>
+        <button onclick="saveData()" title="保存資料">💾</button>
+        <button onclick="loadData()" title="讀取">📂</button>
+        <select onchange="document.getElementById('spreadsheet').className = this.value" title="格顯示方式">
             <option value="mode-extend">延伸</option>
+            <option value="mode-wrap" >換行</option>
+            <option value="mode-clip" >蓋住</option>
         </select>
         
         <div class="divider"></div>
         
-        <input type="color" id="bgColorPicker" value="#a7e9af" title="選擇底色">
-        <button onclick="applyBgColor()">🖌️</button>
-        <button onclick="clearBgColor()">✖️</button>
+        <input type="color" id="bgColorPicker" value="#f7fd4c" title="選擇底色">
+        <button onclick="applyBgColor()" title="加上底色標示">🖌️</button>
+        <button onclick="clearBgColor()" title="取消底色標示">✖️</button>
     </div>
 
     <div class="table-container">
-        <table id="spreadsheet" class="mode-clip"></table>
+        <table id="spreadsheet" class="mode-extend"></table>
     </div>
 
     <div id="toast"></div>
