@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#43b581">
 <link rel="apple-touch-icon" href="icon-192.png">
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.1/math.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
     :root {
@@ -863,6 +863,29 @@
             });
         }
 
+        // 範圍區間展開輔助函數：將 A1:B2 展開為 A1,A2,B1,B2
+        function expandRange(match, startColStr, startRowStr, endColStr, endRowStr) {
+            let startCol = startColStr.charCodeAt(0);
+            let endCol = endColStr.charCodeAt(0);
+            let startRow = parseInt(startRowStr);
+            let endRow = parseInt(endRowStr);
+
+            // 確保迴圈是從小到大，支援 A1:A10 或 A10:A1 倒著拉的情況
+            let minCol = Math.min(startCol, endCol);
+            let maxCol = Math.max(startCol, endCol);
+            let minRow = Math.min(startRow, endRow);
+            let maxRow = Math.max(startRow, endRow);
+
+            let cells = [];
+            for (let c = minCol; c <= maxCol; c++) {
+                for (let r = minRow; r <= maxRow; r++) {
+                    cells.push(String.fromCharCode(c) + r);
+                }
+            }
+            // 回傳逗號分隔的字串
+            return cells.join(',');
+        }
+
         // ✅ 核心試算與渲染引擎
         function computeAll() {
             const evaluated = {};
@@ -876,26 +899,43 @@
                 if (val === undefined || val === null) val = '';
                 
                 if (!val.toString().startsWith('=')) {
-                    evaluated[id] = val;
-                    return val;
+                    // 若是純文字且為空字串，我們讓它回傳 0，避免 SUM 報錯；若非純數字則照舊
+                    let numVal = Number(val);
+                    evaluated[id] = val === '' ? 0 : (isNaN(numVal) ? val : numVal);
+                    return evaluated[id];
                 }
 
                 visited.add(id);
+                // 統一轉大寫以利解析
                 let formula = val.toString().substring(1).toUpperCase();
                 
-                // 置換儲存格參照為對應數值
+                // 步驟 1：轉換常見的 Excel 函數名稱到 Math.js 支援的名稱
+                formula = formula.replace(/\bSUM\(/g, 'sum(')
+                                 .replace(/\bAVERAGE\(/g, 'mean(')
+                                 .replace(/\bMAX\(/g, 'max(')
+                                 .replace(/\bMIN\(/g, 'min(')
+                                 .replace(/\bABS\(/g, 'abs(')
+                                 .replace(/\bROUND\(/g, 'round(')
+                                 .replace(/\bPOWER\(/g, 'pow(');
+
+                // 步驟 2：將 A1:A10 這類的範圍展開成 A1,A2,A3...
+                // Regex 說明：捕捉 [英文字母][數字] : [英文字母][數字]
+                formula = formula.replace(/([A-Z]+)(\d+):([A-Z]+)(\d+)/g, expandRange);
+
+                // 步驟 3：置換單一儲存格參照為對應數值
                 formula = formula.replace(/([A-Z])(\d+)/g, (match) => {
                     let refVal = evaluate(match, visited);
-                    // 加上括號 `(${refVal})` 避免產生連續運算子導致語法錯誤
+                    // 加上括號避免連續運算子問題，或將文字轉為字串
                     return isNaN(refVal) || refVal === '' ? `"${refVal}"` : `(${refVal})`;
                 });
 
                 try {
-                    // 使用原生 JS 計算基礎公式
-                    evaluated[id] = new Function('return ' + formula)();
+                    // 步驟 4：使用 Math.js 計算最終結果
+                    evaluated[id] = math.evaluate(formula);
                 } catch (e) {
                     evaluated[id] = "#ERROR!";
                 }
+                
                 visited.delete(id);
                 return evaluated[id];
             }
@@ -932,6 +972,69 @@
             }
         }
 
+        // 擴充 Math.js，加入自訂的 Excel 常用函數
+        math.import({
+            // === 先前的邏輯與統計函數 ===
+            IF: function (condition, trueVal, falseVal) {
+                return condition ? trueVal : falseVal;
+            },
+            COUNT: function (...args) {
+                return args.flat(Infinity).filter(x => typeof x === 'number' && !isNaN(x)).length;
+            },
+            COUNTA: function (...args) {
+                return args.flat(Infinity).filter(x => x !== '' && x !== null).length;
+            },
+            CONCATENATE: function (...args) {
+                return args.flat(Infinity).map(x => (x === null || x === undefined) ? '' : x).join('');
+            },
+
+            // === 新增的字串處理函數 ===
+            // 1. LEN：計算字串長度
+            LEN: function(text) {
+                return String(text || '').length;
+            },
+            
+            // 2. LEFT：取左邊指定數量的字元 (預設取 1 個)
+            LEFT: function(text, numChars = 1) {
+                return String(text || '').substring(0, numChars);
+            },
+            
+            // 3. RIGHT：取右邊指定數量的字元 (預設取 1 個)
+            RIGHT: function(text, numChars = 1) {
+                const str = String(text || '');
+                return str.substring(Math.max(0, str.length - numChars));
+            },
+            
+            // 4. MID：從中間擷取字元 (模擬 Excel 習慣，起始位置從 1 開始)
+            MID: function(text, startNum, numChars) {
+                const str = String(text || '');
+                const startIndex = Math.max(0, startNum - 1); // 將 1-based 轉為 0-based
+                return str.substring(startIndex, startIndex + numChars);
+            },
+            
+            // 5. UPPER：全部轉大寫
+            UPPER: function(text) {
+                return String(text || '').toUpperCase();
+            },
+            
+            // 6. LOWER：全部轉小寫
+            LOWER: function(text) {
+                return String(text || '').toLowerCase();
+            },
+            
+            // 7. TRIM：清除字串前後的多餘空白
+            TRIM: function(text) {
+                return String(text || '').trim();
+            },
+            
+            // 8. FIND：尋找字串位置 (模擬 Excel，從 1 開始，找不到時為了避免整個程式當掉，回傳 0)
+            FIND: function(findText, withinText) {
+                const index = String(withinText || '').indexOf(String(findText || ''));
+                return index >= 0 ? index + 1 : 0;
+            }
+        }, { override: true });
+        
+        
         // 初始化整個表格
         initTable();
     </script>
