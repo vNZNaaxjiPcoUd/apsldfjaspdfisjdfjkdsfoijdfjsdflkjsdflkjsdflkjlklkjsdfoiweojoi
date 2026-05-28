@@ -11,8 +11,8 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-    /* （保留你原本的所有 CSS，無須變更） */
     :root {
+        /* 顏色定義 */
         --primary-green: #43b581;
         --hover-green: #379e6f;
         --light-green: #e9f5ed;
@@ -21,6 +21,77 @@
         --text-dark: #2d4033;
         --text-light: #5e8267;
         --panel-bg: #ffffff;
+
+        /* RWD 預設尺寸 (800px ~ 1599px 的適中版面) */
+        --base-font-size: 16px;
+        --cell-width: 80px; 
+        --index-width: 40px;
+        --ctrl-padding-v: 8px;
+        --ctrl-padding-h: 16px;
+        --ui-height: 38px;
+    }
+
+/* 480px 手機版：極度緊湊，移除多餘留白，格子精確為4個字元寬 */
+    @media (max-width: 799px) {
+        :root {
+            --base-font-size: 16px;
+            /* 使用 ch 單位，精準設定為 4 個字元寬（需加上極小內距避免字貼死邊界） */
+            --cell-width: calc(4ch + 4px); 
+            --index-width: 30px;
+            --ctrl-padding-v: 4px;
+            --ctrl-padding-h: 8px;
+            --ui-height: 32px;
+        }
+        
+        body {
+            padding: 0; /* 移除手機版 body 外圍所有的留白 */
+        }
+
+        .controls {
+            gap: 4px;
+            padding: 6px;
+            margin-bottom: 8px; /* 縮小控制面板與表格的距離 */
+            border-radius: 0 0 8px 8px;
+            border-left: none;
+            border-right: none;
+            border-top: none;
+        }
+
+        th {
+            padding: 2px 0; /* 標題列的上下內距縮到最小 */
+        }
+
+        textarea {
+            padding: 0 2px !important; /* 儲存格內的文字距離邊框只留 2px */
+        }
+    }
+
+    /* 1600px 大螢幕：寬鬆舒適，字體相應放大 */
+    @media (min-width: 1600px) {
+        :root {
+            --base-font-size: 18px;
+            --cell-width: 110px;
+            --index-width: 50px;
+            --ctrl-padding-v: 10px;
+            --ctrl-padding-h: 20px;
+            --ui-height: 44px;
+        }
+    }
+
+    /* 2200px 超大螢幕：最大化舒適度 */
+    @media (min-width: 2200px) {
+        :root {
+            --base-font-size: 20px;
+            --cell-width: 140px;
+            --index-width: 60px;
+            --ctrl-padding-v: 12px;
+            --ctrl-padding-h: 24px;
+            --ui-height: 50px;
+        }
+        .controls {
+            gap: 16px;
+            padding: 20px 32px;
+        }
     }
 
     body { 
@@ -29,6 +100,7 @@
         background-color: var(--bg-green);
         color: var(--text-dark);
         margin: 0;
+        font-size: var(--base-font-size);
     }
 
     .controls { 
@@ -49,26 +121,32 @@
         font-weight: 700;
         color: var(--hover-green);
         letter-spacing: 0.5px;
+        font-size: calc(var(--base-font-size) * 1.5);
     }
 
     button, select, input[type="color"] { 
-        padding: 8px 16px; 
+        padding: var(--ctrl-padding-v) var(--ctrl-padding-h); 
         cursor: pointer; 
         background-color: var(--light-green); 
         border: 1px solid var(--border-green); 
         border-radius: 8px; 
-        font-size: 15px; 
+        font-size: var(--base-font-size); 
         font-family: inherit;
         color: var(--hover-green);
         font-weight: 500;
-        height: 38px; 
+        height: var(--ui-height); 
         box-sizing: border-box;
         transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        -webkit-appearance: none; /* 移除 iOS Safari 預設按鈕外觀 */
+        appearance: none;
+        margin: 0;
     }
     
     input[type="color"] { 
         padding: 2px 6px; 
-        width: 55px; 
+        width: 35px; 
         border-radius: 8px;
     }
 
@@ -81,12 +159,20 @@
 
     .divider { width: 1px; height: 24px; background-color: var(--border-green); margin: 0 5px; }
 
+    /* 表格滾動容器：保護 480px 時版面不會爆掉 */
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        border-radius: 4px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    }
+
     table { 
         border-collapse: collapse; 
         user-select: none; 
         table-layout: fixed; 
         background-color: var(--panel-bg);
-        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        width: max-content; /* 確保內容決定寬度 */
     }
     
     th, td { border: 1px solid var(--border-green); padding: 0; vertical-align: top; }
@@ -94,21 +180,37 @@
     th { 
         background-color: var(--light-green); 
         padding: 6px; 
-        min-width: 70px; 
         text-align: center; 
         color: var(--text-light); 
         font-weight: 500;
         height: 28px; 
         position: relative; 
+        font-size: var(--base-font-size);
+    }
+
+    /* 利用 class 套用 RWD 寬度 */
+    th.index-cell { width: var(--index-width); min-width: var(--index-width); }
+    th.data-cell { 
+        width: var(--cell-width); 
+        min-width: var(--cell-width); 
+        max-width: var(--cell-width); /* 新增這行 */
     }
     
-    td { position: relative; transition: background-color 0.2s; }
+    td { 
+        position: relative; 
+        transition: background-color 0.2s; 
+        
+        /* 新增這三行，確保 td 絕對服從變數大小 */
+        width: var(--cell-width);
+        min-width: var(--cell-width);
+        max-width: var(--cell-width);
+    }
     
     textarea {
         border: 2px solid transparent; 
         outline: none;
         padding: 8px;
-        font-size: 15px;
+        font-size: var(--base-font-size);
         box-sizing: border-box;
         background-color: transparent; 
         resize: none;
@@ -118,6 +220,14 @@
         margin: 0;
         display: block;
         transition: border 0.2s, box-shadow 0.2s;
+
+        /* 💡 以下是針對 Safari 的殺手鐧 */
+        width: 100%;
+        min-width: 0;         /* 破除 Safari 預設的最小寬度限制 */
+        max-width: 100%;      /* 嚴格限制不能超出 td */
+        -webkit-appearance: none; /* 移除蘋果預設外觀 */
+        appearance: none;
+        border-radius: 0;     /* 移除蘋果預設圓角 */
     }
     
     textarea:focus { 
@@ -144,9 +254,9 @@
         background-color: var(--primary-green);
     }
 
-    .mode-clip textarea { width: 100%; height: 38px; white-space: nowrap; overflow: hidden; text-overflow: clip; }
-    .mode-wrap textarea { width: 100%; min-height: 38px; white-space: normal; word-break: break-all; overflow: hidden; field-sizing: content; }
-    .mode-extend textarea { height: 38px; white-space: nowrap; overflow: hidden; field-sizing: content; }
+    .mode-clip textarea { width: 100%; height: var(--ui-height); white-space: nowrap; overflow: hidden; text-overflow: clip; }
+    .mode-wrap textarea { width: 100%; min-height: var(--ui-height); white-space: normal; word-break: break-all; overflow: hidden; field-sizing: content; }
+    .mode-extend textarea { height: var(--ui-height); white-space: nowrap; overflow: hidden; field-sizing: content; }
 
     .selecting { 
         border: 2px dashed #20c997 !important; 
@@ -171,7 +281,7 @@
         left: 50%; 
         bottom: 30px; 
         transform: translateX(-50%);
-        font-size: 15px; 
+        font-size: var(--base-font-size); 
         font-weight: 500;
         box-shadow: 0px 8px 24px rgba(39, 98, 61, 0.25);
         opacity: 0; 
@@ -185,30 +295,29 @@
 <body>
 
     <div class="controls">
-        <h2>試算表</h2>
-        <div class="divider"></div>
-        <button onclick="addRow()">➕ 增加十列</button>
-        <button onclick="saveData()">💾 儲存</button>
-        <button onclick="loadData()">📂 讀取</button>
+        <button onclick="addRow()">➕</button>
+        <button onclick="saveData()">💾</button>
+        <button onclick="loadData()">📂</button>
         <select onchange="document.getElementById('spreadsheet').className = this.value">
-            <option value="mode-clip">超出蓋住</option>
-            <option value="mode-wrap">強制換行</option>
-            <option value="mode-extend">隨文字延伸</option>
+            <option value="mode-clip">蓋住</option>
+            <option value="mode-wrap">換行</option>
+            <option value="mode-extend">延伸</option>
         </select>
         
         <div class="divider"></div>
         
         <input type="color" id="bgColorPicker" value="#a7e9af" title="選擇底色">
-        <button onclick="applyBgColor()">🖌️ 填滿底色</button>
-        <button onclick="clearBgColor()">✖️ 清除底色</button>
+        <button onclick="applyBgColor()">🖌️</button>
+        <button onclick="clearBgColor()">✖️</button>
     </div>
 
-    <table id="spreadsheet" class="mode-clip"></table>
+    <div class="table-container">
+        <table id="spreadsheet" class="mode-clip"></table>
+    </div>
 
     <div id="toast"></div>
 
     <script>
-        // （保留你原本的所有 JavaScript 邏輯，無須變更）
         let COLS = 26; 
         let ROWS = 29; 
 
@@ -330,10 +439,11 @@
         let startX = 0;
         let startWidth = 0;
 
+        /* 修改了 initTableDOM 與 createRowDOM：將寫死的 inline-style 改為 class 套用 */
         function initTableDOM() {
-            let headerRow = '<tr id="header-row"><th style="width: 40px;"></th>'; 
+            let headerRow = `<tr id="header-row"><th class="index-cell"></th>`; 
             for (let c = 0; c < COLS; c++) {
-                headerRow += `<th style="width: 80px;">${String.fromCharCode(65 + c)}<div class="resizer"></div></th>`;
+                headerRow += `<th class="data-cell">${String.fromCharCode(65 + c)}<div class="resizer"></div></th>`;
             }
             headerRow += '</tr>';
             table.innerHTML = headerRow;
@@ -351,7 +461,7 @@
 
         function createRowDOM(r) {
             let tr = document.createElement('tr');
-            tr.innerHTML = `<th>${r}</th>`;
+            tr.innerHTML = `<th class="index-cell">${r}</th>`;
             for (let c = 0; c < COLS; c++) {
                 const id = getCellId(c, r);
                 data[id] = data[id] || ''; 
@@ -822,7 +932,7 @@
 
         initTable();
 
-        // ---- 新增：註冊 Service Worker ----
+        // ---- 新增：註冊 Service Worker (並補全程式碼) ----
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
@@ -830,7 +940,7 @@
                         console.log('Service Worker 註冊成功，範圍為：', registration.scope);
                     })
                     .catch((error) => {
-                        console.error('Service Worker 註冊失敗：', error);
+                        console.log('Service Worker 註冊失敗：', error);
                     });
             });
         }
