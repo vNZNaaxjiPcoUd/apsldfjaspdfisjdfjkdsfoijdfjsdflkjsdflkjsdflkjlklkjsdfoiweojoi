@@ -31,11 +31,10 @@
         --ui-height: 38px;
     }
 
-/* 480px 手機版：極度緊湊，移除多餘留白，格子精確為4個字元寬 */
+    /* 480px 手機版：極度緊湊，移除多餘留白，格子精確為4個字元寬 */
     @media (max-width: 799px) {
         :root {
             --base-font-size: 16px;
-            /* 使用 ch 單位，精準設定為 4 個字元寬（需加上極小內距避免字貼死邊界） */
             --cell-width: calc(4ch + 4px); 
             --index-width: 30px;
             --ctrl-padding-v: 4px;
@@ -43,27 +42,20 @@
             --ui-height: 32px;
         }
         
-        body {
-            padding: 0; /* 移除手機版 body 外圍所有的留白 */
-        }
+        body { padding: 0; }
 
         .controls {
             gap: 4px;
             padding: 6px;
-            margin-bottom: 8px; /* 縮小控制面板與表格的距離 */
+            margin-bottom: 8px; 
             border-radius: 0 0 8px 8px;
             border-left: none;
             border-right: none;
             border-top: none;
         }
 
-        th {
-            padding: 2px 0; /* 標題列的上下內距縮到最小 */
-        }
-
-        textarea {
-            padding: 0 2px !important; /* 儲存格內的文字距離邊框只留 2px */
-        }
+        th { padding: 2px 0; }
+        textarea { padding: 0 2px !important; }
     }
 
     /* 1600px 大螢幕：寬鬆舒適，字體相應放大 */
@@ -88,10 +80,7 @@
             --ctrl-padding-h: 24px;
             --ui-height: 50px;
         }
-        .controls {
-            gap: 16px;
-            padding: 20px 32px;
-        }
+        .controls { gap: 16px; padding: 20px 32px; }
     }
 
     body { 
@@ -139,16 +128,12 @@
         transition: all 0.25s ease;
         display: flex;
         align-items: center;
-        -webkit-appearance: none; /* 移除 iOS Safari 預設按鈕外觀 */
+        -webkit-appearance: none; 
         appearance: none;
         margin: 0;
     }
     
-    input[type="color"] { 
-        padding: 2px 6px; 
-        width: 35px; 
-        border-radius: 8px;
-    }
+    input[type="color"] { padding: 2px 6px; width: 35px; border-radius: 8px; }
 
     button:hover, select:hover { 
         background-color: #d8eedf; 
@@ -159,7 +144,6 @@
 
     .divider { width: 1px; height: 24px; background-color: var(--border-green); margin: 0 5px; }
 
-    /* 表格滾動容器：保護 480px 時版面不會爆掉 */
     .table-container {
         width: 100%;
         overflow-x: auto;
@@ -172,7 +156,7 @@
         user-select: none; 
         table-layout: fixed; 
         background-color: var(--panel-bg);
-        width: max-content; /* 確保內容決定寬度 */
+        width: max-content; 
     }
     
     th, td { border: 1px solid var(--border-green); padding: 0; vertical-align: top; }
@@ -188,19 +172,12 @@
         font-size: var(--base-font-size);
     }
 
-    /* 利用 class 套用 RWD 寬度 */
     th.index-cell { width: var(--index-width); min-width: var(--index-width); }
-    th.data-cell { 
-        width: var(--cell-width); 
-        min-width: var(--cell-width); 
-        max-width: var(--cell-width); /* 新增這行 */
-    }
+    th.data-cell { width: var(--cell-width); min-width: var(--cell-width); max-width: var(--cell-width); }
     
     td { 
         position: relative; 
         transition: background-color 0.2s; 
-        
-        /* 新增這三行，確保 td 絕對服從變數大小 */
         width: var(--cell-width);
         min-width: var(--cell-width);
         max-width: var(--cell-width);
@@ -220,14 +197,12 @@
         margin: 0;
         display: block;
         transition: border 0.2s, box-shadow 0.2s;
-
-        /* 💡 以下是針對 Safari 的殺手鐧 */
         width: 100%;
-        min-width: 0;         /* 破除 Safari 預設的最小寬度限制 */
-        max-width: 100%;      /* 嚴格限制不能超出 td */
-        -webkit-appearance: none; /* 移除蘋果預設外觀 */
+        min-width: 0;         
+        max-width: 100%;      
+        -webkit-appearance: none; 
         appearance: none;
-        border-radius: 0;     /* 移除蘋果預設圓角 */
+        border-radius: 0;     
     }
     
     textarea:focus { 
@@ -241,22 +216,54 @@
 
     .resizer {
         position: absolute;
-        top: 0;
-        right: 0;
-        width: 5px;
-        height: 100%;
+        top: 0; right: 0;
+        width: 5px; height: 100%;
         cursor: col-resize;
         user-select: none;
         z-index: 1;
     }
-    
-    .resizer:hover, .resizer.resizing {
-        background-color: var(--primary-green);
-    }
+    .resizer:hover, .resizer.resizing { background-color: var(--primary-green); }
 
     .mode-clip textarea { width: 100%; height: var(--ui-height); white-space: nowrap; overflow: hidden; text-overflow: clip; }
     .mode-wrap textarea { width: 100%; min-height: var(--ui-height); white-space: normal; word-break: break-all; overflow: hidden; field-sizing: content; }
-    .mode-extend textarea { height: var(--ui-height); white-space: nowrap; overflow: hidden; field-sizing: content; }
+    
+    /* ========================================================= */
+    /* 💡 修正的重點區域：讓「延伸」模式能撐開整個欄寬 */
+    /* ========================================================= */
+    
+    /* 1. 解除表格的固定佈局，允許根據內容自動計算欄寬 */
+    table.mode-extend {
+        table-layout: auto; 
+    }
+
+    /* 2. 解除儲存格與表頭的「最大寬度」限制，保留原有的最小寬度 */
+    .mode-extend th.data-cell,
+    .mode-extend td {
+        width: auto;
+        max-width: none; 
+    }
+
+    /* 3. 設定輸入框的延展行為 */
+    .mode-extend textarea { 
+        height: var(--ui-height); 
+        white-space: pre;        /* 防止文字換行 */
+        overflow: hidden;        /* 欄寬已被撐開，不需要溢出顯示了 */
+        field-sizing: content;   
+        
+        width: max-content;      /* 讓 textarea 根據內容無限撐寬 */
+        max-width: none;         
+        min-width: 100%;         /* 但最少要與目前的欄位一樣寬 */
+        
+        background-color: transparent;
+        position: relative;
+        z-index: 1;              
+    }
+
+    .mode-extend textarea:focus {
+        z-index: 10;
+        background-color: #fff;
+        box-shadow: 0 0 0 3px rgba(67, 181, 129, 0.15); 
+    }    
 
     .selecting { 
         border: 2px dashed #20c997 !important; 
@@ -264,9 +271,7 @@
         z-index: 5; 
         position: relative;
     }
-    .selected-range { 
-        background-color: rgba(67, 181, 129, 0.15) !important; 
-    } 
+    .selected-range { background-color: rgba(67, 181, 129, 0.15) !important; } 
 
     #toast {
         visibility: hidden; 
@@ -287,7 +292,6 @@
         opacity: 0; 
         transition: opacity 0.3s ease, bottom 0.3s ease;
     }
-    
     #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
     #toast.error { background-color: #e74c3c; box-shadow: 0px 8px 24px rgba(231, 76, 60, 0.25); }
 </style>
@@ -439,7 +443,6 @@
         let startX = 0;
         let startWidth = 0;
 
-        /* 修改了 initTableDOM 與 createRowDOM：將寫死的 inline-style 改為 class 套用 */
         function initTableDOM() {
             let headerRow = `<tr id="header-row"><th class="index-cell"></th>`; 
             for (let c = 0; c < COLS; c++) {
@@ -503,6 +506,7 @@
                 const cell = document.getElementById(id);
                 if (cell) cell.parentElement.style.backgroundColor = color;
             });
+            computeAll();
         }
 
         function clearBgColor() {
@@ -513,6 +517,7 @@
                 const cell = document.getElementById(id);
                 if (cell) cell.parentElement.style.backgroundColor = '';
             });
+            computeAll();
         }
 
         function getCellId(colIndex, rowIndex) {
@@ -726,9 +731,7 @@
             const isMultiSelect = selectedElements.length > 1 && selectionStart && selectionEnd;
             const active = document.activeElement;
 
-            if (!isMultiSelect && active && active.tagName === 'TEXTAREA' && active.selectionStart !== active.selectionEnd) {
-                return; 
-            }
+            if (!isMultiSelect && active && active.tagName === 'TEXTAREA' && active.selectionStart !== active.selectionEnd) return; 
 
             let minC, maxC, minR, maxR;
             
@@ -817,7 +820,6 @@
                         
                         const shiftedFormula = shiftFormula(sourceCell.formula, colOffset, rowOffset);
                         data[el.id] = shiftedFormula;
-                        el.value = shiftedFormula; 
                         
                         if (sourceCell.bgColor) cellColors[el.id] = sourceCell.bgColor;
                         else delete cellColors[el.id];
@@ -843,107 +845,94 @@
                     
                     if (cell.bgColor) cellColors[targetId] = cell.bgColor;
                     else delete cellColors[targetId];
-                    
-                    const targetEl = document.getElementById(targetId);
-                    if (targetEl) {
-                        targetEl.value = shiftedFormula;
-                    }
                 }
             });
             
             computeAll();
-            showToast(`已貼上 ${clipboardRangeData.cells.length} 個儲存格資料`);
-            
-            const maxDCol = Math.max(...clipboardRangeData.cells.map(c => c.dCol));
-            const maxDRow = Math.max(...clipboardRangeData.cells.map(c => c.dRow));
-            selectionStart = pos;
-            selectionEnd = { 
-                col: Math.min(pos.col + maxDCol, COLS - 1), 
-                row: Math.min(pos.row + maxDRow, ROWS) 
-            };
-            drawSelection();
+            showToast(`已成功貼上 ${clipboardRangeData.cells.length} 個儲存格`);
         });
 
-        function shiftFormula(formula, colOffset, rowOffset) {
-            if (!formula.startsWith('=')) return formula; 
-            return formula.replace(/([A-Za-z]+)([0-9]+)/g, (match, colStr, rowStr) => {
-                let newColCode = colStr.toUpperCase().charCodeAt(0) + colOffset;
-                let newRow = parseInt(rowStr) + rowOffset;
-                if (newColCode < 65 || newRow < 1) return match;
-                return String.fromCharCode(newColCode) + newRow;
+        // ✅ 公式平移邏輯
+        function shiftFormula(formula, dCol, dRow) {
+            if (!formula || typeof formula !== 'string' || !formula.startsWith('=')) return formula;
+            return formula.replace(/([A-Z])(\d+)/g, (match, colStr, rowStr) => {
+                let col = colStr.charCodeAt(0) - 65 + dCol;
+                let row = parseInt(rowStr) + dRow;
+                if (col < 0 || col > 25 || row < 1) return match; 
+                return String.fromCharCode(65 + col) + row;
             });
         }
 
+        // ✅ 核心試算與渲染引擎
         function computeAll() {
-            for (let r = 1; r <= ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    const id = getCellId(c, r);
-                    const cell = document.getElementById(id);
-                    if (cell && document.activeElement !== cell) {
-                         cell.value = ''; 
-                    }
+            const evaluated = {};
+
+            // 簡易公式解析器
+            function evaluate(id, visited = new Set()) {
+                if (visited.has(id)) return "#REF!";
+                if (evaluated[id] !== undefined) return evaluated[id];
+                
+                let val = data[id];
+                if (val === undefined || val === null) val = '';
+                
+                if (!val.toString().startsWith('=')) {
+                    evaluated[id] = val;
+                    return val;
                 }
+
+                visited.add(id);
+                let formula = val.toString().substring(1).toUpperCase();
+                
+                // 置換儲存格參照為對應數值
+                formula = formula.replace(/([A-Z])(\d+)/g, (match) => {
+                    let refVal = evaluate(match, visited);
+                    return isNaN(refVal) || refVal === '' ? `"${refVal}"` : refVal;
+                });
+
+                try {
+                    // 使用原生 JS 計算基礎公式
+                    evaluated[id] = new Function('return ' + formula)();
+                } catch (e) {
+                    evaluated[id] = "#ERROR!";
+                }
+                visited.delete(id);
+                return evaluated[id];
             }
 
             for (let r = 1; r <= ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
                     const id = getCellId(c, r);
                     const cell = document.getElementById(id);
-                    
-                    if (cell) {
-                        const td = cell.parentElement;
-                        td.style.backgroundColor = cellColors[id] || '';
+                    if (!cell) continue;
 
-                        if (document.activeElement !== cell) {
-                            const val = data[id];
-                            if (val) {
-                                if (val.startsWith('=')) {
-                                    try { cell.value = evaluateFormula(val.substring(1)); } 
-                                    catch (e) { cell.value = '#ERROR'; }
-                                } else {
-                                    cell.value = val;
-                                }
-                            }
+                    // 1. 公式及數值渲染
+                    if (document.activeElement === cell) {
+                        cell.value = data[id] || ''; // 正在編輯時顯示原始值/公式
+                    } else {
+                        const val = data[id] || '';
+                        if (val.toString().startsWith('=')) {
+                            cell.value = evaluate(id);
+                        } else {
+                            cell.value = val;
                         }
                     }
+
+                    // 2. 處理背景色與「延伸遮蔽」效果
+                    const bgColor = cellColors[id];
+                    cell.parentElement.style.backgroundColor = bgColor || '';
+                    
+                    // 💡 如果此儲存格內有內容，設定實體背景色來「阻斷」左側文字的延伸；若為空則保持透明讓左側文字透出
+                    if (cell.value.trim() !== '') {
+                        cell.style.backgroundColor = bgColor || 'var(--panel-bg)';
+                    } else {
+                        cell.style.backgroundColor = 'transparent';
+                    }
                 }
             }
         }
 
-        function evaluateFormula(formula) {
-            let parsedFormula = formula.replace(/[A-Za-z]+[0-9]+/g, (match) => {
-                let cellVal = data[match.toUpperCase()];
-                if (cellVal && cellVal.startsWith('=')) return evaluateFormula(cellVal.substring(1));
-                const num = parseFloat(cellVal);
-                return isNaN(num) ? 0 : num; 
-            });
-            if (parsedFormula.trim() === '') return '';
-            return new Function('return ' + parsedFormula)();
-        }
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 's' || e.key === 'S') {
-                if (e.ctrlKey || e.metaKey || e.altKey) {
-                    e.preventDefault();
-                    saveData();         
-                }
-            }
-        });        
-
+        // 初始化整個表格
         initTable();
-
-        // ---- 新增：註冊 Service Worker (並補全程式碼) ----
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then((registration) => {
-                        console.log('Service Worker 註冊成功，範圍為：', registration.scope);
-                    })
-                    .catch((error) => {
-                        console.log('Service Worker 註冊失敗：', error);
-                    });
-            });
-        }
     </script>
 </body>
 </html>
