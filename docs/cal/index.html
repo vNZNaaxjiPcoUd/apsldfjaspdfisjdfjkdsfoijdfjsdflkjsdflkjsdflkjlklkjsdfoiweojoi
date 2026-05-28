@@ -886,7 +886,8 @@
                 // 置換儲存格參照為對應數值
                 formula = formula.replace(/([A-Z])(\d+)/g, (match) => {
                     let refVal = evaluate(match, visited);
-                    return isNaN(refVal) || refVal === '' ? `"${refVal}"` : refVal;
+                    // 加上括號 `(${refVal})` 避免產生連續運算子導致語法錯誤
+                    return isNaN(refVal) || refVal === '' ? `"${refVal}"` : `(${refVal})`;
                 });
 
                 try {
