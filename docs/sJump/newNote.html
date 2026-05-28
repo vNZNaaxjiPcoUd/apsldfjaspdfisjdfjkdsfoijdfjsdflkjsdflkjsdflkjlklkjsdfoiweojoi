@@ -10,83 +10,153 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #222;
-            gap: 15px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            background-color: #1a1a1a;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             font-size: 16px;
             color: #fff;
         }
-        a{
-            color: #fff;
+
+        /* --- 主視窗卡片美化 --- */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            background-color: #2a2a2a;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        a {
+            color: #aaa;
             text-decoration: none;
+            transition: color 0.2s;
         }
         
+        a:hover {
+            color: #4CAF50;
+        }
+        
+        /* --- 輸入框美化 --- */
         .url-input {
-            padding: 12px 15px;
+            padding: 14px 18px;
             font-size: 16px;
-            width: 320px;
-            border: 1px solid #555;
-            border-radius: 8px;
+            width: 300px;
+            border: 1.5px solid #444;
+            border-radius: 10px;
             background-color: #333;
             color: #fff;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
         }
         
         .url-input:focus {
             border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
         }
         
         .url-input::placeholder {
-            color: #aaa;
+            color: #777;
         }
         
+        /* --- 按鈕美化 --- */
         .launch-btn {
-            padding: 15px 30px;
+            padding: 14px 30px;
             font-size: 18px;
+            font-weight: bold;
             background-color: #4CAF50;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: background-color 0.3s;
-            width: 320px;
+            transition: background-color 0.3s, transform 0.1s;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .launch-btn:hover {
             background-color: #45a049;
         }
-        
-        /* --- 狀態訊息樣式 --- */
-        .status-info {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 0px 10px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: normal;
-            background-color: #b9d68bfa;
-            border-top: 0px solid #ccc;
-            z-index: 1000;
-            box-sizing: border-box;
-            color: #000;
-        
+
+        .launch-btn:active {
+            transform: scale(0.98);
         }
 
+        /* --- 底部連結區塊美化 --- */
+        .links-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .divider {
+            color: #555;
+        }
+        
+        /* --- 狀態訊息泡泡 (Toast) 樣式 --- */
+        .status-info {
+            position: fixed;
+            bottom: 40px; /* 懸浮於底部 */
+            left: 50%;
+            transform: translateX(-50%) translateY(50px);
+            padding: 12px 24px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 500;
+            border-radius: 30px; /* 泡泡圓角 */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); /* 帶有彈性的動畫 */
+        }
+
+        /* 顯示泡泡的狀態 */
+        .status-info.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 不同情境的泡泡顏色 */
+        .status-info.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-info.error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .status-info.info {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
     </style>
 </head>
 <body>
 
-    <input type="password" id="passwordInput" class="url-input" value="" placeholder="">
+    <div class="container">
+        <input type="password" id="passwordInput" class="url-input" value="" placeholder="請輸入密碼">
+        <input type="text" id="urlInput" class="url-input" value="" placeholder="書名" onkeydown="if(event.key === 'Enter') openLiveView()">
+        
+        <button class="launch-btn" onclick="openLiveView()">打開</button>
+        
+        <div class="links-group">
+            <a id="nowReadLink" href="list.html" target="_blank"></a> 
+            <a id="nowEditLink" href="list.html" target="_blank"></a> 
+            <span class="divider">|</span> 
+            <a href="newNoteList.html" target="_blank">舊</a>
+        </div>
+    </div>
 
-    <input type="text" id="urlInput" class="url-input" value="" placeholder="書名"  onkeydown="if(event.key === 'Enter') openLiveView()">
-    
-    <button class="launch-btn" onclick="openLiveView()">打開</button>
-    <div><a id="nowReadLink" href="list.html" target="_blank"></a> <a id="nowEditLink" href="list.html" target="_blank"></a> | <a href="newNoteList.html" target="_blank">舊</a></div>
-
-    <div id="statusMessage" class="status-info" ></div>
+    <div id="statusMessage" class="status-info"></div>
 
     <script>
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbx-zZPCI9kLiW7JbQ6gz10ey1b4f1d1EQlAVSd6zdC2DrAszbELQReOC93nND2WnF7S/exec';
@@ -118,10 +188,23 @@
     </script>
 
     <script>
-        function updateStatus(message, type = 'info') {
-            document.getElementById('statusMessage').textContent = message; 
-        }
+        let statusTimeout; // 用於儲存計時器，避免重複點擊時動畫衝突
 
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('statusMessage');
+            
+            // 清除之前的計時器
+            clearTimeout(statusTimeout);
+            
+            // 更新文字與樣式
+            statusEl.textContent = message; 
+            statusEl.className = `status-info show ${type}`;
+            
+            // 3秒後自動隱藏泡泡
+            statusTimeout = setTimeout(() => {
+                statusEl.classList.remove('show');
+            }, 3000);
+        }
 
         async function openLiveView() {
             const inputElement = document.getElementById('urlInput');
@@ -129,36 +212,35 @@
             const pwd = document.getElementById('passwordInput').value.trim();
             
             if (!bookName) {
-                alert('請先填入書名！');
+                updateStatus('請先填入書名！', 'error');
                 return; 
             }
             
+            updateStatus('處理中...', 'info');
+
             const windowName = bookName.replace(/[^a-zA-Z0-9]/g, '_');
-            //const windowFeatures = 'width=375,height=800,left=100,top=100,toolbar=no,menubar=no,scrollbars=no,resizable=yes,location=no,status=no';
             const windowFeatures = 'toolbar=no,menubar=yes,scrollbars=yes,resizable=yes';
 
             const redirectUrl = `https://n.jwint.net/r?${bookName}`;
+            
             if(await sLink(pwd, "QN_"+bookName, redirectUrl, "quickN:"+bookName)){
                 console.log("url saved");
-            }else{
+            } else {
                 console.log("url save failed");
                 updateStatus("鑰匙錯了！", "error");
                 return;
             }   
+            
             const nowReadLink = document.getElementById('nowReadLink'); 
-            //將它的名字換成bookName, 它的href換成targetUrl
             nowReadLink.href = redirectUrl;
-            nowReadLink.innerHTML = "唯讀-"+bookName;
-
+            nowReadLink.innerHTML = "唯讀-" + bookName;
 
             const editorUrl = `https://n.jwint.net/?${bookName}=YfbMlmGq0j5WrCekCbqpn7tocCbNEbid0HCVjQB1xLBSkU3GqjKBtq8a7sQh2Zt`;
-            console.log(editorUrl);
 
             const nowEditLink = document.getElementById('nowEditLink'); 
             nowEditLink.href = editorUrl;
-            nowEditLink.innerHTML = "編輯-"+bookName;
+            nowEditLink.innerHTML = "編輯-" + bookName;
 
-            //window.open(editorUrl, "_blank");
             updateStatus("完成！", "success");
             inputElement.value = '';
         }

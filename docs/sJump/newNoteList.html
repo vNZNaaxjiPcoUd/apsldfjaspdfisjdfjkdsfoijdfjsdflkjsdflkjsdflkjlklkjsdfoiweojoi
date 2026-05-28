@@ -5,116 +5,240 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>分享</title>
   <style>
+    body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        /* 使用 min-height 確保內容過長時不會被截斷頂部 */
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+        box-sizing: border-box;
+        background-color: #1a1a1a;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-size: 16px;
+        color: #fff;
+    }
 
-            body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+    /* --- 主視窗卡片美化 --- */
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        background-color: #2a2a2a;
+        padding: 30px 25px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        /* 改用彈性寬度 */
+        width: 100%;
+        max-width: 400px;
+        box-sizing: border-box;
+    }
 
-            background-color: #222;
-            gap: 15px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-    .login-container {
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    input[type="password"] {
-      padding: 10px;
-      font-size: 16px;
-      width: 80%;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    .message {
-      color: red;
-      margin-top: 10px;
-      font-size: 14px;
-    }
+    /* 預設隱藏列表容器 */
     #link-list-container {
-      display: none;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: none;
     }
+
+    h2 {
+        margin: 0 0 5px 0;
+        font-size: 22px;
+        font-weight: 600;
+        color: #fff;
+        text-align: center;
+    }
+    
+    /* --- 輸入框美化 --- */
+    .url-input {
+        padding: 14px 18px;
+        font-size: 16px;
+        width: 100%;
+        border: 1.5px solid #444;
+        border-radius: 10px;
+        background-color: #333;
+        color: #fff;
+        outline: none;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .url-input:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+    }
+    
+    /* --- 按鈕美化 --- */
+    .launch-btn {
+        padding: 14px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.1s;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .launch-btn:hover {
+        background-color: #45a049;
+    }
+
+    .launch-btn:active {
+        transform: scale(0.98);
+    }
+
+    /* --- 連結清單區塊美化 --- */
+    #links-wrapper {
+        width: 100%;
+        /* 讓清單高度自動延展，最大高度為螢幕高度的 75% 左右，減去一些 padding 與標題空間 */
+        max-height: calc(100vh - 180px); 
+        overflow-y: auto;
+        padding-right: 5px;
+    }
+
+    /* 自訂滾動條外觀 */
+    #links-wrapper::-webkit-scrollbar {
+        width: 6px;
+    }
+    #links-wrapper::-webkit-scrollbar-thumb {
+        background: #444;
+        border-radius: 3px;
+    }
+    #links-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
     .link-item {
-      display: block;
-      padding: 10px 0;
-      border-bottom: 1px solid #eee;
-      text-decoration: none;
-      color: #007bff;
-      font-size: 18px;
+        display: block;
+        padding: 12px 5px;
+        border-bottom: 1px solid #444;
+        text-decoration: none;
+        color: #e0e0e0;
+        font-size: 16px;
+        transition: color 0.2s, padding-left 0.2s;
+        text-align: left;
+        word-break: break-all;
     }
+    
     .link-item:hover {
-      text-decoration: underline;
+        color: #4CAF50;
+        padding-left: 5px; 
     }
+    
     .link-item:last-child {
-      border-bottom: none;
+        border-bottom: none;
     }
+    
     .path-text {
-      font-size: 8px;
-      color: #888;
-      margin-left: 8px;
+        display: block; 
+        font-size: 11px;
+        color: #777;
+        margin-top: 4px;
+    }
+
+    /* --- 狀態訊息泡泡 (Toast) 樣式 --- */
+    .status-info {
+        position: fixed;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%) translateY(50px);
+        padding: 12px 24px;
+        text-align: center;
+        font-size: 15px;
+        font-weight: 500;
+        border-radius: 30px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        white-space: nowrap;
+    }
+
+    .status-info.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .status-info.success {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .status-info.error {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+
+    .status-info.info {
+        background-color: #e3f2fd;
+        color: #1565c0;
     }
   </style>
 </head>
 <body>
 
-  <div class="login-container" id="login-section">
-    <h2>輸入</h2>
-    <input type="password" id="password-input" placeholder="" onkeydown="if(event.key === 'Enter') fetchList()">
-    <br>
-    <button onclick="fetchList()">確認</button>
-    <div id="status-message" class="message"></div>
+  <div class="container" id="login-section">
+    <h2>輸入密碼</h2>
+    <input type="password" id="password-input" class="url-input" placeholder="請輸入密碼" onkeydown="if(event.key === 'Enter') fetchList()">
+    <button class="launch-btn" onclick="fetchList()">確認</button>
   </div>
 
-  <div id="link-list-container">
+  <div class="container" id="link-list-container">
     <h2>連結列表</h2>
     <div id="links-wrapper"></div>
   </div>
 
+  <div id="statusMessage" class="status-info"></div>
+
   <script>
-    // ⚠️ 請替換為你最新佈署的 GAS 網址
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbx-zZPCI9kLiW7JbQ6gz10ey1b4f1d1EQlAVSd6zdC2DrAszbELQReOC93nND2WnF7S/exec';
+    let statusTimeout;
+
+    // 網頁載入完成後，自動將焦點放到密碼輸入框
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('password-input').focus();
+    });
+
+    // 泡泡狀態控制函式
+    function updateStatus(message, type = 'info') {
+        const statusEl = document.getElementById('statusMessage');
+        clearTimeout(statusTimeout);
+        
+        statusEl.textContent = message; 
+        statusEl.className = `status-info show ${type}`;
+        
+        // 除了提示訊息（info）外，其餘狀態 3 秒後自動隱藏
+        if (type !== 'info') {
+            statusTimeout = setTimeout(() => {
+                statusEl.classList.remove('show');
+            }, 3000);
+        }
+    }
 
     async function fetchList() {
-      const password = document.getElementById('password-input').value;
-      const statusMsg = document.getElementById('status-message');
+      const password = document.getElementById('password-input').value.trim();
       const loginSection = document.getElementById('login-section');
       const listContainer = document.getElementById('link-list-container');
       const linksWrapper = document.getElementById('links-wrapper');
 
       if (!password) {
-        statusMsg.textContent = '不能為空！';
+        updateStatus('不能為空！', 'error');
         return;
       }
 
-      statusMsg.style.color = '#333';
-      statusMsg.textContent = '驗證中，請稍候...';
+      updateStatus('驗證中，請稍候...', 'info');
 
       try {
         const response = await fetch(GAS_URL, {
           method: 'POST',
           redirect: 'follow',
-          // 使用 text/plain 避免觸發複雜的 CORS preflight
           headers: {
             'Content-Type': 'text/plain;charset=utf-8',
           },
@@ -127,40 +251,33 @@
         const result = await response.json();
 
         if (result.status === 'success') {
-          // 隱藏登入區，顯示列表區
+          // 隱藏登入卡片，顯示列表卡片
           loginSection.style.display = 'none';
-          listContainer.style.display = 'block';
+          listContainer.style.display = 'flex'; 
           
-          // 清空現有內容
           linksWrapper.innerHTML = '';
 
-          // 產生 <a> 標籤
           result.data.forEach(item => {
             let noteT = item.note;
-            //console.log(noteT);
-            //noteT = "quickN:ttttt"
-            if( noteT.includes("quickN:")){
+            if (noteT.includes("quickN:")) {
               const a = document.createElement('a');
-              //a.href = item.url;
-              a.href = "https://s.jwint.net/"+item.path;
-              a.target = '_blank'; // 開啟新分頁
+              a.href = "https://s.jwint.net/" + item.path;
+              a.target = '_blank';
               a.className = 'link-item';
               
-              // 顯示 note，並在旁邊小字顯示 path 方便辨識
-              //a.innerHTML = `${item.note} <span class="path-text">(${item.path})</span>`;
-              a.innerHTML = `${noteT.replace("quickN:","")} <span class="path-text">(${item.url})</span>`;
+              a.innerHTML = `${noteT.replace("quickN:","")} <span class="path-text">${item.url}</span>`;
               
               linksWrapper.appendChild(a);
             }
           });
 
+          updateStatus('載入成功！', 'success');
+
         } else {
-          statusMsg.style.color = 'red';
-          statusMsg.textContent = result.message || '驗證失敗';
+          updateStatus(result.message || '驗證失敗', 'error');
         }
       } catch (error) {
-        statusMsg.style.color = 'red';
-        statusMsg.textContent = '網路請求錯誤，請檢查主控台。';
+        updateStatus('網路請求錯誤，請檢查主控台。', 'error');
         console.error('Fetch error:', error);
       }
     }
