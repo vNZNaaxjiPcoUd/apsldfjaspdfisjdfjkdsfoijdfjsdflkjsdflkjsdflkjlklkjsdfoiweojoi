@@ -133,7 +133,7 @@
         margin: 0;
     }
     
-    input[type="color"] { padding: 2px 6px; width: 35px; border-radius: 8px; }
+    input[type="color"] { padding: 2px 2px; width: 38px; border-radius: 8px; }
 
     button:hover, select:hover { 
         background-color: #d8eedf; 
@@ -312,8 +312,7 @@
         <div class="divider"></div>
         
         <input type="color" id="bgColorPicker" value="#f7fd4c" title="選擇顏色">
-        <button onclick="applyBgColor()" title="底色標示">塗</button>
-        <button onclick="clearBgColor()" title="取消底色">✖️</button>
+        <button onclick="toggleBgColor()" title="底色標示">塗</button>
     </div>
 
     <div class="table-container">
@@ -555,6 +554,30 @@
                 const cell = document.getElementById(id);
                 if (cell) cell.parentElement.style.backgroundColor = '';
             });
+            computeAll();
+        }
+
+        function toggleBgColor() {
+            // 取得目前調色盤設定的顏色
+            const color = document.getElementById('bgColorPicker').value;
+            const targetIds = getSelectedCells();
+            
+            targetIds.forEach(id => {
+                // 判斷該儲存格目前的顏色是否與調色盤選取的顏色相同
+                if (cellColors[id] === color) {
+                    // 如果相同，代表使用者想要「取消上色」
+                    delete cellColors[id];
+                    const cell = document.getElementById(id);
+                    if (cell) cell.parentElement.style.backgroundColor = '';
+                } else {
+                    // 如果不同（或原本無顏色），代表使用者想要「上色」
+                    cellColors[id] = color;
+                    const cell = document.getElementById(id);
+                    if (cell) cell.parentElement.style.backgroundColor = color;
+                }
+            });
+            
+            // 重新計算並渲染，確保背景遮蔽邏輯正確套用
             computeAll();
         }
 
@@ -929,7 +952,7 @@
             const evaluated = {};
 
             // 簡易公式解析器
-            function evaluate(id, visited = new Set()) {
+            function old_evaluate(id, visited = new Set()) {
                 if (visited.has(id)) return "#REF!";
                 if (evaluated[id] !== undefined) return evaluated[id];
                 
@@ -978,6 +1001,67 @@
                 return evaluated[id];
             }
 
+            // 簡易公式解析器
+            function evaluate(id, visited = new Set()) {
+                if (visited.has(id)) return "#REF!";
+                if (evaluated[id] !== undefined) return evaluated[id];
+                
+                let val = data[id];
+                if (val === undefined || val === null) val = '';
+                
+                if (!val.toString().startsWith('=')) {
+                    let numVal = Number(val);
+                    evaluated[id] = val === '' ? 0 : (isNaN(numVal) ? val : numVal);
+                    return evaluated[id];
+                }
+
+                visited.add(id);
+                
+                // 【優化點 1】移除 .toUpperCase()，保留使用者傳入字串的原始大小寫
+                let formula = val.toString().substring(1);
+                
+                // 【優化點 2】使用不分大小寫 (gi) 替換內建函數
+                formula = formula.replace(/\bSUM\(/gi, 'sum(')
+                                 .replace(/\bAVERAGE\(/gi, 'mean(')
+                                 .replace(/\bMAX\(/gi, 'max(')
+                                 .replace(/\bMIN\(/gi, 'min(')
+                                 .replace(/\bABS\(/gi, 'abs(')
+                                 .replace(/\bROUND\(/gi, 'round(')
+                                 .replace(/\bPOWER\(/gi, 'pow(');
+
+                // 將自訂函數轉為大寫以符合 math.import 定義 (不分大小寫比對)
+                const customFuncs = ['IF', 'COUNT', 'COUNTA', 'CONCATENATE', 'LEN', 'LEFT', 'RIGHT', 'MID', 'UPPER', 'LOWER', 'TRIM', 'FIND'];
+                customFuncs.forEach(func => {
+                    const regex = new RegExp(`\\b${func}\\(`, 'gi');
+                    formula = formula.replace(regex, `${func}(`);
+                });
+
+                // 步驟 2：將 a1:a10 這類的範圍展開，並確保傳入 expandRange 的代號是大寫
+                formula = formula.replace(/([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)/g, (match, startColStr, startRowStr, endColStr, endRowStr) => {
+                    return expandRange(match, startColStr.toUpperCase(), startRowStr, endColStr.toUpperCase(), endRowStr);
+                });
+
+                // 步驟 3：置換單一儲存格參照為對應數值 (正則表達式加入 a-z 支援小寫)
+                formula = formula.replace(/([A-Za-z])(\d+)/g, (match) => {
+                    // 將擷取到的代號轉大寫 (例如 f22 -> F22) 以正確讀取資料
+                    let upperMatch = match.toUpperCase();
+                    let refVal = evaluate(upperMatch, visited);
+                    
+                    // 加上括號避免連續運算子問題，或將文字轉為字串
+                    return isNaN(refVal) || refVal === '' ? `"${refVal}"` : `(${refVal})`;
+                });
+
+                try {
+                    // 步驟 4：使用 Math.js 計算最終結果
+                    evaluated[id] = math.evaluate(formula);
+                } catch (e) {
+                    evaluated[id] = "#ERROR!";
+                }
+                
+                visited.delete(id);
+                return evaluated[id];
+            }
+            
             for (let r = 1; r <= ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
                     const id = getCellId(c, r);
