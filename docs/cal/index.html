@@ -299,9 +299,9 @@
 <body>
 
     <div class="controls">
+        <button onclick="saveData()" title="保存資料">存</button>
         <button onclick="addRow()" title="下面增加十行">➕</button>
-        <button onclick="saveData()" title="保存資料">💾</button>
-        <button onclick="loadData()" title="讀取">📂</button>
+        <button onclick="loadData()" title="讀取">讀</button>
         <button onclick="window.open('https://n.jwint.net/r?book=cal%E4%BD%BF%E7%94%A8%E8%AA%AA%E6%98%8E', '_blank')" title="說明">💡</button>
         <select onchange="document.getElementById('spreadsheet').className = this.value" title="格顯示方式">
             <option value="mode-extend">延伸</option>
@@ -363,7 +363,7 @@
             });
         }
 
-        async function saveData() {
+        async function old_saveData() {
             try {
                 if (!dbInstance) await openDB();
                 const tx = dbInstance.transaction(STORE_NAME, 'readwrite');
@@ -372,6 +372,43 @@
                 tx.oncomplete = () => showToast('💾 資料已成功儲存！');
                 tx.onerror = () => showToast('儲存失敗！', true);
             } catch (error) {
+                showToast('儲存發生錯誤，請查看控制台。', true);
+            }
+        }
+
+        async function saveData() {
+            try {
+                if (!dbInstance) await openDB();
+
+                // 1. 建立乾淨的資料物件：只保留有實質內容的儲存格
+                const cleanData = {};
+                Object.entries(data).forEach(([key, val]) => {
+                    if (val !== undefined && val !== null && val.toString().trim() !== '') {
+                        cleanData[key] = val;
+                    }
+                });
+
+                // 2. 建立乾淨的顏色物件：只保留有設定顏色的儲存格
+                const cleanColors = {};
+                Object.entries(cellColors).forEach(([key, color]) => {
+                    if (color && color.trim() !== '') {
+                        cleanColors[key] = color;
+                    }
+                });
+
+                const tx = dbInstance.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                
+                // 3. 存入瘦身過後的資料
+                store.put({ id: 'sheet_1', cells: cleanData, colors: cleanColors });
+                
+                tx.oncomplete = () => {
+                    const savedCount = Object.keys(cleanData).length;
+                    showToast(`💾 資料已成功儲存！(有效儲存格：${savedCount})`);
+                };
+                tx.onerror = () => showToast('儲存失敗！', true);
+            } catch (error) {
+                console.error("Save Error:", error);
                 showToast('儲存發生錯誤，請查看控制台。', true);
             }
         }
@@ -947,15 +984,29 @@
                     const cell = document.getElementById(id);
                     if (!cell) continue;
 
+                  
                     // 1. 公式及數值渲染
                     if (document.activeElement === cell) {
                         cell.value = data[id] || ''; // 正在編輯時顯示原始值/公式
                     } else {
                         const val = data[id] || '';
+                        let displayVal = val;
+                        
+                        // 計算公式結果
                         if (val.toString().startsWith('=')) {
-                            cell.value = evaluate(id);
+                            displayVal = evaluate(id);
+                        }
+                        
+                        // 處理小數點位數限制 (最多 4 位)
+                        if (typeof displayVal === 'number') {
+                            // 如果 evaluate 計算出來是數字型態
+                            cell.value = parseFloat(displayVal.toFixed(4));
+                        } else if (typeof displayVal === 'string' && displayVal !== '' && !isNaN(displayVal) && displayVal.includes('.')) {
+                            // 如果使用者直接輸入帶小數點的純數字字串 (例如 "3.14159265")
+                            cell.value = parseFloat(Number(displayVal).toFixed(4));
                         } else {
-                            cell.value = val;
+                            // 一般文字或不帶小數點的字串則照常顯示
+                            cell.value = displayVal;
                         }
                     }
 
