@@ -4,22 +4,28 @@
     <meta charset="UTF-8">
     <title>倉頡輸入</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap');
+
         html, body {
             height: 100%;
             margin: 0;
             padding: 0;
         }
         body {
-            font-family: sans-serif;
+            /* 現代可愛的圓潤字體設定 */
+            font-family: 'Nunito', 'Noto Sans TC', sans-serif;
             padding: 20px;
             box-sizing: border-box;
-            background-color: #f5f5f5;
+            /* 柔和的淡綠色背景 */
+            background-color: #f0f8f1; 
+            color: #333;
         }
         .container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: #ffffff;
+            padding: 30px;
+            /* 現代化的大圓角與柔和陰影 */
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(134, 184, 142, 0.15);
             max-width: 1080px;
             height: 100%; 
             margin: auto;
@@ -32,70 +38,150 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 10px;
         }
         h2 {
             margin: 0;
+            color: #2e7d32; /* 森林綠標題 */
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+        h2::before {
+            content: '🌱'; /* 加上可愛的表情符號點綴 */
+            font-size: 24px;
+        }
+        
+        /* 頂部按鈕與連結區域 */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
         #mode-toggle {
-            padding: 8px 16px;
+            padding: 10px 20px;
             font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #eee;
+            border: none;
+            /* 可愛膠囊形狀 */
+            border-radius: 50px; 
+            background-color: #a5d6a7;
+            color: #1b5e20;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(165, 214, 167, 0.4);
+            font-family: inherit;
         }
         #mode-toggle:hover {
-            background-color: #e0e0e0;
+            background-color: #81c784;
+            transform: translateY(-2px); /* 懸停時微微浮起 */
+            box-shadow: 0 6px 15px rgba(129, 199, 132, 0.5);
+        }
+
+        .header-controls a {
+            color: #66bb6a;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        .header-controls a:hover {
+            color: #388e3c;
         }
 
         #cj-status {
             margin-top: 15px;
             font-size: 18px;
             color: #555;
-            height: 25px; 
+            height: 28px; 
+            font-weight: bold;
         }
         #current-code {
-            font-weight: bold;
-            color: #d32f2f;
+            font-weight: 900;
+            color: #ff8a65; /* 活潑可愛的珊瑚橘色 */
             text-transform: uppercase;
+            letter-spacing: 2px;
         }
+        
         #candidates {
-            margin-top: 10px;
+            margin-top: 15px;
+            margin-bottom: 15px;
             font-size: 20px;
-            color: #1976d2;
-            height: 45px; 
+            height: 60px; /* 加大高度避免 hover 動畫被裁切 */
             white-space: nowrap; 
             overflow-x: auto;    
             overflow-y: hidden;  
+            /* 客製化可愛的滾動條 */
             scrollbar-width: thin;
+            scrollbar-color: #a5d6a7 transparent;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
         }
+        
+        /* Webkit 瀏覽器的滾動條美化 */
+        #candidates::-webkit-scrollbar {
+            height: 8px;
+        }
+        #candidates::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #candidates::-webkit-scrollbar-thumb {
+            background-color: #a5d6a7;
+            border-radius: 10px;
+        }
+
         .candidate {
-            margin-right: 15px;
+            margin-right: 12px;
             cursor: pointer;
-            padding: 5px 8px;
-            border: 1px solid #bbdefb;
-            border-radius: 4px;
+            padding: 8px 16px;
+            border: 2px solid transparent;
+            border-radius: 16px; /* 圓潤的標籤 */
             display: inline-block;
-            background-color: #e3f2fd;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            font-weight: bold;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Q彈動畫 */
         }
         .candidate:hover {
-            background-color: #bbdefb;
+            background-color: #c8e6c9;
+            border-color: #a5d6a7;
+            transform: scale(1.08); /* 滑過時稍微放大 */
         }
+        
         label {
             margin-top: 10px;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
             font-weight: bold;
+            color: #66bb6a;
+            font-size: 15px;
         }
+        
         textarea {
             width: 100%;
             flex-grow: 1; 
             resize: none;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            /* 柔和的邊框與大圓角 */
+            border: 2px solid #c8e6c9;
+            border-radius: 20px;
             outline: none;
-            padding: 10px;
+            padding: 20px;
             font-size: 18px;
+            font-family: inherit;
+            line-height: 1.6;
             box-sizing: border-box;
+            background-color: #fafafa;
+            transition: all 0.3s ease;
+        }
+        textarea:focus {
+            border-color: #81c784;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(129, 199, 132, 0.2); /* 聚焦時的光暈效果 */
+        }
+        textarea::placeholder {
+            color: #b0bec5;
         }
     </style>
 </head>
@@ -104,14 +190,17 @@
 <div class="container">
     <div class="header-controls">
         <h2>倉頡輸入</h2>
-        <button id="mode-toggle">目前模式：中文</button>
+        <div class="header-right">
+            <button id="mode-toggle">目前模式：中文</button>
+            <a href="https://www.google.com/inputtools/try/" target="_blank">GoogleIME ↗</a>
+        </div>
     </div>
     
     <script src="cangjie_dict.js"></script>
     
     <div id="cj-status">目前拼碼：<span id="current-code"></span></div>
     <div id="candidates"></div>
-    <label>請在此輸入 (支援 Ctrl + 空白鍵 切換中/英文)：</label>
+    <label>✨ 請在此輸入 (支援 Ctrl + 空白鍵 切換中/英文)：</label>
     <textarea id="input-box" placeholder="點擊此處並開始輸入..."></textarea>
 </div>
 
@@ -128,6 +217,15 @@
     function toggleMode() {
         isChineseMode = !isChineseMode;
         modeToggleBtn.textContent = isChineseMode ? '目前模式：中文' : '目前模式：英文';
+        
+        // 切換按鈕的視覺提示 (英文模式顏色變灰綠)
+        if(isChineseMode) {
+            modeToggleBtn.style.backgroundColor = '#a5d6a7';
+            modeToggleBtn.style.color = '#1b5e20';
+        } else {
+            modeToggleBtn.style.backgroundColor = '#e0e0e0';
+            modeToggleBtn.style.color = '#555555';
+        }
         
         // 切換時清空未完成的拼碼
         currentCode = '';
@@ -200,16 +298,16 @@
                 chars.forEach((char, index) => {
                     const span = document.createElement('span');
                     span.className = 'candidate';
-                    span.textContent = `${index + 1}.${char}`;
+                    span.textContent = `${index + 1}. ${char}`;
                     // 點擊候選字也能上屏
                     span.onclick = () => commitChar(char);
                     candidatesDiv.appendChild(span);
                 });
             } else {
-                candidatesDiv.textContent = '無符合字詞';
+                candidatesDiv.innerHTML = '<span style="color: #9e9e9e; font-size: 16px;">無符合字詞 💧</span>';
             }
         } else {
-             candidatesDiv.textContent = '字典檔尚未載入';
+             candidatesDiv.innerHTML = '<span style="color: #e57373; font-size: 16px;">字典檔尚未載入 ⚠️</span>';
         }
     }
 
