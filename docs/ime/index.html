@@ -2,28 +2,30 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>倉頡輸入</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap');
 
         html, body {
-            height: 100%;
+            /* 【手機版優化】使用 dvh 動態視窗高度，避免被 Safari 底部工具列遮擋 */
+            height: 100dvh;
             margin: 0;
             padding: 0;
+            overflow: hidden; /* 防止整體頁面不必要的滑動 */
         }
+        
         body {
-            /* 現代可愛的圓潤字體設定 */
             font-family: 'Nunito', 'Noto Sans TC', sans-serif;
             padding: 20px;
             box-sizing: border-box;
-            /* 柔和的淡綠色背景 */
             background-color: #f0f8f1; 
             color: #333;
         }
+
         .container {
             background: #ffffff;
             padding: 30px;
-            /* 現代化的大圓角與柔和陰影 */
             border-radius: 24px;
             box-shadow: 0 10px 30px rgba(134, 184, 142, 0.15);
             max-width: 1080px;
@@ -40,20 +42,21 @@
             align-items: center;
             margin-bottom: 10px;
         }
+        
         h2 {
             margin: 0;
-            color: #2e7d32; /* 森林綠標題 */
+            color: #2e7d32;
             font-weight: 700;
             display: flex;
             align-items: center;
             gap: 8px;
         }
+        
         h2::before {
-            content: '🌱'; /* 加上可愛的表情符號點綴 */
+            content: '🌱';
             font-size: 24px;
         }
         
-        /* 頂部按鈕與連結區域 */
         .header-right {
             display: flex;
             align-items: center;
@@ -66,7 +69,6 @@
             font-weight: bold;
             cursor: pointer;
             border: none;
-            /* 可愛膠囊形狀 */
             border-radius: 50px; 
             background-color: #a5d6a7;
             color: #1b5e20;
@@ -74,9 +76,10 @@
             box-shadow: 0 4px 10px rgba(165, 214, 167, 0.4);
             font-family: inherit;
         }
+        
         #mode-toggle:hover {
             background-color: #81c784;
-            transform: translateY(-2px); /* 懸停時微微浮起 */
+            transform: translateY(-2px);
             box-shadow: 0 6px 15px rgba(129, 199, 132, 0.5);
         }
 
@@ -87,9 +90,6 @@
             font-size: 14px;
             transition: color 0.3s;
         }
-        .header-controls a:hover {
-            color: #388e3c;
-        }
 
         #cj-status {
             margin-top: 15px;
@@ -98,9 +98,10 @@
             height: 28px; 
             font-weight: bold;
         }
+        
         #current-code {
             font-weight: 900;
-            color: #ff8a65; /* 活潑可愛的珊瑚橘色 */
+            color: #ff8a65;
             text-transform: uppercase;
             letter-spacing: 2px;
         }
@@ -109,11 +110,12 @@
             margin-top: 15px;
             margin-bottom: 15px;
             font-size: 20px;
-            height: 60px; /* 加大高度避免 hover 動畫被裁切 */
+            height: 60px; 
             white-space: nowrap; 
             overflow-x: auto;    
             overflow-y: hidden;  
-            /* 客製化可愛的滾動條 */
+            /* 【手機版優化】讓橫向滑動更順暢，有原生 App 的慣性滑動感 */
+            -webkit-overflow-scrolling: touch; 
             scrollbar-width: thin;
             scrollbar-color: #a5d6a7 transparent;
             padding-bottom: 10px;
@@ -121,9 +123,8 @@
             align-items: center;
         }
         
-        /* Webkit 瀏覽器的滾動條美化 */
         #candidates::-webkit-scrollbar {
-            height: 8px;
+            height: 6px;
         }
         #candidates::-webkit-scrollbar-track {
             background: transparent;
@@ -136,52 +137,92 @@
         .candidate {
             margin-right: 12px;
             cursor: pointer;
-            padding: 8px 16px;
+            /* 【手機版優化】增加 Padding，讓手指更好點擊 (Fat-finger friendly) */
+            padding: 10px 18px; 
             border: 2px solid transparent;
-            border-radius: 16px; /* 圓潤的標籤 */
+            border-radius: 16px;
             display: inline-block;
             background-color: #e8f5e9;
             color: #2e7d32;
             font-weight: bold;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Q彈動畫 */
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            /* 防止選取文字干擾點擊 */
+            user-select: none;
+            -webkit-user-select: none;
         }
-        .candidate:hover {
-            background-color: #c8e6c9;
-            border-color: #a5d6a7;
-            transform: scale(1.08); /* 滑過時稍微放大 */
+
+        /* 手機上取消 hover 放大，改用 active 按壓回饋 */
+        @media (hover: hover) {
+            .candidate:hover {
+                background-color: #c8e6c9;
+                border-color: #a5d6a7;
+                transform: scale(1.08);
+            }
+        }
+        .candidate:active {
+            transform: scale(0.95);
+            background-color: #a5d6a7;
         }
         
         label {
-            margin-top: 10px;
-            margin-bottom: 10px;
+            margin-top: 5px;
+            margin-bottom: 8px;
             font-weight: bold;
             color: #66bb6a;
-            font-size: 15px;
+            font-size: 14px;
         }
         
         textarea {
             width: 100%;
             flex-grow: 1; 
             resize: none;
-            /* 柔和的邊框與大圓角 */
             border: 2px solid #c8e6c9;
             border-radius: 20px;
             outline: none;
-            padding: 20px;
-            font-size: 18px;
+            padding: 15px;
+            /* 【手機版優化】iOS Safari 如果 input/textarea 字體小於 16px，點擊時會自動放大畫面 */
+            font-size: 16px; 
             font-family: inherit;
             line-height: 1.6;
             box-sizing: border-box;
             background-color: #fafafa;
             transition: all 0.3s ease;
         }
+        
         textarea:focus {
             border-color: #81c784;
             background-color: #ffffff;
-            box-shadow: 0 0 0 4px rgba(129, 199, 132, 0.2); /* 聚焦時的光暈效果 */
+            box-shadow: 0 0 0 4px rgba(129, 199, 132, 0.2);
         }
-        textarea::placeholder {
-            color: #b0bec5;
+
+        /* --- 手機版 RWD 響應式排版調整 --- */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px; /* 縮小螢幕邊緣留白 */
+            }
+            .container {
+                padding: 15px; /* 縮小內部留白給輸入區更多空間 */
+                border-radius: 18px;
+            }
+            .header-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+            h2 {
+                font-size: 20px;
+            }
+            #mode-toggle {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+            #candidates {
+                height: 70px; /* 給予觸控跟捲動更多空間 */
+            }
         }
     </style>
 </head>
@@ -200,8 +241,14 @@
     
     <div id="cj-status">目前拼碼：<span id="current-code"></span></div>
     <div id="candidates"></div>
-    <label>✨ 請在此輸入 (支援 Ctrl + 空白鍵 切換中/英文)：</label>
-    <textarea id="input-box" placeholder="點擊此處並開始輸入..."></textarea>
+    <label>✨ 請在此輸入 (手機點擊虛擬鍵盤)：</label>
+    
+    <textarea id="input-box" 
+              placeholder="點擊此處開始輸入..." 
+              autocapitalize="none" 
+              autocorrect="off" 
+              autocomplete="off" 
+              spellcheck="false"></textarea>
 </div>
 
 <script>
@@ -211,14 +258,12 @@
     const modeToggleBtn = document.getElementById('mode-toggle');
     
     let currentCode = '';
-    let isChineseMode = true; // 預設為中文模式
+    let isChineseMode = true;
 
-    // 將切換模式的邏輯獨立成一個函數
     function toggleMode() {
         isChineseMode = !isChineseMode;
         modeToggleBtn.textContent = isChineseMode ? '目前模式：中文' : '目前模式：英文';
         
-        // 切換按鈕的視覺提示 (英文模式顏色變灰綠)
         if(isChineseMode) {
             modeToggleBtn.style.backgroundColor = '#a5d6a7';
             modeToggleBtn.style.color = '#1b5e20';
@@ -227,52 +272,41 @@
             modeToggleBtn.style.color = '#555555';
         }
         
-        // 切換時清空未完成的拼碼
         currentCode = '';
         updateUI();
-        inputBox.focus(); // 切換後自動對焦回輸入框
+        inputBox.focus(); 
     }
 
-    // 點擊按鈕時切換
     modeToggleBtn.addEventListener('click', toggleMode);
 
     inputBox.addEventListener('keydown', function(e) {
-        // 新增：偵測 Ctrl + 空白鍵 (切換中英文)
         if (e.ctrlKey && e.key === ' ') {
-            e.preventDefault(); // 阻止瀏覽器預設行為
+            e.preventDefault(); 
             toggleMode();
-            return; // 結束這次按鍵事件的處理
+            return; 
         }
 
-        // 若為英文模式，不攔截剩下的任何按鍵，直接讓瀏覽器輸出英文
         if (!isChineseMode) return;
 
-        // --- 以下為中文模式的處理邏輯 ---
-
-        // 如果使用者輸入的是 a-z 小寫字母
         if (e.key >= 'a' && e.key <= 'z' && !e.ctrlKey && !e.altKey && !e.metaKey) {
             e.preventDefault(); 
             currentCode += e.key;
             updateUI();
         } 
-        // 處理倒退鍵 (Backspace)
         else if (e.key === 'Backspace' && currentCode.length > 0) {
             e.preventDefault();
             currentCode = currentCode.slice(0, -1);
             updateUI();
         } 
-        // 處理空白鍵選字 (Space)
         else if (e.key === ' ' && currentCode.length > 0) {
             e.preventDefault();
             if (typeof cangjieDict !== 'undefined') {
                 const chars = cangjieDict[currentCode];
-                // 若有候選字，預設輸出第一個字
                 if (chars && chars.length > 0) {
                     commitChar(chars[0]);
                 }
             }
         }
-        // 若輸入數字 1-9 進行選字
         else if (e.key >= '1' && e.key <= '9' && currentCode.length > 0) {
             if (typeof cangjieDict !== 'undefined') {
                 const index = parseInt(e.key) - 1;
@@ -294,25 +328,28 @@
         if (typeof cangjieDict !== 'undefined') {
             const chars = cangjieDict[currentCode];
             if (chars) {
-                // 渲染所有候選字
                 chars.forEach((char, index) => {
                     const span = document.createElement('span');
                     span.className = 'candidate';
                     span.textContent = `${index + 1}. ${char}`;
-                    // 點擊候選字也能上屏
-                    span.onclick = () => commitChar(char);
+                    
+                    // 【手機版優化】使用 pointerdown 可讓觸控反應比 click 更快上屏
+                    span.addEventListener('pointerdown', (e) => {
+                        e.preventDefault(); // 防止失去焦點收起鍵盤
+                        commitChar(char);
+                    });
+                    
                     candidatesDiv.appendChild(span);
                 });
             } else {
-                candidatesDiv.innerHTML = '<span style="color: #9e9e9e; font-size: 16px;">無符合字詞 💧</span>';
+                candidatesDiv.innerHTML = '<span style="color: #9e9e9e; font-size: 16px; padding: 10px;">無符合字詞 💧</span>';
             }
         } else {
-             candidatesDiv.innerHTML = '<span style="color: #e57373; font-size: 16px;">字典檔尚未載入 ⚠️</span>';
+             candidatesDiv.innerHTML = '<span style="color: #e57373; font-size: 16px; padding: 10px;">字典檔尚未載入 ⚠️</span>';
         }
     }
 
     function commitChar(char) {
-        // 將選定的字加到輸入框中
         const start = inputBox.selectionStart;
         const end = inputBox.selectionEnd;
         const text = inputBox.value;
@@ -320,8 +357,9 @@
         inputBox.value = text.slice(0, start) + char + text.slice(end);
         inputBox.selectionStart = inputBox.selectionEnd = start + char.length;
         
-        currentCode = ''; // 清空拼碼緩衝區
+        currentCode = ''; 
         updateUI();
+        // 確保上屏後游標依然在輸入框內，不會讓手機鍵盤收起來
         inputBox.focus();
     }
 </script>
