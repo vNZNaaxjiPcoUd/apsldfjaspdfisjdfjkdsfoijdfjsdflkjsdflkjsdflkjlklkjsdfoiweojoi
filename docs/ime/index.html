@@ -92,11 +92,11 @@
         }
 
         #cj-status {
-            margin-top: 15px;
-            font-size: 18px;
+            margin-top: 0px;
+            font-size: 12px;
             color: #555;
-            height: 28px; 
-            font-weight: bold;
+            height: 13px; 
+            font-weight: normal;
         }
         
         #current-code {
@@ -198,16 +198,18 @@
         /* --- 手機版 RWD 響應式排版調整 --- */
         @media (max-width: 600px) {
             body {
-                padding: 10px; /* 縮小螢幕邊緣留白 */
+                padding: 1px; /* 縮小螢幕邊緣留白 */
             }
             .container {
-                padding: 15px; /* 縮小內部留白給輸入區更多空間 */
-                border-radius: 18px;
+                padding: 1px; /* 縮小內部留白給輸入區更多空間 */
+                border-radius: 3px;
             }
             .header-controls {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 12px;
+                gap: 2px;
+                margin-bottom: 0px;
+                font-size: 12px;
             }
             .header-right {
                 width: 100%;
@@ -217,12 +219,23 @@
                 font-size: 20px;
             }
             #mode-toggle {
-                padding: 8px 16px;
-                font-size: 14px;
+                padding: 2px 16px;
+                font-size: 12px;
             }
             #candidates {
-                height: 70px; /* 給予觸控跟捲動更多空間 */
+                height: 18px; /* 給予觸控跟捲動更多空間 */
+                margin-top: 3px;
+                margin-bottom: 3px;
+                font-size: 12px;
+                padding-bottom: 0px;
+
             }
+            .candidate {
+                margin-right: 0px;
+                padding: 0px 0px; 
+                border: 1px solid transparent;
+                border-radius: 2px;
+            }            
         }
     </style>
 </head>
@@ -230,27 +243,26 @@
 
 <div class="container">
     <div class="header-controls">
-        <h2>倉頡輸入</h2>
+        <!--h2>倉頡輸入</h2-->
         <div class="header-right">
             <button id="mode-toggle">目前模式：中文</button>
             <a href="https://www.google.com/inputtools/try/" target="_blank">GoogleIME ↗</a>
         </div>
     </div>
-    
-    <script src="cangjie_dict.js"></script>
-    
+    <!--label>✨ 請在此輸入 (手機點擊虛擬鍵盤)：</label-->
     <div id="cj-status">目前拼碼：<span id="current-code"></span></div>
-    <div id="candidates"></div>
-    <label>✨ 請在此輸入 (手機點擊虛擬鍵盤)：</label>
-    
+    <div id="candidates"></div>    
     <textarea id="input-box" 
               placeholder="點擊此處開始輸入..." 
               autocapitalize="none" 
               autocorrect="off" 
               autocomplete="off" 
               spellcheck="false"></textarea>
+
+
 </div>
 
+<script src="cangjie_dict.js"></script>
 <script>
     const inputBox = document.getElementById('input-box');
     const candidatesDiv = document.getElementById('candidates');
