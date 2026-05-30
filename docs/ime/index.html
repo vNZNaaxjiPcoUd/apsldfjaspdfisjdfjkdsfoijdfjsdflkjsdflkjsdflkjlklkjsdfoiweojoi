@@ -19,21 +19,22 @@
             font-family: 'Nunito', 'Noto Sans TC', sans-serif;
             padding: 20px;
             box-sizing: border-box;
-            background-color: #f0f8f1; 
-            color: #333;
+            background-color: #121212; /* 改為極暗色背景 */
+            color: #e0e0e0; /* 調整文字為亮灰色 */
         }
 
         .container {
-            background: #ffffff;
+            background: #1e1e1e; /* 容器改為稍亮的深色 */
             padding: 30px;
             border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(134, 184, 142, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* 陰影改為深色 */
             max-width: 1080px;
             height: 100%; 
             margin: auto;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
+            border: 1px solid #2e7d32; /* 增加一道暗綠色細邊框增加質感 */
         }
         
         .header-controls {
@@ -45,7 +46,7 @@
         
         h2 {
             margin: 0;
-            color: #2e7d32;
+            color: #81c784; /* 改為淡綠色 */
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -70,38 +71,41 @@
             cursor: pointer;
             border: none;
             border-radius: 50px; 
-            background-color: #a5d6a7;
-            color: #1b5e20;
+            background-color: #2e7d32; /* 按鈕背景改為深綠 */
+            color: #e8f5e9; /* 按鈕文字為淡綠 */
             transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(165, 214, 167, 0.4);
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
             font-family: inherit;
         }
         
         #mode-toggle:hover {
-            background-color: #81c784;
+            background-color: #388e3c;
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(129, 199, 132, 0.5);
+            box-shadow: 0 6px 15px rgba(56, 142, 60, 0.4);
         }
 
         .header-controls a {
-            color: #66bb6a;
+            color: #81c784; /* 改為淡綠色 */
             text-decoration: none;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 12px;
             transition: color 0.3s;
+        }
+        .header-controls a:hover {
+            color: #a5d6a7;
         }
 
         #cj-status {
             margin-top: 0px;
             font-size: 18px;
-            color: #555;
+            color: #b0bec5; /* 改為亮灰藍 */
             height: 25px; 
             font-weight: bold;
         }
         
         #current-code {
             font-weight: 900;
-            color: #ff8a65;
+            color: #ffab91; /* 調淡橘色，在暗色背景更柔和 */
             text-transform: uppercase;
             letter-spacing: 2px;
         }
@@ -114,10 +118,9 @@
             white-space: nowrap; 
             overflow-x: auto;    
             overflow-y: hidden;  
-            /* 【手機版優化】讓橫向滑動更順暢，有原生 App 的慣性滑動感 */
             -webkit-overflow-scrolling: touch; 
             scrollbar-width: thin;
-            scrollbar-color: #a5d6a7 transparent;
+            scrollbar-color: #2e7d32 transparent;
             padding-bottom: 10px;
             display: flex;
             align-items: center;
@@ -130,45 +133,43 @@
             background: transparent;
         }
         #candidates::-webkit-scrollbar-thumb {
-            background-color: #a5d6a7;
+            background-color: #2e7d32;
             border-radius: 10px;
         }
 
         .candidate {
             margin-right: 12px;
             cursor: pointer;
-            /* 【手機版優化】增加 Padding，讓手指更好點擊 (Fat-finger friendly) */
             padding: 10px 18px; 
             border: 2px solid transparent;
             border-radius: 16px;
             display: inline-block;
-            background-color: #e8f5e9;
-            color: #2e7d32;
+            background-color: #263238; /* 候選字背景改為暗藍灰 */
+            color: #a5d6a7; /* 候選字文字改為淡綠色 */
             font-weight: bold;
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            /* 防止選取文字干擾點擊 */
             user-select: none;
             -webkit-user-select: none;
         }
 
-        /* 手機上取消 hover 放大，改用 active 按壓回饋 */
         @media (hover: hover) {
             .candidate:hover {
-                background-color: #c8e6c9;
-                border-color: #a5d6a7;
+                background-color: #37474f;
+                border-color: #4caf50; /* 懸停時邊框變綠 */
                 transform: scale(1.08);
             }
         }
         .candidate:active {
             transform: scale(0.95);
-            background-color: #a5d6a7;
+            background-color: #4caf50;
+            color: #121212;
         }
         
         label {
             margin-top: 5px;
             margin-bottom: 8px;
             font-weight: bold;
-            color: #66bb6a;
+            color: #81c784;
             font-size: 14px;
         }
         
@@ -176,43 +177,38 @@
             width: 100%;
             flex-grow: 1; 
             resize: none;
-            border: 2px solid #c8e6c9;
+            border: 2px solid #2e7d32; /* 輸入框邊框改為深綠 */
             border-radius: 20px;
             outline: none;
             padding: 15px;
-            /* 【手機版優化】iOS Safari 如果 input/textarea 字體小於 16px，點擊時會自動放大畫面 */
             font-size: 16px; 
             font-family: inherit;
             line-height: 1.6;
             box-sizing: border-box;
-            background-color: #fafafa;
+            background-color: #151515; /* 輸入框內部極暗色 */
+            color: #e0e0e0; /* 輸入文字為白色系 */
             transition: all 0.3s ease;
         }
         
         textarea:focus {
-            border-color: #81c784;
-            background-color: #ffffff;
-            box-shadow: 0 0 0 4px rgba(129, 199, 132, 0.2);
+            border-color: #81c784; /* 聚焦時邊框變淡綠 */
+            background-color: #1a1a1a;
+            box-shadow: 0 0 0 4px rgba(129, 199, 132, 0.15);
         }
 
         /* --- 手機版 RWD 響應式排版調整 --- */
         @media (max-width: 600px) {
             body {
-                padding: 1px; /* 縮小螢幕邊緣留白 */
+                padding: 1px; 
             }
             .container {
-                padding: 1px; /* 縮小內部留白給輸入區更多空間 */
+                padding: 1px; 
                 border-radius: 3px;
             }
             .header-controls {
-                /*flex-direction: column;
-                align-items: flex-start;*/
                 gap: 2px;
                 margin-bottom: 0px;
                 font-size: 12px;
-            }
-            .header-right {
-
             }
             h2 {
                 font-size: 20px;
@@ -222,7 +218,7 @@
                 font-size: 12px;
             }
             #candidates {
-                height: 18px; /* 給予觸控跟捲動更多空間 */
+                height: 18px; 
                 margin-top: 1px;
                 margin-bottom: 1px;
                 font-size: 12px;
@@ -238,7 +234,7 @@
             #cj-status {
                 margin-top: 0px;
                 font-size: 12px;
-                color: #555;
+                color: #b0bec5;
                 height: 13px; 
                 font-weight: normal;
             }  
@@ -255,7 +251,6 @@
             <a href="https://www.google.com/inputtools/try/" target="_blank">IME↗</a>
         </div>
     </div>
-    <!--div id="cj-status">目前拼碼：<span id="current-code"></span></div-->
     <div id="candidates"></div>    
     <textarea id="input-box" 
               placeholder="點擊此處開始輸入..." 
@@ -280,11 +275,11 @@
         modeToggleBtn.textContent = isChineseMode ? '倉頡' : '英文';
         
         if(isChineseMode) {
-            modeToggleBtn.style.backgroundColor = '#a5d6a7';
-            modeToggleBtn.style.color = '#1b5e20';
+            modeToggleBtn.style.backgroundColor = '#2e7d32';
+            modeToggleBtn.style.color = '#e8f5e9';
         } else {
-            modeToggleBtn.style.backgroundColor = '#e0e0e0';
-            modeToggleBtn.style.color = '#555555';
+            modeToggleBtn.style.backgroundColor = '#424242';
+            modeToggleBtn.style.color = '#bdbdbd';
         }
         
         currentCode = '';
@@ -294,25 +289,19 @@
 
     modeToggleBtn.addEventListener('click', toggleMode);
 
-    // 新增：獲取模糊匹配候選字的函式
     function getCandidates(code) {
         if (typeof cangjieDict === 'undefined' || !code) return [];
-        
-        // 使用 Set 避免不同編碼帶有相同文字時出現重複候選字
         const resultSet = new Set();
         
-        // 優先將完全符合的字排在前面
         if (cangjieDict[code]) {
             cangjieDict[code].forEach(char => resultSet.add(char));
         }
         
-        // 尋找所有以目前輸入編碼為開頭的字
         for (const key in cangjieDict) {
             if (key !== code && key.startsWith(code)) {
                 cangjieDict[key].forEach(char => resultSet.add(char));
             }
         }
-        
         return Array.from(resultSet);
     }
 
@@ -374,10 +363,10 @@
                     candidatesDiv.appendChild(span);
                 });
             } else {
-                candidatesDiv.innerHTML = '<span style="color: #9e9e9e; font-size: 16px; padding: 10px;">無符合字詞 💧</span>';
+                candidatesDiv.innerHTML = '<span style="color: #757575; font-size: 16px; padding: 10px;">無符合字詞 💧</span>';
             }
         } else {
-             candidatesDiv.innerHTML = '<span style="color: #e57373; font-size: 16px; padding: 10px;">字典檔尚未載入 ⚠️</span>';
+             candidatesDiv.innerHTML = '<span style="color: #ef5350; font-size: 16px; padding: 10px;">字典檔尚未載入 ⚠️</span>';
         }
     }
 
