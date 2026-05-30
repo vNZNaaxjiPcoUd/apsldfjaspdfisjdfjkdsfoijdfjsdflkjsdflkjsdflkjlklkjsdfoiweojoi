@@ -64,6 +64,27 @@
             gap: 5px;
         }
 
+        /* 複製按鈕樣式 */
+        #copy-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 50px; 
+            background-color: #43a047; /* 藍色系區隔 */
+            color: #e1f5fe; 
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(2, 136, 209, 0.3);
+            font-family: inherit;
+        }
+        
+        #copy-btn:hover {
+            background-color: #36813a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(3, 155, 229, 0.4);
+        }
+
         #mode-toggle {
             padding: 10px 20px;
             font-size: 16px;
@@ -213,7 +234,7 @@
             h2 {
                 font-size: 20px;
             }
-            #mode-toggle {
+            #copy-btn, #mode-toggle {
                 padding: 2px 16px;
                 font-size: 12px;
             }
@@ -247,6 +268,7 @@
     <div class="header-controls">
         <div id="cj-status">輸入：<span id="current-code"></span></div>
         <div class="header-right">
+            <button id="copy-btn" title="複製內容">複製</button>
             <button id="mode-toggle" title="ctrl + L">倉頡</button>
             <a href="https://www.google.com/inputtools/try/" target="_blank">IME↗</a>
         </div>
@@ -266,9 +288,32 @@
     const candidatesDiv = document.getElementById('candidates');
     const currentCodeSpan = document.getElementById('current-code');
     const modeToggleBtn = document.getElementById('mode-toggle');
+    const copyBtn = document.getElementById('copy-btn'); // 取得複製按鈕
     
     let currentCode = '';
     let isChineseMode = true;
+
+    // --- 剪貼簿複製功能 ---
+    copyBtn.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(inputBox.value);
+            // 提供視覺回饋
+            copyBtn.textContent = '已複製';
+            copyBtn.style.backgroundColor = '#43a047'; // 變綠色表示成功
+            
+            setTimeout(() => {
+                copyBtn.textContent = '複製';
+                copyBtn.style.backgroundColor = '#43a047'; // 恢復原本顏色
+            }, 1500);
+        } catch (err) {
+            console.error('複製失敗:', err);
+            copyBtn.textContent = '失敗';
+            setTimeout(() => {
+                copyBtn.textContent = '複製';
+            }, 1500);
+        }
+        inputBox.focus(); // 複製完保持游標在輸入框
+    });
 
     function toggleMode() {
         isChineseMode = !isChineseMode;
