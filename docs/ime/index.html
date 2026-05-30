@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>倉頡輸入</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 1080px;
+            height: 100%; 
+            margin: auto;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h2 {
+            margin: 0;
+        }
+        #mode-toggle {
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #eee;
+        }
+        #mode-toggle:hover {
+            background-color: #e0e0e0;
+        }
+
+        #cj-status {
+            margin-top: 15px;
+            font-size: 18px;
+            color: #555;
+            height: 25px; 
+        }
+        #current-code {
+            font-weight: bold;
+            color: #d32f2f;
+            text-transform: uppercase;
+        }
+        #candidates {
+            margin-top: 10px;
+            font-size: 20px;
+            color: #1976d2;
+            height: 45px; 
+            white-space: nowrap; 
+            overflow-x: auto;    
+            overflow-y: hidden;  
+            scrollbar-width: thin;
+        }
+        .candidate {
+            margin-right: 15px;
+            cursor: pointer;
+            padding: 5px 8px;
+            border: 1px solid #bbdefb;
+            border-radius: 4px;
+            display: inline-block;
+            background-color: #e3f2fd;
+        }
+        .candidate:hover {
+            background-color: #bbdefb;
+        }
+        label {
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        textarea {
+            width: 100%;
+            flex-grow: 1; 
+            resize: none;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+            padding: 10px;
+            font-size: 18px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-controls">
+        <h2>倉頡輸入</h2>
+        <button id="mode-toggle">目前模式：中文</button>
+    </div>
+    
+    <script src="cangjie_dict.js"></script>
+    
+    <div id="cj-status">目前拼碼：<span id="current-code"></span></div>
+    <div id="candidates"></div>
+    <label>請在此輸入 (支援 Ctrl + 空白鍵 切換中/英文)：</label>
+    <textarea id="input-box" placeholder="點擊此處並開始輸入..."></textarea>
+</div>
+
+<script>
+    const inputBox = document.getElementById('input-box');
+    const candidatesDiv = document.getElementById('candidates');
+    const currentCodeSpan = document.getElementById('current-code');
+    const modeToggleBtn = document.getElementById('mode-toggle');
+    
+    let currentCode = '';
+    let isChineseMode = true; // 預設為中文模式
+
+    // 將切換模式的邏輯獨立成一個函數
+    function toggleMode() {
+        isChineseMode = !isChineseMode;
+        modeToggleBtn.textContent = isChineseMode ? '目前模式：中文' : '目前模式：英文';
+        
+        // 切換時清空未完成的拼碼
+        currentCode = '';
+        updateUI();
+        inputBox.focus(); // 切換後自動對焦回輸入框
+    }
+
+    // 點擊按鈕時切換
+    modeToggleBtn.addEventListener('click', toggleMode);
+
+    inputBox.addEventListener('keydown', function(e) {
+        // 新增：偵測 Ctrl + 空白鍵 (切換中英文)
+        if (e.ctrlKey && e.key === ' ') {
+            e.preventDefault(); // 阻止瀏覽器預設行為
+            toggleMode();
+            return; // 結束這次按鍵事件的處理
+        }
+
+        // 若為英文模式，不攔截剩下的任何按鍵，直接讓瀏覽器輸出英文
+        if (!isChineseMode) return;
+
+        // --- 以下為中文模式的處理邏輯 ---
+
+        // 如果使用者輸入的是 a-z 小寫字母
+        if (e.key >= 'a' && e.key <= 'z' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+            e.preventDefault(); 
+            currentCode += e.key;
+            updateUI();
+        } 
+        // 處理倒退鍵 (Backspace)
+        else if (e.key === 'Backspace' && currentCode.length > 0) {
+            e.preventDefault();
+            currentCode = currentCode.slice(0, -1);
+            updateUI();
+        } 
+        // 處理空白鍵選字 (Space)
+        else if (e.key === ' ' && currentCode.length > 0) {
+            e.preventDefault();
+            if (typeof cangjieDict !== 'undefined') {
+                const chars = cangjieDict[currentCode];
+                // 若有候選字，預設輸出第一個字
+                if (chars && chars.length > 0) {
+                    commitChar(chars[0]);
+                }
+            }
+        }
+        // 若輸入數字 1-9 進行選字
+        else if (e.key >= '1' && e.key <= '9' && currentCode.length > 0) {
+            if (typeof cangjieDict !== 'undefined') {
+                const index = parseInt(e.key) - 1;
+                const chars = cangjieDict[currentCode];
+                if (chars && chars[index]) {
+                    e.preventDefault();
+                    commitChar(chars[index]);
+                }
+            }
+        }
+    });
+
+    function updateUI() {
+        currentCodeSpan.textContent = currentCode;
+        candidatesDiv.innerHTML = '';
+        
+        if (currentCode === '') return;
+
+        if (typeof cangjieDict !== 'undefined') {
+            const chars = cangjieDict[currentCode];
+            if (chars) {
+                // 渲染所有候選字
+                chars.forEach((char, index) => {
+                    const span = document.createElement('span');
+                    span.className = 'candidate';
+                    span.textContent = `${index + 1}.${char}`;
+                    // 點擊候選字也能上屏
+                    span.onclick = () => commitChar(char);
+                    candidatesDiv.appendChild(span);
+                });
+            } else {
+                candidatesDiv.textContent = '無符合字詞';
+            }
+        } else {
+             candidatesDiv.textContent = '字典檔尚未載入';
+        }
+    }
+
+    function commitChar(char) {
+        // 將選定的字加到輸入框中
+        const start = inputBox.selectionStart;
+        const end = inputBox.selectionEnd;
+        const text = inputBox.value;
+        
+        inputBox.value = text.slice(0, start) + char + text.slice(end);
+        inputBox.selectionStart = inputBox.selectionEnd = start + char.length;
+        
+        currentCode = ''; // 清空拼碼緩衝區
+        updateUI();
+        inputBox.focus();
+    }
+</script>
+
+</body>
+</html>
