@@ -92,11 +92,11 @@
         }
 
         #cj-status {
-            margin-top: 0px;
-            font-size: 12px;
+            margin-top: 5px;
+            font-size: 18px;
             color: #555;
-            height: 13px; 
-            font-weight: normal;
+            height: 25px; 
+            font-weight: bold;
         }
         
         #current-code {
@@ -235,7 +235,14 @@
                 padding: 0px 0px; 
                 border: 1px solid transparent;
                 border-radius: 2px;
-            }            
+            }          
+            #cj-status {
+                margin-top: 0px;
+                font-size: 12px;
+                color: #555;
+                height: 13px; 
+                font-weight: normal;
+            }  
         }
     </style>
 </head>
@@ -243,13 +250,11 @@
 
 <div class="container">
     <div class="header-controls">
-        <!--h2>倉頡輸入</h2-->
         <div class="header-right">
             <button id="mode-toggle">目前模式：中文</button>
             <a href="https://www.google.com/inputtools/try/" target="_blank">GoogleIME ↗</a>
         </div>
     </div>
-    <!--label>✨ 請在此輸入 (手機點擊虛擬鍵盤)：</label-->
     <div id="cj-status">目前拼碼：<span id="current-code"></span></div>
     <div id="candidates"></div>    
     <textarea id="input-box" 
@@ -258,8 +263,6 @@
               autocorrect="off" 
               autocomplete="off" 
               spellcheck="false"></textarea>
-
-
 </div>
 
 <script src="cangjie_dict.js"></script>
@@ -274,7 +277,7 @@
 
     function toggleMode() {
         isChineseMode = !isChineseMode;
-        modeToggleBtn.textContent = isChineseMode ? '目前模式：中文' : '目前模式：英文';
+        modeToggleBtn.textContent = isChineseMode ? '目前模式：中文' : '現時模式：英文';
         
         if(isChineseMode) {
             modeToggleBtn.style.backgroundColor = '#a5d6a7';
@@ -290,6 +293,28 @@
     }
 
     modeToggleBtn.addEventListener('click', toggleMode);
+
+    // 新增：獲取模糊匹配候選字的函式
+    function getCandidates(code) {
+        if (typeof cangjieDict === 'undefined' || !code) return [];
+        
+        // 使用 Set 避免不同編碼帶有相同文字時出現重複候選字
+        const resultSet = new Set();
+        
+        // 優先將完全符合的字排在前面
+        if (cangjieDict[code]) {
+            cangjieDict[code].forEach(char => resultSet.add(char));
+        }
+        
+        // 尋找所有以目前輸入編碼為開頭的字
+        for (const key in cangjieDict) {
+            if (key !== code && key.startsWith(code)) {
+                cangjieDict[key].forEach(char => resultSet.add(char));
+            }
+        }
+        
+        return Array.from(resultSet);
+    }
 
     inputBox.addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.key === ' ') {
@@ -312,21 +337,17 @@
         } 
         else if (e.key === ' ' && currentCode.length > 0) {
             e.preventDefault();
-            if (typeof cangjieDict !== 'undefined') {
-                const chars = cangjieDict[currentCode];
-                if (chars && chars.length > 0) {
-                    commitChar(chars[0]);
-                }
+            const chars = getCandidates(currentCode);
+            if (chars.length > 0) {
+                commitChar(chars[0]);
             }
         }
         else if (e.key >= '1' && e.key <= '9' && currentCode.length > 0) {
-            if (typeof cangjieDict !== 'undefined') {
-                const index = parseInt(e.key) - 1;
-                const chars = cangjieDict[currentCode];
-                if (chars && chars[index]) {
-                    e.preventDefault();
-                    commitChar(chars[index]);
-                }
+            const index = parseInt(e.key) - 1;
+            const chars = getCandidates(currentCode);
+            if (chars && chars[index]) {
+                e.preventDefault();
+                commitChar(chars[index]);
             }
         }
     });
@@ -338,16 +359,15 @@
         if (currentCode === '') return;
 
         if (typeof cangjieDict !== 'undefined') {
-            const chars = cangjieDict[currentCode];
-            if (chars) {
+            const chars = getCandidates(currentCode);
+            if (chars.length > 0) {
                 chars.forEach((char, index) => {
                     const span = document.createElement('span');
                     span.className = 'candidate';
                     span.textContent = `${index + 1}. ${char}`;
                     
-                    // 【手機版優化】使用 pointerdown 可讓觸控反應比 click 更快上屏
                     span.addEventListener('pointerdown', (e) => {
-                        e.preventDefault(); // 防止失去焦點收起鍵盤
+                        e.preventDefault(); 
                         commitChar(char);
                     });
                     
@@ -371,7 +391,6 @@
         
         currentCode = ''; 
         updateUI();
-        // 確保上屏後游標依然在輸入框內，不會讓手機鍵盤收起來
         inputBox.focus();
     }
 </script>
