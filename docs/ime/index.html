@@ -8,33 +8,32 @@
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap');
 
         html, body {
-            /* 【手機版優化】使用 dvh 動態視窗高度，避免被 Safari 底部工具列遮擋 */
             height: 100dvh;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* 防止整體頁面不必要的滑動 */
+            overflow: hidden; 
         }
         
         body {
             font-family: 'Nunito', 'Noto Sans TC', sans-serif;
             padding: 20px;
             box-sizing: border-box;
-            background-color: #121212; /* 改為極暗色背景 */
-            color: #e0e0e0; /* 調整文字為亮灰色 */
+            background-color: #121212; 
+            color: #e0e0e0; 
         }
 
         .container {
-            background: #1e1e1e; /* 容器改為稍亮的深色 */
+            background: #1e1e1e; 
             padding: 30px;
             border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* 陰影改為深色 */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); 
             max-width: 1080px;
             height: 100%; 
             margin: auto;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            border: 1px solid #2e7d32; /* 增加一道暗綠色細邊框增加質感 */
+            border: 1px solid #2e7d32; 
         }
         
         .header-controls {
@@ -46,7 +45,7 @@
         
         h2 {
             margin: 0;
-            color: #81c784; /* 改為淡綠色 */
+            color: #81c784; 
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -64,7 +63,6 @@
             gap: 5px;
         }
 
-        /* 複製按鈕樣式 */
         #copy-btn {
             padding: 10px 20px;
             font-size: 16px;
@@ -72,7 +70,7 @@
             cursor: pointer;
             border: none;
             border-radius: 50px; 
-            background-color: #43a047; /* 藍色系區隔 */
+            background-color: #43a047; 
             color: #e1f5fe; 
             transition: all 0.3s ease;
             box-shadow: 0 4px 10px rgba(2, 136, 209, 0.3);
@@ -92,8 +90,8 @@
             cursor: pointer;
             border: none;
             border-radius: 50px; 
-            background-color: #2e7d32; /* 按鈕背景改為深綠 */
-            color: #e8f5e9; /* 按鈕文字為淡綠 */
+            background-color: #2e7d32; 
+            color: #e8f5e9; 
             transition: all 0.3s ease;
             box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
             font-family: inherit;
@@ -106,7 +104,7 @@
         }
 
         .header-controls a {
-            color: #81c784; /* 改為淡綠色 */
+            color: #81c784; 
             text-decoration: none;
             font-weight: bold;
             font-size: 12px;
@@ -119,14 +117,14 @@
         #cj-status {
             margin-top: 0px;
             font-size: 18px;
-            color: #b0bec5; /* 改為亮灰藍 */
+            color: #b0bec5; 
             height: 25px; 
             font-weight: bold;
         }
         
         #current-code {
             font-weight: 900;
-            color: #ffab91; /* 調淡橘色，在暗色背景更柔和 */
+            color: #ffab91; 
             text-transform: uppercase;
             letter-spacing: 2px;
         }
@@ -165,8 +163,8 @@
             border: 2px solid transparent;
             border-radius: 16px;
             display: inline-block;
-            background-color: #263238; /* 候選字背景改為暗藍灰 */
-            color: #a5d6a7; /* 候選字文字改為淡綠色 */
+            background-color: #263238; 
+            color: #a5d6a7; 
             font-weight: bold;
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             user-select: none;
@@ -176,7 +174,7 @@
         @media (hover: hover) {
             .candidate:hover {
                 background-color: #37474f;
-                border-color: #4caf50; /* 懸停時邊框變綠 */
+                border-color: #4caf50; 
                 transform: scale(1.08);
             }
         }
@@ -198,7 +196,7 @@
             width: 100%;
             flex-grow: 1; 
             resize: none;
-            border: 2px solid #2e7d32; /* 輸入框邊框改為深綠 */
+            border: 2px solid #2e7d32; 
             border-radius: 20px;
             outline: none;
             padding: 15px;
@@ -206,59 +204,26 @@
             font-family: inherit;
             line-height: 1.6;
             box-sizing: border-box;
-            background-color: #151515; /* 輸入框內部極暗色 */
-            color: #e0e0e0; /* 輸入文字為白色系 */
+            background-color: #151515; 
+            color: #e0e0e0; 
             transition: all 0.3s ease;
         }
         
         textarea:focus {
-            border-color: #81c784; /* 聚焦時邊框變淡綠 */
+            border-color: #81c784; 
             background-color: #1a1a1a;
             box-shadow: 0 0 0 4px rgba(129, 199, 132, 0.15);
         }
 
-        /* --- 手機版 RWD 響應式排版調整 --- */
         @media (max-width: 600px) {
-            body {
-                padding: 1px; 
-            }
-            .container {
-                padding: 1px; 
-                border-radius: 3px;
-            }
-            .header-controls {
-                gap: 2px;
-                margin-bottom: 0px;
-                font-size: 12px;
-            }
-            h2 {
-                font-size: 20px;
-            }
-            #copy-btn, #mode-toggle {
-                padding: 2px 16px;
-                font-size: 12px;
-            }
-            #candidates {
-                height: 18px; 
-                margin-top: 1px;
-                margin-bottom: 1px;
-                font-size: 12px;
-                padding-bottom: 0px;
-                overflow-x: hidden;
-            }
-            .candidate {
-                margin-right: 0px;
-                padding: 0px 0px; 
-                border: 1px solid transparent;
-                border-radius: 2px;
-            }          
-            #cj-status {
-                margin-top: 0px;
-                font-size: 12px;
-                color: #b0bec5;
-                height: 13px; 
-                font-weight: normal;
-            }  
+            body { padding: 1px; }
+            .container { padding: 1px; border-radius: 3px; }
+            .header-controls { gap: 2px; margin-bottom: 0px; font-size: 12px; }
+            h2 { font-size: 20px; }
+            #copy-btn, #mode-toggle { padding: 2px 16px; font-size: 12px; }
+            #candidates { height: 18px; margin-top: 1px; margin-bottom: 1px; font-size: 12px; padding-bottom: 0px; overflow-x: hidden; }
+            .candidate { margin-right: 0px; padding: 0px 0px; border: 1px solid transparent; border-radius: 2px; }          
+            #cj-status { margin-top: 0px; font-size: 12px; color: #b0bec5; height: 13px; font-weight: normal; }  
         }
     </style>
 </head>
@@ -288,22 +253,37 @@
     const candidatesDiv = document.getElementById('candidates');
     const currentCodeSpan = document.getElementById('current-code');
     const modeToggleBtn = document.getElementById('mode-toggle');
-    const copyBtn = document.getElementById('copy-btn'); // 取得複製按鈕
+    const copyBtn = document.getElementById('copy-btn'); 
     
     let currentCode = '';
     let isChineseMode = true;
 
-    // --- 剪貼簿複製功能 ---
+    // --- 倉頡字根對應表 ---
+    const cangjieRadicals = {
+        'a': '日', 'b': '月', 'c': '金', 'd': '木', 'e': '水', 'f': '火', 'g': '土', 
+        'h': '竹', 'i': '戈', 'j': '十', 'k': '大', 'l': '中', 'm': '一', 'n': '弓', 
+        'o': '人', 'p': '心', 'q': '手', 'r': '口', 's': '尸', 't': '廿', 'u': '山', 
+        'v': '女', 'w': '田', 'x': '難', 'y': '卜', 'z': '重'
+    };
+
+    // --- 標點符號對應表 ---
+    const punctuationMap = {
+        ',': '，',
+        '.': '。',
+        '?': '？',
+        ';': '；',
+        ' ': '　'
+    };
+
     copyBtn.addEventListener('click', async () => {
         try {
             await navigator.clipboard.writeText(inputBox.value);
-            // 提供視覺回饋
             copyBtn.textContent = '已複製';
-            copyBtn.style.backgroundColor = '#43a047'; // 變綠色表示成功
+            copyBtn.style.backgroundColor = '#43a047'; 
             
             setTimeout(() => {
                 copyBtn.textContent = '複製';
-                copyBtn.style.backgroundColor = '#43a047'; // 恢復原本顏色
+                copyBtn.style.backgroundColor = '#43a047'; 
             }, 1500);
         } catch (err) {
             console.error('複製失敗:', err);
@@ -312,7 +292,7 @@
                 copyBtn.textContent = '複製';
             }, 1500);
         }
-        inputBox.focus(); // 複製完保持游標在輸入框
+        inputBox.focus(); 
     });
 
     function toggleMode() {
@@ -359,35 +339,65 @@
 
         if (!isChineseMode) return;
 
+        // 處理英文字母輸入
         if (e.key >= 'a' && e.key <= 'z' && !e.ctrlKey && !e.altKey && !e.metaKey) {
             e.preventDefault(); 
             currentCode += e.key;
             updateUI();
+            return;
         } 
-        else if (e.key === 'Backspace' && currentCode.length > 0) {
+        
+        // 處理退格鍵
+        if (e.key === 'Backspace' && currentCode.length > 0) {
             e.preventDefault();
             currentCode = currentCode.slice(0, -1);
             updateUI();
+            return;
         } 
-        else if (e.key === ' ' && currentCode.length > 0) {
+        
+        // 處理標點符號與空白鍵 (對應全形)
+        if (punctuationMap[e.key] && !e.ctrlKey && !e.altKey && !e.metaKey) {
             e.preventDefault();
-            const chars = getCandidates(currentCode);
-            if (chars.length > 0) {
-                commitChar(chars[0]);
+            if (e.key === ' ') {
+                if (currentCode.length > 0) {
+                    // 若有輸入碼，空白鍵作為選字
+                    const chars = getCandidates(currentCode);
+                    if (chars.length > 0) commitChar(chars[0]);
+                } else {
+                    // 若無輸入碼，輸出全形空白
+                    commitChar(punctuationMap[e.key]);
+                }
+            } else {
+                // 若輸入標點符號，先將尚未輸出的首個候選字印出，再補上標點
+                if (currentCode.length > 0) {
+                    const chars = getCandidates(currentCode);
+                    if (chars.length > 0) {
+                        commitChar(chars[0]);
+                    } else {
+                        currentCode = ''; 
+                        updateUI();
+                    }
+                }
+                commitChar(punctuationMap[e.key]);
             }
+            return;
         }
-        else if (e.key >= '1' && e.key <= '9' && currentCode.length > 0) {
+
+        // 處理數字鍵選字
+        if (e.key >= '1' && e.key <= '9' && currentCode.length > 0) {
             const index = parseInt(e.key) - 1;
             const chars = getCandidates(currentCode);
             if (chars && chars[index]) {
                 e.preventDefault();
                 commitChar(chars[index]);
             }
+            return;
         }
     });
 
     function updateUI() {
-        currentCodeSpan.textContent = currentCode;
+        // 將英文字母轉換為倉頡字根呈現
+        currentCodeSpan.textContent = currentCode.split('').map(c => cangjieRadicals[c] || c).join('');
         candidatesDiv.innerHTML = '';
         
         if (currentCode === '') return;
@@ -427,6 +437,7 @@
         updateUI();
         inputBox.focus();
     }
+    
     inputBox.focus();
 </script>
 
