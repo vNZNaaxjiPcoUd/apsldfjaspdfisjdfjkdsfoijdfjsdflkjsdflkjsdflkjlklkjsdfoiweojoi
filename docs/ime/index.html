@@ -60,7 +60,7 @@
         .header-right {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 5px;
         }
 
         #mode-toggle {
@@ -92,7 +92,7 @@
         }
 
         #cj-status {
-            margin-top: 5px;
+            margin-top: 0px;
             font-size: 18px;
             color: #555;
             height: 25px; 
@@ -205,15 +205,14 @@
                 border-radius: 3px;
             }
             .header-controls {
-                flex-direction: column;
-                align-items: flex-start;
+                /*flex-direction: column;
+                align-items: flex-start;*/
                 gap: 2px;
                 margin-bottom: 0px;
                 font-size: 12px;
             }
             .header-right {
-                width: 100%;
-                justify-content: space-between;
+
             }
             h2 {
                 font-size: 20px;
@@ -224,11 +223,11 @@
             }
             #candidates {
                 height: 18px; /* 給予觸控跟捲動更多空間 */
-                margin-top: 3px;
-                margin-bottom: 3px;
+                margin-top: 1px;
+                margin-bottom: 1px;
                 font-size: 12px;
                 padding-bottom: 0px;
-
+                overflow-x: hidden;
             }
             .candidate {
                 margin-right: 0px;
@@ -250,12 +249,13 @@
 
 <div class="container">
     <div class="header-controls">
+        <div id="cj-status">輸入：<span id="current-code"></span></div>
         <div class="header-right">
-            <button id="mode-toggle">目前模式：中文</button>
-            <a href="https://www.google.com/inputtools/try/" target="_blank">GoogleIME ↗</a>
+            <button id="mode-toggle" title="ctrl + L">倉頡</button>
+            <a href="https://www.google.com/inputtools/try/" target="_blank">IME↗</a>
         </div>
     </div>
-    <div id="cj-status">目前拼碼：<span id="current-code"></span></div>
+    <!--div id="cj-status">目前拼碼：<span id="current-code"></span></div-->
     <div id="candidates"></div>    
     <textarea id="input-box" 
               placeholder="點擊此處開始輸入..." 
@@ -277,7 +277,7 @@
 
     function toggleMode() {
         isChineseMode = !isChineseMode;
-        modeToggleBtn.textContent = isChineseMode ? '目前模式：中文' : '現時模式：英文';
+        modeToggleBtn.textContent = isChineseMode ? '倉頡' : '英文';
         
         if(isChineseMode) {
             modeToggleBtn.style.backgroundColor = '#a5d6a7';
@@ -317,7 +317,7 @@
     }
 
     inputBox.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.key === ' ') {
+        if ((e.ctrlKey && e.key === ' ') || (e.ctrlKey && e.key.toLowerCase() === 'l')){
             e.preventDefault(); 
             toggleMode();
             return; 
@@ -393,6 +393,7 @@
         updateUI();
         inputBox.focus();
     }
+    inputBox.focus();
 </script>
 
 </body>
