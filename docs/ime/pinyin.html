@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>倉頡輸入</title>
+    <title>拼音輸入</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap');
 
@@ -33,7 +33,7 @@
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            border: 1px solid #2e7d32; 
+            border: 1px solid #1976d2; /* 改為藍色系 */
         }
         
         .header-controls {
@@ -45,16 +45,11 @@
         
         h2 {
             margin: 0;
-            color: #81c784; 
+            color: #64b5f6; 
             font-weight: 700;
             display: flex;
             align-items: center;
             gap: 8px;
-        }
-        
-        h2::before {
-            content: '🌱';
-            font-size: 24px;
         }
         
         .header-right {
@@ -70,17 +65,17 @@
             cursor: pointer;
             border: none;
             border-radius: 50px; 
-            background-color: #43a047; 
+            background-color: #1976d2; 
             color: #e1f5fe; 
             transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(2, 136, 209, 0.3);
+            box-shadow: 0 4px 10px rgba(25, 118, 210, 0.3);
             font-family: inherit;
         }
         
         #copy-btn:hover {
-            background-color: #36813a;
+            background-color: #1565c0;
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(3, 155, 229, 0.4);
+            box-shadow: 0 6px 15px rgba(21, 101, 192, 0.4);
         }
 
         #mode-toggle {
@@ -90,31 +85,31 @@
             cursor: pointer;
             border: none;
             border-radius: 50px; 
-            background-color: #2e7d32; 
-            color: #e8f5e9; 
+            background-color: #0d47a1; 
+            color: #e3f2fd; 
             transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+            box-shadow: 0 4px 10px rgba(13, 71, 161, 0.3);
             font-family: inherit;
         }
         
         #mode-toggle:hover {
-            background-color: #388e3c;
+            background-color: #002171;
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(56, 142, 60, 0.4);
+            box-shadow: 0 6px 15px rgba(0, 33, 113, 0.4);
         }
 
         .header-controls a {
-            color: #81c784; 
+            color: #64b5f6; 
             text-decoration: none;
             font-weight: bold;
             font-size: 12px;
             transition: color 0.3s;
         }
         .header-controls a:hover {
-            color: #a5d6a7;
+            color: #90caf9;
         }
 
-        #cj-status {
+        #py-status {
             margin-top: 0px;
             font-size: 18px;
             color: #b0bec5; 
@@ -125,7 +120,6 @@
         #current-code {
             font-weight: 900;
             color: #ffab91; 
-            text-transform: uppercase;
             letter-spacing: 2px;
         }
         
@@ -139,91 +133,42 @@
             overflow-y: hidden;  
             -webkit-overflow-scrolling: touch; 
             scrollbar-width: thin;
-            scrollbar-color: #2e7d32 transparent;
+            scrollbar-color: #1976d2 transparent;
             padding-bottom: 10px;
             display: flex;
             align-items: center;
         }
-        
-        #candidates::-webkit-scrollbar {
-            height: 6px;
-        }
-        #candidates::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        #candidates::-webkit-scrollbar-thumb {
-            background-color: #2e7d32;
-            border-radius: 10px;
-        }
 
         .candidate {
-            margin-right: 12px;
-            cursor: pointer;
-            padding: 10px 18px; 
-            border: 2px solid transparent;
-            border-radius: 16px;
             display: inline-block;
-            background-color: #263238; 
-            color: #a5d6a7; 
-            font-weight: bold;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            user-select: none;
-            -webkit-user-select: none;
+            margin-right: 15px;
+            padding: 5px 10px;
+            background-color: #333;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
         }
 
-        @media (hover: hover) {
-            .candidate:hover {
-                background-color: #37474f;
-                border-color: #4caf50; 
-                transform: scale(1.08);
-            }
+        .candidate:hover {
+            background-color: #555;
         }
-        .candidate:active {
-            transform: scale(0.95);
-            background-color: #4caf50;
-            color: #121212;
-        }
-        
-        label {
-            margin-top: 5px;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #81c784;
-            font-size: 14px;
-        }
-        
+
         textarea {
             width: 100%;
-            flex-grow: 1; 
-            resize: none;
-            border: 2px solid #2e7d32; 
-            border-radius: 20px;
-            outline: none;
+            flex-grow: 1;
+            background-color: #2a2a2a;
+            color: #ffffff;
+            border: 1px solid #424242;
+            border-radius: 12px;
             padding: 15px;
-            font-size: 16px; 
+            font-size: 18px;
             font-family: inherit;
-            line-height: 1.6;
+            resize: none;
+            outline: none;
             box-sizing: border-box;
-            background-color: #151515; 
-            color: #e0e0e0; 
-            transition: all 0.3s ease;
         }
-        
         textarea:focus {
-            border-color: #81c784; 
-            background-color: #1a1a1a;
-            box-shadow: 0 0 0 4px rgba(129, 199, 132, 0.15);
-        }
-
-        @media (max-width: 600px) {
-            body { padding: 1px; }
-            .container { padding: 1px; border-radius: 3px; }
-            .header-controls { gap: 2px; margin-bottom: 0px; font-size: 12px; }
-            h2 { font-size: 20px; }
-            #copy-btn, #mode-toggle { padding: 2px 16px; font-size: 12px; }
-            #candidates { height: 18px; margin-top: 1px; margin-bottom: 1px; font-size: 12px; padding-bottom: 0px; overflow-x: hidden; }
-            .candidate { margin-right: 0px; padding: 0px 0px; border: 1px solid transparent; border-radius: 2px; }          
-            #cj-status { margin-top: 0px; font-size: 12px; color: #b0bec5; height: 13px; font-weight: normal; }  
+            border-color: #64b5f6;
         }
     </style>
 </head>
@@ -231,23 +176,24 @@
 
 <div class="container">
     <div class="header-controls">
-        <div id="cj-status">輸入：<span id="current-code"></span></div>
+        <div id="py-status">輸入：<span id="current-code"></span></div>
         <div class="header-right">
             <button id="copy-btn" title="複製內容">複製</button>
-            <button id="mode-toggle" title="ctrl + L">倉頡</button>
-            <a href="pinyin.html"">拼音↗</a>
+            <button id="mode-toggle" title="ctrl + L">拼音</button>
+            <a href="https://www.google.com/inputtools/try/" target="_blank">IME↗</a>
         </div>
     </div>
     <div id="candidates"></div>    
     <textarea id="input-box" 
-              placeholder="點擊此處開始輸入..." 
+              placeholder="點擊此處開始輸入拼音 (例如: zhong)..." 
               autocapitalize="none" 
               autocorrect="off" 
               autocomplete="off" 
               spellcheck="false"></textarea>
 </div>
 
-<script src="cangjie_dict.js"></script>
+<!--script src="https://cdn.jsdelivr.net/gh/sxei/pinyinjs@master/dict/pinyin_dict_notone.js"></script-->
+<script src="pinyin_dict_notone.js"></script>
 <script>
     const inputBox = document.getElementById('input-box');
     const candidatesDiv = document.getElementById('candidates');
@@ -258,35 +204,19 @@
     let currentCode = '';
     let isChineseMode = true;
 
-    // --- 倉頡字根對應表 ---
-    const cangjieRadicals = {
-        'a': '日', 'b': '月', 'c': '金', 'd': '木', 'e': '水', 'f': '火', 'g': '土', 
-        'h': '竹', 'i': '戈', 'j': '十', 'k': '大', 'l': '中', 'm': '一', 'n': '弓', 
-        'o': '人', 'p': '心', 'q': '手', 'r': '口', 's': '尸', 't': '廿', 'u': '山', 
-        'v': '女', 'w': '田', 'x': '難', 'y': '卜', 'z': '重'
-    };
-
     // --- 標點符號對應表 ---
     const punctuationMap = {
-        ',': '，',
-        '.': '。',
-        '?': '？',
-        ';': '；',
-        ' ': ' ',
-        '!':'！',
-        '(':'（',
-        ')':'）',
+        ',': '，', '.': '。', '?': '？', ';': '；', ' ': ' ', '!':'！', '(':'（', ')':'）',
     };
 
     copyBtn.addEventListener('click', async () => {
         try {
             await navigator.clipboard.writeText(inputBox.value);
             copyBtn.textContent = '已複製';
-            copyBtn.style.backgroundColor = '#43a047'; 
+            copyBtn.style.backgroundColor = '#1976d2'; 
             
             setTimeout(() => {
                 copyBtn.textContent = '複製';
-                copyBtn.style.backgroundColor = '#43a047'; 
             }, 1500);
         } catch (err) {
             console.error('複製失敗:', err);
@@ -300,11 +230,11 @@
 
     function toggleMode() {
         isChineseMode = !isChineseMode;
-        modeToggleBtn.textContent = isChineseMode ? '倉頡' : '英文';
+        modeToggleBtn.textContent = isChineseMode ? '拼音' : '英文';
         
         if(isChineseMode) {
-            modeToggleBtn.style.backgroundColor = '#2e7d32';
-            modeToggleBtn.style.color = '#e8f5e9';
+            modeToggleBtn.style.backgroundColor = '#0d47a1';
+            modeToggleBtn.style.color = '#e3f2fd';
         } else {
             modeToggleBtn.style.backgroundColor = '#424242';
             modeToggleBtn.style.color = '#bdbdbd';
@@ -317,17 +247,24 @@
 
     modeToggleBtn.addEventListener('click', toggleMode);
 
+    // 解析 sxei 字典
     function getCandidates(code) {
-        if (typeof cangjieDict === 'undefined' || !code) return [];
+        if (typeof pinyin_dict_notone === 'undefined' || !code) return [];
         const resultSet = new Set();
         
-        if (cangjieDict[code]) {
-            cangjieDict[code].forEach(char => resultSet.add(char));
+        // 1. 先匹配「完全符合」的拼音字 (例如輸入 'shi'，先把 'shi' 的字全拿出來)
+        if (pinyin_dict_notone[code]) {
+            for (let char of pinyin_dict_notone[code]) {
+                resultSet.add(char);
+            }
         }
         
-        for (const key in cangjieDict) {
+        // 2. 接著匹配「前綴符合」的拼音字 (例如輸入 's'，會帶出 'sa', 'shi', 'shu' 的字)
+        for (const key in pinyin_dict_notone) {
             if (key !== code && key.startsWith(code)) {
-                cangjieDict[key].forEach(char => resultSet.add(char));
+                for (let char of pinyin_dict_notone[key]) {
+                    resultSet.add(char);
+                }
             }
         }
         return Array.from(resultSet);
@@ -358,20 +295,17 @@
             return;
         } 
         
-        // 處理標點符號與空白鍵 (對應全形)
+        // 處理標點符號與空白鍵
         if (punctuationMap[e.key] && !e.ctrlKey && !e.altKey && !e.metaKey) {
             e.preventDefault();
             if (e.key === ' ') {
                 if (currentCode.length > 0) {
-                    // 若有輸入碼，空白鍵作為選字
                     const chars = getCandidates(currentCode);
                     if (chars.length > 0) commitChar(chars[0]);
                 } else {
-                    // 若無輸入碼，輸出全形空白
                     commitChar(punctuationMap[e.key]);
                 }
             } else {
-                // 若輸入標點符號，先將尚未輸出的首個候選字印出，再補上標點
                 if (currentCode.length > 0) {
                     const chars = getCandidates(currentCode);
                     if (chars.length > 0) {
@@ -386,7 +320,7 @@
             return;
         }
 
-        // 處理數字鍵選字
+        // 處理數字鍵選字 (1-9)
         if (e.key >= '1' && e.key <= '9' && currentCode.length > 0) {
             const index = parseInt(e.key) - 1;
             const chars = getCandidates(currentCode);
@@ -399,19 +333,22 @@
     });
 
     function updateUI() {
-        // 將英文字母轉換為倉頡字根呈現
-        currentCodeSpan.textContent = currentCode.split('').map(c => cangjieRadicals[c] || c).join('');
+        // 拼音直接顯示英文即可
+        currentCodeSpan.textContent = currentCode;
         candidatesDiv.innerHTML = '';
         
         if (currentCode === '') return;
 
-        if (typeof cangjieDict !== 'undefined') {
+        if (typeof pinyin_dict_notone !== 'undefined') {
             const chars = getCandidates(currentCode);
             if (chars.length > 0) {
-                chars.forEach((char, index) => {
+                // 為了避免畫面卡頓，最多只顯示前 50 個候選字
+                const displayLimit = Math.min(chars.length, 50);
+                for (let i = 0; i < displayLimit; i++) {
+                    const char = chars[i];
                     const span = document.createElement('span');
                     span.className = 'candidate';
-                    span.textContent = `${index + 1}. ${char}`;
+                    span.textContent = `${i < 9 ? i + 1 + '. ' : ''}${char}`;
                     
                     span.addEventListener('pointerdown', (e) => {
                         e.preventDefault(); 
@@ -419,7 +356,7 @@
                     });
                     
                     candidatesDiv.appendChild(span);
-                });
+                }
             } else {
                 candidatesDiv.innerHTML = '<span style="color: #757575; font-size: 16px; padding: 10px;">無符合字詞 💧</span>';
             }
