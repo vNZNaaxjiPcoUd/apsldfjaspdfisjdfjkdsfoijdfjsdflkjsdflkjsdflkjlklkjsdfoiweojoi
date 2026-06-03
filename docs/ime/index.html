@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>倉頡輸入</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap');
 
@@ -60,48 +61,53 @@
         .header-right {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
         }
+
+        /* 整合按鈕共用樣式 */
+        .btn-common {
+            padding: 8px 16px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 50px; 
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .btn-common:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 個別按鈕顏色設定 */
+        #save-btn {
+            background-color: #43a047; 
+            color: #fff3e0;
+            box-shadow: 0 4px 10px rgba(113, 255, 78, 0.3);
+        }
+        #save-btn:hover { background-color: #43a047;  box-shadow: 0 6px 15px rgba(92, 255, 64, 0.4); }
+
+        #load-btn {
+            background-color: #43a047; 
+            color: #e3f2fd;
+            box-shadow: 0 4px 10px rgba(47, 210, 25, 0.3);
+        }
+        #load-btn:hover { background-color: #43a047; box-shadow: 0 6px 15px rgba(25, 210, 28, 0.4); }
 
         #copy-btn {
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            border-radius: 50px; 
             background-color: #43a047; 
             color: #e1f5fe; 
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(2, 136, 209, 0.3);
-            font-family: inherit;
+            box-shadow: 0 4px 10px rgba(67, 160, 71, 0.3);
         }
-        
-        #copy-btn:hover {
-            background-color: #36813a;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(3, 155, 229, 0.4);
-        }
+        #copy-btn:hover { background-color: #36813a; box-shadow: 0 6px 15px rgba(67, 160, 71, 0.4); }
 
         #mode-toggle {
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            border-radius: 50px; 
             background-color: #2e7d32; 
             color: #e8f5e9; 
-            transition: all 0.3s ease;
             box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
-            font-family: inherit;
         }
-        
-        #mode-toggle:hover {
-            background-color: #388e3c;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(56, 142, 60, 0.4);
-        }
+        #mode-toggle:hover { background-color: #388e3c; box-shadow: 0 6px 15px rgba(56, 142, 60, 0.4); }
 
         .header-controls a {
             color: #81c784; 
@@ -109,6 +115,7 @@
             font-weight: bold;
             font-size: 12px;
             transition: color 0.3s;
+            margin-left: 4px;
         }
         .header-controls a:hover {
             color: #a5d6a7;
@@ -184,14 +191,6 @@
             color: #121212;
         }
         
-        label {
-            margin-top: 5px;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #81c784;
-            font-size: 14px;
-        }
-        
         textarea {
             width: 100%;
             flex-grow: 1; 
@@ -220,7 +219,7 @@
             .container { padding: 1px; border-radius: 3px; }
             .header-controls { gap: 2px; margin-bottom: 0px; font-size: 12px; }
             h2 { font-size: 20px; }
-            #copy-btn, #mode-toggle { padding: 2px 16px; font-size: 12px; }
+            .btn-common { padding: 4px 10px; font-size: 12px; }
             #candidates { height: 18px; margin-top: 1px; margin-bottom: 1px; font-size: 12px; padding-bottom: 0px; overflow-x: hidden; }
             .candidate { margin-right: 0px; padding: 0px 0px; border: 1px solid transparent; border-radius: 2px; }          
             #cj-status { margin-top: 0px; font-size: 12px; color: #b0bec5; height: 13px; font-weight: normal; }  
@@ -233,9 +232,11 @@
     <div class="header-controls">
         <div id="cj-status">輸入：<span id="current-code"></span></div>
         <div class="header-right">
-            <button id="copy-btn" title="複製內容">複製</button>
-            <button id="mode-toggle" title="ctrl + L">倉頡</button>
-            <a href="pinyin.html"">拼音↗</a>
+            <button id="save-btn" class="btn-common" title="加密並儲存內容至瀏覽器">存</button>
+            <button id="load-btn" class="btn-common" title="從瀏覽器讀取並解密內容">讀</button>
+            <button id="copy-btn" class="btn-common" title="複製內容">複製</button>
+            <button id="mode-toggle" class="btn-common" title="ctrl + L">倉頡</button>
+            <a href="pinyin.html">拼音↗</a>
         </div>
     </div>
     <div id="candidates"></div>    
@@ -254,11 +255,17 @@
     const currentCodeSpan = document.getElementById('current-code');
     const modeToggleBtn = document.getElementById('mode-toggle');
     const copyBtn = document.getElementById('copy-btn'); 
+    const saveBtn = document.getElementById('save-btn');
+    const loadBtn = document.getElementById('load-btn');
     
+    // ==========================================
+    // 加密金鑰設定
+    // ==========================================
+    const SECRET_KEY = "d2c374dc6ea70a3876207c4655e33be1c4397c2cacad3d98a22b";
+
     let currentCode = '';
     let isChineseMode = true;
 
-    // --- 倉頡字根對應表 ---
     const cangjieRadicals = {
         'a': '日', 'b': '月', 'c': '金', 'd': '木', 'e': '水', 'f': '火', 'g': '土', 
         'h': '竹', 'i': '戈', 'j': '十', 'k': '大', 'l': '中', 'm': '一', 'n': '弓', 
@@ -266,34 +273,20 @@
         'v': '女', 'w': '田', 'x': '難', 'y': '卜', 'z': '重'
     };
 
-    // --- 標點符號對應表 ---
     const punctuationMap = {
-        ',': '，',
-        '.': '。',
-        '?': '？',
-        ';': '；',
-        ' ': ' ',
-        '!':'！',
-        '(':'（',
-        ')':'）',
+        ',': '，', '.': '。', '?': '？', ';': '；', ' ': ' ', 
+        '!':'！', '(':'（', ')':'）',
     };
 
     copyBtn.addEventListener('click', async () => {
         try {
             await navigator.clipboard.writeText(inputBox.value);
             copyBtn.textContent = '已複製';
-            copyBtn.style.backgroundColor = '#43a047'; 
-            
-            setTimeout(() => {
-                copyBtn.textContent = '複製';
-                copyBtn.style.backgroundColor = '#43a047'; 
-            }, 1500);
+            setTimeout(() => copyBtn.textContent = '複製', 1500);
         } catch (err) {
             console.error('複製失敗:', err);
             copyBtn.textContent = '失敗';
-            setTimeout(() => {
-                copyBtn.textContent = '複製';
-            }, 1500);
+            setTimeout(() => copyBtn.textContent = '複製', 1500);
         }
         inputBox.focus(); 
     });
@@ -342,7 +335,6 @@
 
         if (!isChineseMode) return;
 
-        // 處理英文字母輸入
         if (e.key >= 'a' && e.key <= 'z' && !e.ctrlKey && !e.altKey && !e.metaKey) {
             e.preventDefault(); 
             currentCode += e.key;
@@ -350,7 +342,6 @@
             return;
         } 
         
-        // 處理退格鍵
         if (e.key === 'Backspace' && currentCode.length > 0) {
             e.preventDefault();
             currentCode = currentCode.slice(0, -1);
@@ -358,20 +349,16 @@
             return;
         } 
         
-        // 處理標點符號與空白鍵 (對應全形)
         if (punctuationMap[e.key] && !e.ctrlKey && !e.altKey && !e.metaKey) {
             e.preventDefault();
             if (e.key === ' ') {
                 if (currentCode.length > 0) {
-                    // 若有輸入碼，空白鍵作為選字
                     const chars = getCandidates(currentCode);
                     if (chars.length > 0) commitChar(chars[0]);
                 } else {
-                    // 若無輸入碼，輸出全形空白
                     commitChar(punctuationMap[e.key]);
                 }
             } else {
-                // 若輸入標點符號，先將尚未輸出的首個候選字印出，再補上標點
                 if (currentCode.length > 0) {
                     const chars = getCandidates(currentCode);
                     if (chars.length > 0) {
@@ -386,7 +373,6 @@
             return;
         }
 
-        // 處理數字鍵選字
         if (e.key >= '1' && e.key <= '9' && currentCode.length > 0) {
             const index = parseInt(e.key) - 1;
             const chars = getCandidates(currentCode);
@@ -399,7 +385,6 @@
     });
 
     function updateUI() {
-        // 將英文字母轉換為倉頡字根呈現
         currentCodeSpan.textContent = currentCode.split('').map(c => cangjieRadicals[c] || c).join('');
         candidatesDiv.innerHTML = '';
         
@@ -440,7 +425,110 @@
         updateUI();
         inputBox.focus();
     }
+
+    // ==========================================
+    // IndexedDB 加密儲存與解密讀取功能
+    // ==========================================
+    const dbName = "CangjieEditorDB";
+    const storeName = "editorData";
+    let db;
+
+    function initDB() {
+        const request = indexedDB.open(dbName, 1);
+
+        request.onupgradeneeded = function(event) {
+            db = event.target.result;
+            if (!db.objectStoreNames.contains(storeName)) {
+                db.createObjectStore(storeName, { keyPath: "id" });
+            }
+        };
+
+        request.onsuccess = function(event) {
+            db = event.target.result;
+        };
+
+        request.onerror = function(event) {
+            console.error("IndexedDB 初始化失敗:", event.target.error);
+        };
+    }
+
+    function saveToIndexedDB() {
+        if (!db) return;
+        const transaction = db.transaction([storeName], "readwrite");
+        const store = transaction.objectStore(storeName);
+        
+        try {
+            // 使用 CryptoJS 將文字內容進行 AES 加密
+            const encryptedContent = CryptoJS.AES.encrypt(inputBox.value, SECRET_KEY).toString();
+            
+            store.put({ id: "savedText", content: encryptedContent });
+            
+            transaction.oncomplete = function() {
+                saveBtn.textContent = '已存';
+                setTimeout(() => saveBtn.textContent = '存', 1500);
+            };
+            
+            transaction.onerror = function(event) {
+                console.error("儲存失敗:", event.target.error);
+                saveBtn.textContent = '失敗';
+                setTimeout(() => saveBtn.textContent = '存', 1500);
+            };
+        } catch (error) {
+            console.error("加密過程發生錯誤:", error);
+            saveBtn.textContent = '加密錯';
+            setTimeout(() => saveBtn.textContent = '存', 1500);
+        }
+    }
+
+    function loadFromIndexedDB() {
+        if (!db) return;
+        const transaction = db.transaction([storeName], "readonly");
+        const store = transaction.objectStore(storeName);
+        const request = store.get("savedText");
+
+        request.onsuccess = function(event) {
+            if (request.result) {
+                try {
+                    // 使用 CryptoJS 將讀取出的內容進行 AES 解密
+                    const bytes = CryptoJS.AES.decrypt(request.result.content, SECRET_KEY);
+                    const decryptedContent = bytes.toString(CryptoJS.enc.Utf8);
+
+                    // 檢查解密結果是否有效（若密碼錯誤或未加密，轉碼後通常為空字串）
+                    if (decryptedContent) {
+                        inputBox.value = decryptedContent;
+                        loadBtn.textContent = '已讀';
+                    } else {
+                        throw new Error("密碼不符或資料格式錯誤");
+                    }
+                } catch (error) {
+                    console.error("解密失敗:", error);
+                    loadBtn.textContent = '解密錯';
+                }
+            } else {
+                loadBtn.textContent = '無檔';
+            }
+            setTimeout(() => loadBtn.textContent = '讀', 1500);
+        };
+        
+        request.onerror = function(event) {
+            console.error("讀取失敗:", event.target.error);
+            loadBtn.textContent = '失敗';
+            setTimeout(() => loadBtn.textContent = '讀', 1500);
+        };
+    }
+
+    // 綁定手動存檔與讀取事件
+    saveBtn.addEventListener('click', () => {
+        saveToIndexedDB();
+        inputBox.focus();
+    });
     
+    loadBtn.addEventListener('click', () => {
+        loadFromIndexedDB();
+        inputBox.focus();
+    });
+
+    initDB();
     inputBox.focus();
 </script>
 
