@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AES 檔案加密/解密工具</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background: #fff;
+            border-radius: 8px;
+        }
+        h2 { text-align: center; color: #2c3e50; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="file"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn-container { display: flex; gap: 10px; }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            color: white;
+            transition: background 0.3s;
+        }
+        #encryptBtn { background-color: #3498db; }
+        #encryptBtn:hover { background-color: #2980b9; }
+        #decryptBtn { background-color: #2ecc71; }
+        #decryptBtn:hover { background-color: #27ae60; }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            display: none;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+
+    <h2>檔案安全加密與解密</h2>
+    
+    <div class="form-group">
+        <label for="fileInput">選擇檔案：</label>
+        <input type="file" id="fileInput">
+    </div>
+
+    <div class="form-group">
+        <label for="password">設定或輸入解密密碼：</label>
+        <input type="password" id="password" placeholder="請輸入高強度密碼">
+    </div>
+
+    <div class="btn-container">
+        <button id="encryptBtn">加密並儲存</button>
+        <button id="decryptBtn">解密並儲存</button>
+    </div>
+
+    <div id="status"></div>
+
+    <script>
+        // 將密碼字串轉換為可用於衍生密鑰的基礎 Key 材料
+        async function getPasswordKey(password) {
+            const enc = new TextEncoder();
+            return window.crypto.subtle.importKey(
+                "raw",
+                enc.encode(password),
+                { name: "PBKDF2" },
+                false,
+                ["deriveKey"]
+            );
+        }
+
+        // 使用 PBKDF2 將密碼與 Salt 進行雜湊，產生 AES-GCM 256 位元密鑰
+        async function deriveAesKey(passwordKey, salt) {
+            return window.crypto.subtle.deriveKey(
+                {
+                    name: "PBKDF2",
+                    salt: salt,
+                    iterations: 100000,
+                    hash: "SHA-256"
+                },
+                passwordKey,
+                { name: "AES-GCM", length: 256 },
+                false,
+                ["encrypt", "decrypt"]
+            );
+        }
+
+        // 觸發檔案下載
+        function downloadFile(data, filename) {
+            const blob = new Blob([data], { type: "application/octet-stream" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 顯示狀態訊息
+        function showStatus(message, isError = false) {
+            const statusEl = document.getElementById('status');
+            statusEl.style.display = 'block';
+            statusEl.textContent = message;
+            statusEl.className = isError ? 'error' : 'success';
+        }
+
+        // 加密流程
+        document.getElementById('encryptBtn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('fileInput');
+            const password = document.getElementById('password').value;
+
+            if (!fileInput.files.length || !password) {
+                showStatus("請選擇檔案並輸入密碼。", true);
+                return;
+            }
+
+            try {
+                showStatus("加密中，請稍候...");
+                const file = fileInput.files[0];
+                const fileData = await file.arrayBuffer();
+
+                // 產生 16 bytes 隨機鹽值與 12 bytes 隨機初始向量 (IV)
+                const salt = window.crypto.getRandomValues(new Uint8Array(16));
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+                const passwordKey = await getPasswordKey(password);
+                const aesKey = await deriveAesKey(passwordKey, salt);
+
+                // 使用 AES-GCM 進行加密
+                const encryptedContent = await window.crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv: iv },
+                    aesKey,
+                    fileData
+                );
+
+                // 將 Salt, IV 與 加密後的內容合併在一個 Uint8Array 中
+                const encryptedBytes = new Uint8Array(encryptedContent);
+                const combinedData = new Uint8Array(salt.length + iv.length + encryptedBytes.length);
+                combinedData.set(salt, 0);
+                combinedData.set(iv, salt.length);
+                combinedData.set(encryptedBytes, salt.length + iv.length);
+
+                downloadFile(combinedData, file.name + ".enc");
+                showStatus("加密成功！檔案已自動下載。");
+            } catch (error) {
+                console.error(error);
+                showStatus("加密過程發生錯誤。", true);
+            }
+        });
+
+        // 解密流程
+        document.getElementById('decryptBtn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('fileInput');
+            const password = document.getElementById('password').value;
+
+            if (!fileInput.files.length || !password) {
+                showStatus("請選擇檔案並輸入密碼。", true);
+                return;
+            }
+
+            try {
+                showStatus("解密中，請稍候...");
+                const file = fileInput.files[0];
+                const fileData = await file.arrayBuffer();
+                const dataBytes = new Uint8Array(fileData);
+
+                // 從檔案前段分離出 16 bytes 的 Salt 與 12 bytes 的 IV
+                const salt = dataBytes.slice(0, 16);
+                const iv = dataBytes.slice(16, 28);
+                const encryptedBytes = dataBytes.slice(28);
+
+                const passwordKey = await getPasswordKey(password);
+                const aesKey = await deriveAesKey(passwordKey, salt);
+
+                // 解密內容
+                const decryptedContent = await window.crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv: iv },
+                    aesKey,
+                    encryptedBytes
+                );
+
+                // 移除原有的 .enc 副檔名 (若有)
+                let originalName = file.name;
+                if (originalName.endsWith('.enc')) {
+                    originalName = originalName.slice(0, -4);
+                } else {
+                    originalName = "decrypted_" + originalName;
+                }
+
+                downloadFile(new Uint8Array(decryptedContent), originalName);
+                showStatus("解密成功！檔案已還原並自動下載。");
+            } catch (error) {
+                console.error(error);
+                showStatus("解密失敗。請確認密碼是否正確，或檔案是否毀損。", true);
+            }
+        });
+    </script>
+</body>
+</html>
