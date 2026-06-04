@@ -307,7 +307,7 @@
             <button class="icon-btn" onclick="toggleSidebar()">☰</button>
             <h1 id="main-title" contenteditable="true" onblur="updateListName()">載入中...</h1>
             <button class="icon-btn" onclick="refreshData()" title="重新載入" style="font-size: 1.1rem; margin-right: 5px;">🔄</button>
-            <button class="save-btn" onclick="forceSave()">保存</button>
+            <button class="save-btn" onclick="forceSave()">最新</button>
         </header>
 
         <main>
@@ -858,7 +858,7 @@
                 saveBtn.style.background = "var(--danger)";
                 saveBtn.style.color = "var(--bg)";
             } else {
-                saveBtn.innerText = "保存";
+                saveBtn.innerText = "最新";
                 saveBtn.style.background = "white";
                 saveBtn.style.color = "var(--primary)";
             }
