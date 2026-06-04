@@ -109,6 +109,8 @@
     <button class="btn-start" onclick="uploadFile()">開始</button>
     
     <p id="status"></p>
+    <br>
+    <a href="https://lh3.googleusercontent.com/d/1SazSWZqJ8QVuXXNiYA37bYNVG-hwiZh3" target="_blank">圖片例子</a>
 </div>
 
 
@@ -148,6 +150,30 @@ fileInput.addEventListener('change', function() {
     }
 });
 
+function funA(url) {
+  // 1. 定義通用型正則表達式
+  // 匹配 /d/ 或 /folders/ 後面的一連串英數字與底線、連字號
+  // 這樣無論是 drive.google.com 還是 docs.google.com 都能抓取
+  const regex = /\/(?:d|folders)\/([a-zA-Z0-9_-]+)/;
+  const match = url.match(regex);
+
+  // 2. 檢查是否成功匹配並提取到 ID
+  if (match && match[1]) {
+    const extractedId = match[1];
+    
+    // 這裡印出 ID 方便開發與除錯時確認抓取結果
+    console.log(`已成功取出檔案/文件 ID: ${extractedId}`);
+    
+    // 3. 依照您的原需求，回傳指定的網址
+    return `https://lh3.googleusercontent.com/d/${extractedId}`;
+    
+    // 💡 補充：若未來需要將這個 ID 動態組合進網址中，可改為：
+    // return `http://googleusercontent.com/profile/picture/${extractedId}`;
+  }
+
+  // 若完全找不到符合的 ID 格式，回傳提示
+  return url;
+}
 
 function uploadFile() {
 
@@ -185,7 +211,8 @@ function uploadFile() {
       .then(res => res.json())
       .then(data => {
           if(data.result === "success") {
-          status.innerHTML =  `上傳成功！<a href="${data.fileUrl}" target="_blank">查看檔案</a>`;
+            B,C = funA(data.fileUrl);
+          status.innerHTML =  `上傳成功！<a href="${data.fileUrl}" target="_blank">查看檔案</a> <a href=${B} target="_blank">圖片連結</a> `;
           } else {
           status.textContent =  "上傳失敗: " + data.message;
           APIKey = ""; // 清除密碼，讓使用者下次上傳時需要重新輸入
@@ -199,6 +226,7 @@ function uploadFile() {
 
     reader.readAsDataURL(file); 
 }
+
 </script>
 </body>
 </html>
