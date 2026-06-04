@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ToDo</title>
+    <title>Items</title>
     <!-- 加入這兩行來確保各種設備都能抓到圖示 -->
     <link rel="icon" type="image/png" sizes="192x192" href="./favicon192.png">
     <link rel="apple-touch-icon" href="./favicon192.png">
@@ -211,15 +211,15 @@
             if (currentUrl.includes('id=')) dbId = currentUrl.split('id=')[1].split('&')[0];
             else if (currentUrl.includes('?')) dbId = currentUrl.split('?')[1].split('&')[0];
 
-            const manifestName = dbId ? dbId : "待辦事項";
+            const manifestName = dbId ? dbId : "事項";
             const startUrl = new URL(`./index.html${dbId ? '?id=' + dbId : ''}`, currentUrl).href;
             const icon192Url = new URL('./favicon192.png', currentUrl).href;
             const icon512Url = new URL('./favicon512.png', currentUrl).href;
 
             const manifest = {
-                "name": `ToDo - ${manifestName}`,
+                "name": `Items - ${manifestName}`,
                 "short_name": manifestName,
-                "description": `待辦事項 (${manifestName})`,
+                "description": `(${manifestName})`,
                 "start_url": startUrl,
                 "display": "standalone",
                 "background_color": "#f1f8f1",
@@ -257,7 +257,7 @@
 
     <div id="login-screen">
         <div class="login-card">
-            <h2>🔒 ToDo</h2>
+            <h2>🔒 項目</h2>
             <div class="input-group-login">
                 <label>帳號</label>
                 <input type="text" id="login-db-name" placeholder="輸入帳號" onkeydown="if(event.key === 'Enter') document.getElementById('login-password').focus()">
@@ -306,7 +306,7 @@
 
         <main>
             <div class="input-group">
-                <input type="text" id="new-item-title" placeholder="新增待辦項目..." onkeydown="if(event.key === 'Enter') addNewItem()">
+                <input type="text" id="new-item-title" placeholder="新增項目..." onkeydown="if(event.key === 'Enter') addNewItem()">
                 <button onclick="addNewItem()">+</button>
             </div>
             
@@ -418,7 +418,7 @@
                 return;
             }
 
-            document.title = `Todo ${dbNameInput}`;
+            document.title = `${dbNameInput}`;
 
             errorMsg.innerText = "";
             loginBtn.innerText = "載入中...";
@@ -430,7 +430,7 @@
             let res = await getFromAPI();
             
             if (res && res.message === "Key not found") {
-                appData = { lists: [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }] };
+                appData = { lists: [{ id: 'list_' + Date.now(), name: '清單', items: [] }] };
                 finishLoginSetup();
                 return;
             }
@@ -469,7 +469,7 @@
             document.getElementById('app-container').style.display = 'block';
 
             if (!appData.lists || appData.lists.length === 0) {
-                appData.lists = [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }];
+                appData.lists = [{ id: 'list_' + Date.now(), name: '清單', items: [] }];
             }
             
             if (!activeListId || !appData.lists.find(l => l.id === activeListId)) {
@@ -949,7 +949,7 @@
                 const date = new Date();
                 const yy = date.getFullYear().toString().slice(-2);
                 const dateString = `${yy}${(date.getMonth()+1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}${date.getSeconds().toString().padStart(2, '0')}`;
-                a.download = `ToDo_Backup_${dateString}.json`;
+                a.download = `List_Backup_${dateString}.json`;
                 
                 document.body.appendChild(a);
                 a.click();
@@ -984,7 +984,7 @@
                         if (appData.lists.length > 0) {
                             activeListId = appData.lists[0].id;
                         } else {
-                            appData.lists = [{ id: 'list_' + Date.now(), name: '我的清單', items: [] }];
+                            appData.lists = [{ id: 'list_' + Date.now(), name: '清單', items: [] }];
                             activeListId = appData.lists[0].id;
                         }
 
