@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>開啟窄版畫面</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #222;
+            gap: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .url-input {
+            padding: 12px 15px;
+            font-size: 16px;
+            width: 320px;
+            border: 1px solid #555;
+            border-radius: 8px;
+            background-color: #333;
+            color: #fff;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .url-input:focus {
+            border-color: #4CAF50;
+        }
+        
+        .url-input::placeholder {
+            color: #aaa;
+        }
+        
+        .launch-btn {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 320px;
+        }
+        
+        .launch-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <input type="text" id="urlInput" class="url-input" value="https://sm.jwint.net/sm.v.cam.html" placeholder="請填入網址，例如：http://localhost/...">
+    
+    <button class="launch-btn" onclick="openLiveView()">開啟窄版畫面</button>
+
+    <script>
+        function openLiveView() {
+            const inputElement = document.getElementById('urlInput');
+            const targetUrl = inputElement.value.trim(); 
+            
+            if (!targetUrl) {
+                alert('請先填入有效的目標網址！');
+                return; 
+            }
+            
+            const windowName = targetUrl.replace(/[^a-zA-Z0-9]/g, '_');
+            const windowFeatures = 'width=375,height=800,left=100,top=100,toolbar=no,menubar=no,scrollbars=no,resizable=yes,location=no,status=no';
+
+            window.open(targetUrl, windowName, windowFeatures);
+        }
+    </script>
+</body>
+</html>
