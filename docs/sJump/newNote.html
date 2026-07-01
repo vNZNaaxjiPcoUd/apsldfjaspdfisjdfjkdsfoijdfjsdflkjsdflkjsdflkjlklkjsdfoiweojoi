@@ -221,7 +221,7 @@
             const windowName = bookName.replace(/[^a-zA-Z0-9]/g, '_');
             const windowFeatures = 'toolbar=no,menubar=yes,scrollbars=yes,resizable=yes';
 
-            const redirectUrl = `https://n.jwint.net/r?${bookName}`;
+            const redirectUrl = `https://n.jwint.net/r#${bookName}`;
             
             if(await sLink(pwd, "QN_"+bookName, redirectUrl, "quickN:"+bookName)){
                 console.log("url saved");
@@ -235,7 +235,7 @@
             nowReadLink.href = redirectUrl;
             nowReadLink.innerHTML = "唯讀-" + bookName;
 
-            const editorUrl = `https://n.jwint.net/?${bookName}=YfbMlmGq0j5WrCekCbqpn7tocCbNEbid0HCVjQB1xLBSkU3GqjKBtq8a7sQh2Zt`;
+            const editorUrl = `https://n.jwint.net/#${bookName}=YfbMlmGq0j5WrCekCbqpn7tocCbNEbid0HCVjQB1xLBSkU3GqjKBtq8a7sQh2Zt`;
 
             const nowEditLink = document.getElementById('nowEditLink'); 
             nowEditLink.href = editorUrl;
