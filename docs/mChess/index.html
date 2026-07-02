@@ -352,7 +352,7 @@
                             turnMessage = `✅ 工兵成功挖除敵方地雷！`;
                         } else {
                             boardData[sr][sc] = null; 
-                            turnMessage = `💣 你的 ${attacker.name} 踩到地雷陣亡！`;
+                            turnMessage = `💣 ${attacker.name} 踩到地雷陣亡！`;
                         }
                     } else if (defender.name === '軍旗') {
                         boardData[r][c] = attacker;
@@ -365,10 +365,10 @@
                     } else if (aRank > dRank) {
                         boardData[r][c] = attacker; 
                         boardData[sr][sc] = null;
-                        turnMessage = `⚔️ 你的 ${attacker.name} 擊敗了敵方的 ${defender.name}！`;
+                        turnMessage = `⚔️ ${attacker.name} 擊敗了敵方的 ${defender.name}！`;
                     } else {
                         boardData[sr][sc] = null; 
-                        turnMessage = `❌ 攻擊失敗！你的 ${attacker.name} 被敵方 ${defender.name} 擊敗！`;
+                        turnMessage = `❌ 攻擊失敗！${attacker.name} 被敵方 ${defender.name} 擊敗！`;
                     }
                 } else {
                     boardData[r][c] = attacker;
