@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>陸軍棋</title>
     <style>
         :root {
@@ -12,71 +12,90 @@
             --board-bg: #ffffff;
             --highlight: #ffeb3b;
             --msg-bg: #e8ebf0;
+            
+            /* * 【關鍵修正】
+             * 螢幕寬度切分 5 格 (約佔 18vw)
+             * 螢幕高度扣除頂部 UI (約 140px) 後，除以 12 格 * 1.2 (長寬比) = 14.4
+             * 取兩者最小值，確保棋盤絕對不會超出螢幕邊界
+             */
+            --cell-w: min(18vw, calc((100dvh - 140px) / 14.4));
+            --cell-h: calc(var(--cell-w) * 1.2); /* 強制維持 1:1.2 的微長方形 */
         }
 
         body {
             margin: 0;
             padding: 0;
             width: 100vw;
-            height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             background-color: var(--bg-color);
             font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang TC', 'Heiti TC', sans-serif;
-            overflow: hidden;
+            overflow: hidden; /* 防止整個網頁出現滾動條 */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .header {
-            padding: 15px 20px;
+            padding: 10px 15px;
             background-color: #fff;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
             z-index: 10;
+            flex-shrink: 0; 
+            min-height: 50px;
+            box-sizing: border-box;
         }
 
         .status {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: bold;
             color: #333;
-            min-width: 200px;
+            flex: 1;
+            text-align: left;
         }
 
-        /* 新增的狀態訊息列樣式 */
         .message-bar {
-            flex: 1;
-            margin: 0 20px;
-            padding: 10px 15px;
+            margin: 5px 10px;
+            padding: 8px 10px;
             background-color: var(--msg-bg);
             border-radius: 8px;
             text-align: center;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: bold;
             color: #1a4a7b;
             transition: background-color 0.3s ease;
+            flex-shrink: 0; 
+            min-height: 35px;
+            box-sizing: border-box;
         }
 
         .controls {
-            min-width: 200px;
-            text-align: right;
+            display: flex;
+            gap: 8px;
         }
 
         .controls button {
             background-color: #e0e0e0;
             border: none;
-            padding: 10px 15px;
-            margin-left: 10px;
+            padding: 8px 12px;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             cursor: pointer;
             transition: all 0.2s;
             font-weight: bold;
+            min-height: 40px;
         }
 
-        .controls button:hover {
+        .controls button:active {
             background-color: #d5d5d5;
-            transform: translateY(-1px);
+            transform: translateY(2px);
         }
 
         .board-container {
@@ -84,18 +103,20 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 10px;
+            padding: 5px;
+            box-sizing: border-box;
+            overflow: hidden; 
         }
 
         .board {
             display: grid;
-            grid-template-columns: repeat(5, 60px);
-            grid-template-rows: repeat(12, 70px);
+            grid-template-columns: repeat(5, var(--cell-w));
+            grid-template-rows: repeat(12, var(--cell-h));
             gap: 2px;
             background-color: #ccc;
             padding: 4px;
-            border-radius: 10px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .cell {
@@ -105,33 +126,39 @@
             align-items: center;
             border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
         }
 
         .cell.frontline-zone {
             background-color: #eaf2f8;
         }
 
-        .cell:hover {
-            background-color: #f9f9f9;
+        .cell:active {
+            background-color: #f0f0f0;
         }
 
         .piece {
-            width: 50px;
-            height: 60px;
-            border-radius: 6px;
+            width: 90%;
+            height: 90%;
+            border-radius: 4px;
             display: flex;
             justify-content: center;
             align-items: center;
             color: white;
             font-weight: bold;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            
+            /* 【字體修正】讓字體大小跟隨網格寬度變化，確保不撐破外框 */
+            font-size: calc(var(--cell-w) * 0.45); 
+            line-height: 1;
+            letter-spacing: 0; /* 移除字距，防止垂直排列溢出 */
+            
+            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
             writing-mode: vertical-rl;
             text-orientation: upright;
-            letter-spacing: 2px;
             transition: transform 0.2s;
-            user-select: none;
+            box-sizing: border-box;
         }
 
         .piece.green {
@@ -149,37 +176,37 @@
             background-image: repeating-linear-gradient(
                 45deg,
                 rgba(255, 255, 255, 0.1),
-                rgba(255, 255, 255, 0.1) 10px,
-                rgba(0, 0, 0, 0.15) 10px,
-                rgba(0, 0, 0, 0.15) 20px
+                rgba(255, 255, 255, 0.1) 8px,
+                rgba(0, 0, 0, 0.15) 8px,
+                rgba(0, 0, 0, 0.15) 16px
             );
         }
 
         .selected {
-            outline: 4px solid var(--highlight);
-            transform: scale(1.05) translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            outline: 3px solid var(--highlight);
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
             z-index: 5;
         }
         
         .piece.hidden.selected {
             outline: none;
             transform: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
-
     <div class="header">
         <div class="status" id="statusText">當前局勢：準備中</div>
-        <div class="message-bar" id="messageBar">綠軍先手！</div>
         <div class="controls">
             <button onclick="undo()">↶ 退棋</button>
             <button onclick="initGame()">↻ 重新開局</button>
         </div>
     </div>
-
+    
+    <div class="message-bar" id="messageBar">綠軍先手！</div>
+    
     <div class="board-container">
         <div class="board" id="board"></div>
     </div>
@@ -211,12 +238,10 @@
             return array;
         }
 
-        // 負責顯示訊息與閃爍特效的函數
         function showMessage(msg, isHighlight = false) {
             const msgBar = document.getElementById('messageBar');
             msgBar.textContent = msg;
             
-            // 加入提示閃爍效果
             if (isHighlight) {
                 msgBar.style.backgroundColor = '#ffeb3b';
                 msgBar.style.color = '#b71c1c';
@@ -301,7 +326,6 @@
 
             const targetPiece = boardData[r][c];
 
-            // 1. 選擇自己的棋子
             if (targetPiece && targetPiece.color === currentTurn) {
                 if (targetPiece.name === '地雷' || targetPiece.name === '軍旗') {
                     showMessage("⚠️ 地雷與軍旗無法移動！", true);
@@ -319,7 +343,6 @@
                 return;
             }
 
-            // 2. 移動或攻擊
             if (selectedCell) {
                 const sr = selectedCell.r;
                 const sc = selectedCell.c;
