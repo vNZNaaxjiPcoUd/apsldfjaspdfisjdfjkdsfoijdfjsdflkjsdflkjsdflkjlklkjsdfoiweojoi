@@ -11,6 +11,7 @@
             --bg-color: #f4f6f8;
             --board-bg: #ffffff;
             --highlight: #ffeb3b;
+            --msg-bg: #e8ebf0;
         }
 
         body {
@@ -39,12 +40,32 @@
             font-size: 1.2rem;
             font-weight: bold;
             color: #333;
+            min-width: 200px;
+        }
+
+        /* 新增的狀態訊息列樣式 */
+        .message-bar {
+            flex: 1;
+            margin: 0 20px;
+            padding: 10px 15px;
+            background-color: var(--msg-bg);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #1a4a7b;
+            transition: background-color 0.3s ease;
+        }
+
+        .controls {
+            min-width: 200px;
+            text-align: right;
         }
 
         .controls button {
             background-color: #e0e0e0;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 15px;
             margin-left: 10px;
             border-radius: 8px;
             font-size: 1rem;
@@ -87,7 +108,6 @@
             transition: background-color 0.2s;
         }
 
-        /* 中間兩排交戰區稍微改變背景色 */
         .cell.frontline-zone {
             background-color: #eaf2f8;
         }
@@ -124,7 +144,6 @@
             border: 2px solid #000;
         }
 
-        /* 蓋住對手棋子的樣式 */
         .piece.hidden {
             color: transparent;
             background-image: repeating-linear-gradient(
@@ -143,22 +162,21 @@
             z-index: 5;
         }
         
-        /* 隱藏對手棋子被選中的狀態(防止作弊破解) */
         .piece.hidden.selected {
             outline: none;
             transform: none;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
-
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="status" id="statusText">當前局勢：準備中</div>
+        <div class="message-bar" id="messageBar">綠軍先手！</div>
         <div class="controls">
             <button onclick="undo()">↶ 退棋</button>
-            <button onclick="initGame()">重新開局</button>
+            <button onclick="initGame()">↻ 重新開局</button>
         </div>
     </div>
 
@@ -173,7 +191,6 @@
             '炸彈': 99, '地雷': 100, '軍旗': 0
         };
 
-        // 扣除軍旗的 24 個棋子
         const PIECES_NO_FLAG = [
             '司令', '軍長', '師長', '師長', '旅長', '旅長', '團長', '團長', 
             '營長', '營長', '連長', '連長', '連長', '排長', '排長', '排長', 
@@ -184,6 +201,7 @@
         let currentTurn = 'green';
         let selectedCell = null;
         let history = [];
+        let gameOver = false;
 
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -193,17 +211,36 @@
             return array;
         }
 
+        // 負責顯示訊息與閃爍特效的函數
+        function showMessage(msg, isHighlight = false) {
+            const msgBar = document.getElementById('messageBar');
+            msgBar.textContent = msg;
+            
+            // 加入提示閃爍效果
+            if (isHighlight) {
+                msgBar.style.backgroundColor = '#ffeb3b';
+                msgBar.style.color = '#b71c1c';
+            } else {
+                msgBar.style.backgroundColor = '#dcedc8';
+                msgBar.style.color = '#33691e';
+            }
+            
+            setTimeout(() => {
+                msgBar.style.backgroundColor = 'var(--msg-bg)';
+                msgBar.style.color = '#1a4a7b';
+            }, 600);
+        }
+
         function initGame() {
-            // 初始化 12x5 棋盤
             boardData = Array(12).fill(null).map(() => Array(5).fill(null));
             currentTurn = 'green';
             selectedCell = null;
             history = [];
+            gameOver = false;
 
-            // 準備黑軍 (軍旗固定在最後一排 Row 0)
             let bFlagCol = Math.floor(Math.random() * 5);
             let bPieces = shuffle([...PIECES_NO_FLAG]);
-            bPieces.splice(bFlagCol, 0, '軍旗'); // 將軍旗插入第 0 排對應的位置
+            bPieces.splice(bFlagCol, 0, '軍旗');
 
             let bIndex = 0;
             for (let r = 0; r <= 4; r++) {
@@ -212,10 +249,9 @@
                 }
             }
 
-            // 準備綠軍 (軍旗固定在最後一排 Row 11)
             let gFlagCol = Math.floor(Math.random() * 5);
             let gPieces = shuffle([...PIECES_NO_FLAG]);
-            gPieces.splice(20 + gFlagCol, 0, '軍旗'); // 將軍旗插入第 11 排(最後5個位置中)
+            gPieces.splice(20 + gFlagCol, 0, '軍旗');
 
             let gIndex = 0;
             for (let r = 7; r <= 11; r++) {
@@ -227,12 +263,14 @@
             saveState();
             renderBoard();
             updateStatus();
+            showMessage("重新開局完成！綠軍請下第一步。");
         }
 
         function saveState() {
             history.push({
                 board: JSON.parse(JSON.stringify(boardData)),
-                turn: currentTurn
+                turn: currentTurn,
+                gameOver: gameOver
             });
         }
 
@@ -244,28 +282,38 @@
                 
                 boardData = JSON.parse(JSON.stringify(previousState.board));
                 currentTurn = previousState.turn;
+                gameOver = previousState.gameOver;
                 selectedCell = null;
+                
                 renderBoard();
                 updateStatus();
+                showMessage("已退回兩步！", true);
             } else {
-                alert('開局步數不足，無法退棋！');
+                showMessage("開局步數不足，無法退棋！", true);
             }
         }
 
         function handleCellClick(r, c) {
+            if (gameOver) {
+                showMessage("遊戲已結束！", true);
+                return;
+            }
+
             const targetPiece = boardData[r][c];
 
             // 1. 選擇自己的棋子
             if (targetPiece && targetPiece.color === currentTurn) {
                 if (targetPiece.name === '地雷' || targetPiece.name === '軍旗') {
-                    alert('地雷與軍旗無法移動！');
+                    showMessage("⚠️ 地雷與軍旗無法移動！", true);
                     return;
                 }
-                // 切換選取狀態
+                
                 if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
                     selectedCell = null;
+                    showMessage("取消選取");
                 } else {
                     selectedCell = { r, c };
+                    showMessage(`選取了 ${targetPiece.name}，請選擇目標位置`);
                 }
                 renderBoard();
                 return;
@@ -276,66 +324,70 @@
                 const sr = selectedCell.r;
                 const sc = selectedCell.c;
 
-                // 檢查是否上下左右相鄰
                 let isValidMove = false;
                 if (Math.abs(sc - c) === 1 && sr === r) isValidMove = true;
                 if (Math.abs(sr - r) === 1 && sc === c) isValidMove = true;
 
-                if (!isValidMove) return;
+                if (!isValidMove) {
+                    showMessage("只能走上下左右相鄰的格子！", true);
+                    return;
+                }
 
                 const attacker = boardData[sr][sc];
                 const defender = boardData[r][c];
+                let turnMessage = "";
 
                 if (defender) {
                     let aRank = PIECE_TYPES[attacker.name];
                     let dRank = PIECE_TYPES[defender.name];
                     
                     if (attacker.name === '炸彈' || defender.name === '炸彈' || aRank === dRank) {
-                        // 同歸於盡
                         boardData[sr][sc] = null;
                         boardData[r][c] = null;
-                        alert(`雙方 ${attacker.name} 與 ${defender.name} 同歸於盡！`);
+                        turnMessage = `💥 雙方 ${attacker.name} 與 ${defender.name} 同歸於盡！`;
                     } else if (defender.name === '地雷') {
                         if (attacker.name === '工兵') {
                             boardData[r][c] = attacker; 
                             boardData[sr][sc] = null;
-                            alert(`工兵成功挖除地雷！`);
+                            turnMessage = `✅ 工兵成功挖除敵方地雷！`;
                         } else {
                             boardData[sr][sc] = null; 
-                            alert(`${attacker.name} 踩到地雷陣亡！`);
+                            turnMessage = `💣 你的 ${attacker.name} 踩到地雷陣亡！`;
                         }
                     } else if (defender.name === '軍旗') {
                         boardData[r][c] = attacker;
                         boardData[sr][sc] = null;
+                        gameOver = true;
                         renderBoard();
-                        setTimeout(() => alert(`${currentTurn === 'green' ? '🟢 綠軍' : '⚫ 黑軍'} 奪得軍旗獲勝！`), 100);
+                        const winner = currentTurn === 'green' ? '🟢 綠軍' : '⚫ 黑軍';
+                        showMessage(`🏆 遊戲結束！${winner} 奪得軍旗獲勝！`, true);
                         return;
                     } else if (aRank > dRank) {
                         boardData[r][c] = attacker; 
                         boardData[sr][sc] = null;
-                        alert(`你的 ${attacker.name} 擊敗了敵方的 ${defender.name}！`);
+                        turnMessage = `⚔️ 你的 ${attacker.name} 擊敗了敵方的 ${defender.name}！`;
                     } else {
                         boardData[sr][sc] = null; 
-                        alert(`攻擊失敗！你的 ${attacker.name} 被敵方的 ${defender.name} 擊敗！`);
+                        turnMessage = `❌ 攻擊失敗！你的 ${attacker.name} 被敵方 ${defender.name} 擊敗！`;
                     }
                 } else {
-                    // 走到空格
                     boardData[r][c] = attacker;
                     boardData[sr][sc] = null;
+                    turnMessage = `🚶 ${attacker.name} 移動完畢`;
                 }
 
-                // 換手
                 currentTurn = currentTurn === 'green' ? 'black' : 'green';
                 selectedCell = null;
                 saveState();
                 renderBoard();
                 updateStatus();
+                showMessage(turnMessage);
             }
         }
 
         function updateStatus() {
             const statusEl = document.getElementById('statusText');
-            statusEl.textContent = `現行：${currentTurn === 'green' ? '🟢 綠軍' : '⚫ 黑軍'}`;
+            statusEl.textContent = `當前回合：${currentTurn === 'green' ? '🟢 綠軍' : '⚫ 黑軍'}`;
             statusEl.style.color = currentTurn === 'green' ? 'var(--green-color)' : 'var(--black-color)';
         }
 
@@ -348,7 +400,6 @@
                     const cell = document.createElement('div');
                     cell.className = 'cell';
                     
-                    // 中間兩排為前線緩衝區
                     if (r === 5 || r === 6) {
                         cell.classList.add('frontline-zone');
                     }
@@ -361,8 +412,7 @@
                         piece.className = `piece ${pieceData.color}`;
                         piece.textContent = pieceData.name;
                         
-                        // 若不是自己的回合，把棋子蓋住
-                        if (pieceData.color !== currentTurn) {
+                        if (pieceData.color !== currentTurn && !gameOver) {
                             piece.classList.add('hidden');
                         }
                         
@@ -377,7 +427,6 @@
             }
         }
 
-        // 啟動遊戲
         initGame();
     </script>
 </body>
