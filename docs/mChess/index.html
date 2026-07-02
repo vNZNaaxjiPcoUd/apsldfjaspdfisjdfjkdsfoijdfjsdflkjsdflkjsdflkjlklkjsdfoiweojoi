@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>現代簡潔版 - 陸軍棋 (暗棋對戰)</title>
+    <title>陸軍棋</title>
     <style>
         :root {
             --green-color: #2e7d32;
@@ -157,8 +157,8 @@
     <div class="header">
         <div class="status" id="statusText">當前局勢：準備中</div>
         <div class="controls">
-            <button onclick="undo()">↶ 退棋 (退兩步)</button>
-            <button onclick="initGame()">↻ 重新開局</button>
+            <button onclick="undo()">↶ 退棋</button>
+            <button onclick="initGame()">重新開局</button>
         </div>
     </div>
 
@@ -335,7 +335,7 @@
 
         function updateStatus() {
             const statusEl = document.getElementById('statusText');
-            statusEl.textContent = `換手遮蔽完成，當前回合：${currentTurn === 'green' ? '🟢 綠軍' : '⚫ 黑軍'}`;
+            statusEl.textContent = `現行：${currentTurn === 'green' ? '🟢 綠軍' : '⚫ 黑軍'}`;
             statusEl.style.color = currentTurn === 'green' ? 'var(--green-color)' : 'var(--black-color)';
         }
 
