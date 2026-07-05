@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vCard工具</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 { color: #1a365d; }
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+        .section {
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            flex: 1;
+            min-width: 450px;
+        }
+        .grid-2-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-group { margin-bottom: 12px; }
+        .full-width { grid-column: span 2; }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #4a5568;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        fieldset {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        legend {
+            font-weight: bold;
+            color: #2b6cb0;
+            padding: 0 5px;
+        }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        button {
+            flex: 1;
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #2b6cb0; }
+        button.btn-parse { background-color: #38a169; }
+        button.btn-parse:hover { background-color: #2f855a; }
+        .output-box {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>vCard解析工具</h1>
+    
+    <div class="container">
+        <div class="section">
+            <h2>資料輸入</h2>
+            
+            <fieldset>
+                <legend>基本資料</legend>
+                <div class="grid-2-col">
+                    <div class="form-group">
+                        <label>姓氏 (Last Name)</label>
+                        <input type="text" id="v-lastname" placeholder="例如：陳">
+                    </div>
+                    <div class="form-group">
+                        <label>名字 (First Name)</label>
+                        <input type="text" id="v-firstname" placeholder="例如：大文">
+                    </div>
+                    <div class="form-group">
+                        <label>暱稱 (Nickname)</label>
+                        <input type="text" id="v-nickname" placeholder="例如：David">
+                    </div>
+                    <div class="form-group">
+                        <label>生日 (Birthday)</label>
+                        <input type="date" id="v-bday">
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>聯絡與工作資訊</legend>
+                <div class="grid-2-col">
+                    <div class="form-group full-width">
+                        <label>公司/組織 (Organization)</label>
+                        <input type="text" id="v-org" placeholder="例如：全球貿易通商公司">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>職稱 (Title)</label>
+                        <input type="text" id="v-title" placeholder="例如：專案經理">
+                    </div>
+                    <div class="form-group">
+                        <label>行動電話 (Cell Phone)</label>
+                        <input type="tel" id="v-tel-cell" placeholder="例如：0912345678">
+                    </div>
+                    <div class="form-group">
+                        <label>工作電話 (Work Phone)</label>
+                        <input type="tel" id="v-tel-work" placeholder="例如：0223456789">
+                    </div>
+                    <div class="form-group">
+                        <label>私人信箱 (Home Email)</label>
+                        <input type="email" id="v-email-home" placeholder="david@home.com">
+                    </div>
+                    <div class="form-group">
+                        <label>工作信箱 (Work Email)</label>
+                        <input type="email" id="v-email-work" placeholder="david@company.com">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>網頁連結 (URL)</label>
+                        <input type="url" id="v-url" placeholder="https://example.com">
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>住家地址 (Home Address)</legend>
+                <div class="grid-2-col">
+                    <div class="form-group full-width">
+                        <label>街道路名 (Street)</label>
+                        <input type="text" id="v-adr-home-street" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label>城市 (City)</label>
+                        <input type="text" id="v-adr-home-city" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label>州/省/縣市 (State/Region)</label>
+                        <input type="text" id="v-adr-home-state" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label>郵遞區號 (Postal Code)</label>
+                        <input type="text" id="v-adr-home-zip" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label>國家 (Country)</label>
+                        <input type="text" id="v-adr-home-country" placeholder="">
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>工作地址 (Work Address)</legend>
+                <div class="grid-2-col">
+                    <div class="form-group full-width">
+                        <label>街道路名 (Street)</label>
+                        <input type="text" id="v-adr-work-street" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label>城市 (City)</label>
+                        <input type="text" id="v-adr-work-city" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label>州/省/縣市 (State/Region)</label>
+                        <input type="text" id="v-adr-work-state" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label>郵遞區號 (Postal Code)</label>
+                        <input type="text" id="v-adr-work-zip" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label>國家 (Country)</label>
+                        <input type="text" id="v-adr-work-country" placeholder="">
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>備註</legend>
+                <div class="form-group">
+                    <label>備註事項 (Note)</label>
+                    <textarea id="v-note" placeholder=""></textarea>
+                </div>
+            </fieldset>
+            
+            <div class="btn-group">
+                <button onclick="generatePreview()">預覽 vCard 內容</button>
+                <button onclick="downloadVCard()">下載 .vcf 檔案</button>
+            </div>
+
+            <div id="previewResult" class="output-box" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>vCard 文字解析</h2>
+            <div class="form-group">
+                <label for="paste-area">在此貼上您的 .vcf 原始文字結構：</label>
+                <textarea id="paste-area" style="height: 250px;" placeholder="BEGIN:VCARD&#10;VERSION:3.0&#10;..."></textarea>
+            </div>
+            
+            <button class="btn-parse" onclick="parsePastedText()">解析內容欄位</button>
+            
+            <h3 style="margin-top: 20px;">解析結構化清單：</h3>
+            <div id="parsedResult" class="output-box" style="background:#f7fafc; color:#2d3748; border:1px solid #e2e8f0;">等待輸入資料...</div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. 產生與組合 vCard 字串 ---
+        function getVCardString() {
+            const lastName = document.getElementById('v-lastname').value.trim();
+            const firstName = document.getElementById('v-firstname').value.trim();
+            const nickname = document.getElementById('v-nickname').value.trim();
+            const bday = document.getElementById('v-bday').value;
+            
+            const org = document.getElementById('v-org').value.trim();
+            const title = document.getElementById('v-title').value.trim();
+            
+            const telCell = document.getElementById('v-tel-cell').value.trim();
+            const telWork = document.getElementById('v-tel-work').value.trim();
+            const emailHome = document.getElementById('v-email-home').value.trim();
+            const emailWork = document.getElementById('v-email-work').value.trim();
+            const url = document.getElementById('v-url').value.trim();
+            
+            // 住家地址欄位
+            const hStreet = document.getElementById('v-adr-home-street').value.trim();
+            const hCity = document.getElementById('v-adr-home-city').value.trim();
+            const hState = document.getElementById('v-adr-home-state').value.trim();
+            const hZip = document.getElementById('v-adr-home-zip').value.trim();
+            const hCountry = document.getElementById('v-adr-home-country').value.trim();
+
+            // 工作地址欄位
+            const wStreet = document.getElementById('v-adr-work-street').value.trim();
+            const wCity = document.getElementById('v-adr-work-city').value.trim();
+            const wState = document.getElementById('v-adr-work-state').value.trim();
+            const wZip = document.getElementById('v-adr-work-zip').value.trim();
+            const wCountry = document.getElementById('v-adr-work-country').value.trim();
+            
+            const note = document.getElementById('v-note').value.trim();
+
+            const fn = `${lastName}${firstName}`.trim() || '未命名聯絡人';
+            const n = `${lastName};${firstName};;;`;
+
+            let vcard = "BEGIN:VCARD\r\nVERSION:3.0\r\n";
+            vcard += `N:${n}\r\n`;
+            vcard += `FN:${fn}\r\n`;
+            
+            if (nickname) vcard += `NICKNAME:${nickname}\r\n`;
+            if (bday) vcard += `BDAY:${bday}\r\n`;
+            if (org) vcard += `ORG:${org}\r\n`;
+            if (title) vcard += `TITLE:${title}\r\n`;
+            
+            if (telCell) vcard += `TEL;TYPE=CELL,VOICE:${telCell}\r\n`;
+            if (telWork) vcard += `TEL;TYPE=WORK,VOICE:${telWork}\r\n`;
+            if (emailHome) vcard += `EMAIL;TYPE=HOME,INTERNET:${emailHome}\r\n`;
+            if (emailWork) vcard += `EMAIL;TYPE=WORK,INTERNET:${emailWork}\r\n`;
+            if (url) vcard += `URL:${url}\r\n`;
+            
+            // 寫入住家地址 (ADR;TYPE=HOME)
+            if (hStreet || hCity || hState || hZip || hCountry) {
+                vcard += `ADR;TYPE=HOME:;;${hStreet};${hCity};${hState};${hZip};${hCountry}\r\n`;
+            }
+
+            // 寫入工作地址 (ADR;TYPE=WORK)
+            if (wStreet || wCity || wState || wZip || wCountry) {
+                vcard += `ADR;TYPE=WORK:;;${wStreet};${wCity};${wState};${wZip};${wCountry}\r\n`;
+            }
+
+            if (note) vcard += `NOTE:${note.replace(/\n/g, '\\n')}\r\n`;
+            vcard += `REV:${new Date().toISOString()}\r\n`;
+            vcard += "END:VCARD\r\n";
+            
+            return { vcardStr: vcard, fileName: fn };
+        }
+
+        function generatePreview() {
+            const data = getVCardString();
+            const previewBox = document.getElementById('previewResult');
+            previewBox.style.display = 'block';
+            previewBox.innerText = data.vcardStr;
+        }
+
+        function downloadVCard() {
+            const data = getVCardString();
+            const blob = new Blob([data.vcardStr], { type: 'text/vcard;charset=utf-8;' });
+            const urlObj = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = urlObj;
+            link.download = `${data.fileName}.vcf`;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            
+            document.body.removeChild(link);
+            URL.revokeObjectURL(urlObj);
+        }
+
+        // --- 2. 解析貼上文字邏輯 ---
+        function parsePastedText() {
+            const text = document.getElementById('paste-area').value;
+            const resultDiv = document.getElementById('parsedResult');
+            
+            if (!text.trim()) {
+                resultDiv.innerText = "欄位空白，請先貼上有效的 vCard 文字資料。";
+                return;
+            }
+
+            let parsedInfo = [];
+            const normalizedText = text.replace(/\r?\n[ \t]+/g, '');
+            const lines = normalizedText.split(/\r?\n/);
+
+            lines.forEach(line => {
+                const match = line.match(/^([A-Z-]+)(?:;([^:]+))?:(.*)$/i);
+                if (!match) return;
+
+                const key = match[1].toUpperCase();
+                const params = match[2] || '';
+                const value = match[3];
+
+                switch(key) {
+                    case 'FN':
+                        parsedInfo.push(`【姓名】 ${value}`);
+                        break;
+                    case 'NICKNAME':
+                        parsedInfo.push(`【暱稱】 ${value}`);
+                        break;
+                    case 'BDAY':
+                        parsedInfo.push(`【生日】 ${value}`);
+                        break;
+                    case 'ORG':
+                        parsedInfo.push(`【組織公司】 ${value.replace(/;/g, ' ')}`);
+                        break;
+                    case 'TITLE':
+                        parsedInfo.push(`【職稱】 ${value}`);
+                        break;
+                    case 'TEL':
+                        let telType = "一般電話";
+                        if(params.toUpperCase().includes('CELL')) telType = "行動電話";
+                        if(params.toUpperCase().includes('WORK')) telType = "工作電話";
+                        if(params.toUpperCase().includes('HOME')) telType = "家用電話";
+                        parsedInfo.push(`【${telType}】 ${value}`);
+                        break;
+                    case 'EMAIL':
+                        let mailType = "電子郵件";
+                        if(params.toUpperCase().includes('WORK')) mailType = "工作 Email";
+                        if(params.toUpperCase().includes('HOME')) mailType = "私人 Email";
+                        parsedInfo.push(`【${mailType}】 ${value}`);
+                        break;
+                    case 'URL':
+                        parsedInfo.push(`【個人網站】 ${value}`);
+                        break;
+                    case 'NOTE':
+                        parsedInfo.push(`【備註】 ${value.replace(/\\n/g, '\n')}`);
+                        break;
+                    case 'ADR':
+                        const adrParts = value.split(';');
+                        const street = adrParts[2] || '';
+                        const city = adrParts[3] || '';
+                        const state = adrParts[4] || '';
+                        const zip = adrParts[5] || '';
+                        const country = adrParts[6] || '';
+                        
+                        let adrType = "未知屬性地址";
+                        if(params.toUpperCase().includes('HOME')) adrType = "住家地址";
+                        if(params.toUpperCase().includes('WORK')) adrType = "工作地址";
+
+                        const formattedAddress = [street, city, state, zip, country].filter(item => item.trim()).join(', ');
+                        if(formattedAddress) {
+                            parsedInfo.push(`【${adrType}】 ${formattedAddress}`);
+                        }
+                        break;
+                }
+            });
+
+            if (parsedInfo.length === 0) {
+                resultDiv.innerText = "無法解析出核心規格欄位，請檢視 vCard 文字格式結構。";
+            } else {
+                resultDiv.innerText = parsedInfo.join('\n\n');
+            }
+        }
+    </script>
+</body>
+</html>
