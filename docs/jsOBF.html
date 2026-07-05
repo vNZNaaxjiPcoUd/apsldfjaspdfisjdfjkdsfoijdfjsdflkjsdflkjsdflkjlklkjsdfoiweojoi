@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS 混淆器 (字串陣列 + 變數/函數混淆)</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --panel-bg: #2d2d2d;
+            --text-color: #d4d4d4;
+            --border-color: #404040;
+            --primary-color: #0e639c;
+            --primary-hover: #1177bb;
+            --success-color: #28a745;
+            --header-bg: #252526;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 15px 20px;
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            color: #fff;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button.copy-btn {
+            background-color: #4d4d4d;
+        }
+
+        button.copy-btn:hover {
+            background-color: #5a5a5a;
+        }
+        
+        button.success {
+            background-color: var(--success-color) !important;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            flex-direction: row; /* 左邊輸入，右邊輸出 */
+            overflow: hidden;
+        }
+
+        .pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            width: 50%;
+        }
+
+        .pane:last-child {
+            border-right: none;
+        }
+
+        .pane-header {
+            padding: 10px 15px;
+            background-color: var(--header-bg);
+            font-size: 0.85rem;
+            color: #9cdcfe;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        textarea {
+            flex: 1;
+            width: 100%;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            border: none;
+            padding: 15px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+            white-space: pre;
+        }
+
+        textarea::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: #424242;
+        }
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: #4f4f4f;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>JS 混淆器</h1>
+        <div class="toolbar">
+            <button id="btn-clear" style="background-color: #d32f2f;">清除</button>
+            <button id="btn-obfuscate">執行混淆</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="pane">
+            <div class="pane-header">
+                <span>// 原始碼 (Source Code)</span>
+            </div>
+            <textarea id="input-code" placeholder="請貼上 JavaScript 原始碼..."></textarea>
+        </div>
+
+        <div class="pane">
+            <div class="pane-header">
+                <span>// 混淆結果 (Obfuscated Code)</span>
+                <button id="btn-copy" class="copy-btn" style="padding: 4px 12px; font-size: 0.8rem;">複製結果</button>
+            </div>
+            <textarea id="output-code" readonly placeholder="結果將顯示於此..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputCode = document.getElementById('input-code');
+            const outputCode = document.getElementById('output-code');
+            const btnObfuscate = document.getElementById('btn-obfuscate');
+            const btnCopy = document.getElementById('btn-copy');
+            const btnClear = document.getElementById('btn-clear');
+
+            btnObfuscate.addEventListener('click', () => {
+                const code = inputCode.value;
+                if (!code.trim()) {
+                    alert('請先輸入 JavaScript 程式碼！');
+                    return;
+                }
+                try {
+                    outputCode.value = obfuscateJS(code);
+                } catch (err) {
+                    alert('混淆失敗：\n' + err.message);
+                }
+            });
+
+            btnCopy.addEventListener('click', () => {
+                const text = outputCode.value;
+                if (!text) return;
+                navigator.clipboard.writeText(text).then(() => {
+                    const origText = btnCopy.textContent;
+                    btnCopy.textContent = '已複製！';
+                    btnCopy.classList.add('success');
+                    setTimeout(() => {
+                        btnCopy.textContent = origText;
+                        btnCopy.classList.remove('success');
+                    }, 2000);
+                });
+            });
+
+            btnClear.addEventListener('click', () => {
+                inputCode.value = '';
+                outputCode.value = '';
+            });
+        });
+
+        function obfuscateJS(code) {
+            const stringArray = [];
+            const stringDict = new Map();
+            const arrPrefix = '_0x' + Math.random().toString(16).substring(2, 6);
+            let strIndex = 0;
+
+            // 1. 同時解析：多行註釋、單行註釋、字串。
+            // 這樣能避免誤將字串內的 // 或 /* 當作註釋刪除。
+            const tokenizer = /\/\*[\s\S]*?\*\/|\/\/[^\n]*|(["'`])(?:(?!\1)[^\\]|\\.)*\1/g;
+
+            let codeWithoutStrings = code.replace(tokenizer, (match, quote) => {
+                // 沒有 quote 代表這是註釋 (Comment) -> 移除
+                if (!quote) return '';
+
+                // ES6 樣板字面值含有變數 ${}，為確保變數不被破壞，不抽離，僅做 Unicode 處理
+                if (quote === '`' && match.includes('${')) {
+                    return match.replace(/[\u0080-\uFFFF]/g, ch => 
+                        "\\u" + ("0000" + ch.charCodeAt(0).toString(16)).slice(-4)
+                    );
+                }
+
+                // 將中文字元轉換為 Unicode 相容格式
+                let escapedMatch = match.replace(/[\u0080-\uFFFF]/g, ch => 
+                    "\\u" + ("0000" + ch.charCodeAt(0).toString(16)).slice(-4)
+                );
+
+                // 將字串推入陣列與字典，並替換為陣列呼叫
+                if (stringDict.has(match)) {
+                    return `${arrPrefix}[${stringDict.get(match)}]`;
+                }
+
+                stringArray.push(escapedMatch);
+                let currentIndex = strIndex++;
+                stringDict.set(match, currentIndex);
+                return `${arrPrefix}[${currentIndex}]`;
+            });
+
+            // 2. 變數與函數名稱混淆
+            const idMap = new Map();
+            let idCounter = 1;
+            
+            // 找出 var, let, const, function 定義的名稱
+            const declRegex = /\b(var|let|const|function)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\b/g;
+            let declMatch;
+            while ((declMatch = declRegex.exec(codeWithoutStrings)) !== null) {
+                const identifier = declMatch[2];
+                if (!idMap.has(identifier)) {
+                    idMap.set(identifier, '_0x' + (idCounter++).toString(16));
+                }
+            }
+
+            // 若有擷取到要混淆的變數名，進行整編替換
+            let finalCode = codeWithoutStrings;
+            if (idMap.size > 0) {
+                // 將鍵值依照長度由大到小排序，避免短變數錯誤替換長變數的局部（例如替換 'a' 影響到 'ab'）
+                const sortedKeys = Array.from(idMap.keys()).sort((a, b) => b.length - a.length);
+                const replaceRegex = new RegExp('\\b(' + sortedKeys.join('|') + ')\\b', 'g');
+                
+                finalCode = finalCode.replace(replaceRegex, m => idMap.get(m));
+            }
+
+            // 3. 組合最終程式碼
+            if (stringArray.length > 0) {
+                // 將字串陣列置於最頂端，不全域封裝
+                const arrayDecl = `const ${arrPrefix} = [\n  ${stringArray.join(',\n  ')}\n];\n\n`;
+                finalCode = arrayDecl + finalCode;
+            }
+
+            // 移除多餘的連續空行，壓縮體積
+            return finalCode.replace(/\n\s*\n/g, '\n');
+        }
+    </script>
+</body>
+</html>
