@@ -137,6 +137,18 @@ function handleID(inID){
 		if(!result){
 			const container = document.getElementById("uID");
 			const restartBtn = document.createElement("button");
+			Object.assign(restartBtn.style, {
+				backgroundColor: "#FEF08A", 
+				color: "#854D0E",           
+				border: "1px solid #FDE047",
+				borderRadius: "8px",        
+				padding: "3px 10px",       
+				fontSize: "16px",           
+				fontWeight: "360",          
+				cursor: "pointer",          
+				boxShadow: "0 2px 4px rgba(0,0,0,0.05)", 
+				transition: "all 0.2s ease" 
+			});
 			restartBtn.textContent = "再來一次";
 			restartBtn.addEventListener("click", () => {
 				location.reload();
