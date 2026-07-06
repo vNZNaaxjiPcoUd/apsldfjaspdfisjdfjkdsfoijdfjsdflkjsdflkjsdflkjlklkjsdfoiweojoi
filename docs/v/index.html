@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
@@ -10,7 +11,7 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    font-size: 23px; /* 基礎文字大小 */
+    font-size: 16px; /* 基礎文字大小 */
     color: #f0f0f0; /* 淺灰文字，適應黑底 */
     background-color: #000000; /* 純黑背景 */
 }
@@ -20,44 +21,23 @@ a.visited {
 	text-decoration: none;
 }
 
-.glass-btn {
-  padding: 12px 30px;
-  font-size: 16px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 15px;
-  backdrop-filter: blur(10px);
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.glass-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.05);
-}
-
-#secretArea { display: none; }
-#countdown {display: none;}
 #showID {display: none;}
 .hint { color: #888; font-size: 14px; }
 #helloWorld { display: block; }
-/*#helloWorld:hover { transform: scale(1.1); }
-*/
+
 #passwordOverlay {
 	position: fixed;
 	top: 0; left: 0; right: 0; bottom: 0;
 	background: rgba(0,0,0,0.95);
 	display: block;
-	justify-content: center;
 	align-items: center;
 	flex-direction: column;
 	z-index: 999;
 }
 #passwordInput {
 	font-size: 16px;
+	margin-top: 8dvh;
 	padding: 5px 10px;
-	width: 300px;
 	text-align: center;
 	border: none;
 	border-bottom: 3px solid #00ff88;
@@ -69,35 +49,65 @@ a.visited {
 .tip {
 	margin-top: 20px;
 	color: #888;
-	font-size: 14px;
+	font-size: 16px;
 }
 
 #startButton {
-	margin-top: 5px;
-	padding: 5px 10px;
-	font-size: 16px;
-	color: #fff;
-	background: #00ff88;
-	border: none;
-	border-radius: 5px;
-	cursor: pointer;
-	transition: background 0.3s;
+    margin-top: 15px;
+    padding: 2px 15px;
+    font-size: 14px;
+    color: #000000;
+    background: #00ff88;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    /* 讓所有屬性變化（如背景色、變形）都有平滑的過渡效果 */
+    transition: all 0.2s ease-in-out; 
 }
+
+/* 當滑鼠懸停（移動到上面）時觸發 */
+#startButton:hover {
+    background: #00e676; /* 微調背景色讓互動更明顯 */
+    /* 套用自訂的跳動動畫，持續 0.4 秒 */
+    animation: bounce 0.4s ease-in-out;
+    /* 動畫結束後保持稍微放大的狀態，增加回饋感 */
+    transform: scale(1.05); 
+}
+
+/* 移除錯誤的 transition，改為 focus 時的 focus-visible 樣式（選填，對無障礙網頁友好） */
+#startButton:focus-visible {
+    outline: 2px solid #000;
+}
+
+/* 定義「動一下」的關鍵字動畫 */
+@keyframes bounce {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.12) translateY(-4px); /* 向上跳並放大 */
+    }
+    75% {
+        transform: scale(0.98) translateY(1px);  /* 輕微回彈 */
+    }
+    100% {
+        transform: scale(1.05) translateY(0);    /* 回到 hover 的放大狀態 */
+    }
+}
+
 </style>
 
 </head>
 <body>
-<br><br>
+<div id="helloWorld"></div>
 
-<div id="helloWorld">按這裡，貼上去，走！</div>
-<br>
 <div id="showID">
 	<div id="uID"></div>
 </div>
 
 <div id="passwordOverlay">
-	<input type="text" id="passwordInput" placeholder="貼" autocomplete="off">
-	<button id="startButton" onclick="bntStart()">走！</button>
+	<input type="text" id="passwordInput" placeholder="貼上文字" autocomplete="off">
+	<button id="startButton" onclick="bntStart()">走</button>
 </div>
 
 
