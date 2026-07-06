@@ -109,8 +109,7 @@ function handleID(inID){
 		  "dong": "t8hTKQeLHqk",   // 東海漁歌
 		};
 		
-		// 使用方式
-		id = idMap[id?.toLowerCase()] || id;  // 如果沒找到就保持原值
+		id = idMap[id?.toLowerCase()] || id; 
 
 		if(id.length > IDL){
 			id = getID(id);
@@ -123,16 +122,13 @@ function handleID(inID){
 			jumpA = nUrl;
 			
 			nUrl= "https://h.jwint.net/c?"+prefix+id+suffix;
-			const c = `<a href="${nUrl}">重複看</a>`;
+			const c = `<a href="${nUrl}">重複轉</a>`;
 			jumpB = nUrl;
 			
 			const bc= b+"<br><br>"+c+"<br><br>";
 			document.getElementById("uID").innerHTML = bc;
 			window.open(jumpA, '_blank');
-		}else {
-            
-        }	
-
+		}else { }	
 	}
 
 (async () => {
