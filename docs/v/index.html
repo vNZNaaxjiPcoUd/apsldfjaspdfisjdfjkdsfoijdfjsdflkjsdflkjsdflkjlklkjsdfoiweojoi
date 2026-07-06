@@ -48,13 +48,6 @@ function getUserInputText(titleTxt="輸入"){
     const confirmBtn = document.getElementById('okCmd');
     const cancelBtn = document.getElementById('cancelCmd');
 
-    function cleanup() {
-      dialog.close();
-      confirmBtn.removeEventListener('click', onOkBtn);
-      cancelBtn.removeEventListener('click', onCancelBtn);
-      input.removeEventListener('keydown', onKeyDown);
-    }
-
     function onOkBtn() {
       cleanup();
 	  handleID(input.value);
@@ -73,7 +66,14 @@ function getUserInputText(titleTxt="輸入"){
       }
     }
 
-    confirmBtn.addEventListener('click', onOkBtn);
+    function cleanup() {
+      dialog.close();
+      confirmBtn.removeEventListener('click', onOkBtn);
+      cancelBtn.removeEventListener('click', onCancelBtn);
+      input.removeEventListener('keydown', onKeyDown);
+    }
+
+	confirmBtn.addEventListener('click', onOkBtn);
     cancelBtn.addEventListener('click', onCancelBtn);
     input.addEventListener('keydown', onKeyDown);
     input.value = ''; 
@@ -136,8 +136,7 @@ function handleID(inID){
 		}else {
             document.getElementById("showID").style.display = "none";
         }	
-		
-		getUserInputText(id);
+
 	}
   
 function checkUrlPara() {
@@ -148,8 +147,12 @@ function checkUrlPara() {
 		}
 	}
 
-getUserInputText("影片");
-
+(async () => {
+	while(true){
+		const result = await getUserInputText("畫卷");
+		if(!result)break;
+	}
+})();
 </script>
 
 </body>
