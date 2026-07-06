@@ -46,11 +46,6 @@ a.visited {
 	outline: none;
 }
 #passwordInput:focus { border-bottom-color: #00ff88; }
-.tip {
-	margin-top: 20px;
-	color: #888;
-	font-size: 16px;
-}
 
 #startButton {
     margin-top: 15px;
@@ -106,7 +101,7 @@ a.visited {
 </div>
 
 <div id="passwordOverlay">
-	<input type="text" id="passwordInput" placeholder="貼上文字" autocomplete="off">
+	<input type="text" id="passwordInput" placeholder="        貼上文字        " autocomplete="off">
 	<button id="startButton" onclick="bntStart()">走</button>
 </div>
 
@@ -125,9 +120,6 @@ function ShowMsgInput(){
 	document.getElementById("helloWorld").style.display = "none";
 }
 
-document.getElementById("helloWorld").onclick = function() {
-		ShowMsgInput();
-	};
 
 const IDL = 11;
 
