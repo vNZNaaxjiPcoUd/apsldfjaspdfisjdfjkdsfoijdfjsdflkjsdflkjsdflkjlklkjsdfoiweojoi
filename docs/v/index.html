@@ -21,8 +21,6 @@ a,a.visited {
 	text-decoration: none;
 }
 
-#showID {display: none;}
-
 </style>
 </head>
 <body>
@@ -128,13 +126,11 @@ function handleID(inID){
 			const c = `<a href="${nUrl}">重複看</a>`;
 			jumpB = nUrl;
 			
-			const bc= b+"<br><br>"+c;
+			const bc= b+"<br><br>"+c+"<br><br>";
 			document.getElementById("uID").innerHTML = bc;
-            document.getElementById("showID").style.display = "block";
-
 			window.open(jumpA, '_blank');
 		}else {
-            document.getElementById("showID").style.display = "none";
+            
         }	
 
 	}
@@ -150,7 +146,23 @@ function checkUrlPara() {
 (async () => {
 	while(true){
 		const result = await getUserInputText("畫卷");
-		if(!result)break;
+		if(!result){
+			// 1. 取得容器
+			const container = document.getElementById("uID");
+
+			// 2. 建立按鈕元件
+			const restartBtn = document.createElement("button");
+			restartBtn.textContent = "再來一次";
+
+			// 3. 綁定點擊事件（重整網頁）
+			restartBtn.addEventListener("click", () => {
+				location.reload();
+			});
+
+			// 4. 放入新按鈕
+			container.appendChild(restartBtn);
+			break;
+		}
 	}
 })();
 </script>
