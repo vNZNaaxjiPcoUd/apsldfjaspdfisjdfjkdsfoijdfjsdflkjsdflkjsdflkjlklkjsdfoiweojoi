@@ -36,7 +36,7 @@ a.visited {
 }
 #passwordInput {
 	font-size: 16px;
-	margin-top: 75dvh;
+	margin-top: 10dvh;
 	padding: 5px 10px;
 	text-align: center;
 	border: none;
@@ -105,6 +105,12 @@ a.visited {
 	<button id="startButton" onclick="bntStart()">走</button>
 </div>
 
+    <dialog id="inputDialog" style="background-color: #1a1a1a; color: #d3d3d3; border: none; border-radius: 16px; padding: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <h2 id="inpTitle" style="margin-top: 0; color: #ffd700; font-size: 16px; font-weight: bold; margin-bottom: 5px;"></h2>
+        <input type="text" id="inputT" placeholder="輸入內容" style="background: transparent; border: none; border-bottom: 2px solid #ffd700; color: #ffffff; padding: 8px 12px; outline: none; font-size: 16px; text-align: center; width: 80%;"><br><br>
+        <button id="okCmd" style="background-color: #ffd700; color: #333333; border: none; border-radius: 10px; padding: 5px 10px; font-weight: bold; cursor: pointer; margin: 0 6px; box-shadow: 0 2px 0 #ccaa00;">確定</button>
+        <button id="cancelCmd" style="background-color: #ffd700; color: #333333; border: none; border-radius: 10px; padding: 5px 10px; font-weight: bold; cursor: pointer; margin: 0 6px; box-shadow: 0 2px 0 #ccaa00;">取消</button>    
+    </dialog>
 
 <script defer>
 
@@ -120,6 +126,64 @@ function ShowMsgInput(){
 	//document.getElementById("helloWorld").style.display = "none";
 }
 
+
+function getUserInputText(titleTxt="輸入"){
+
+    return new Promise((resolve) => {
+    const dialog = document.getElementById('inputDialog');
+    const title = document.getElementById('inpTitle');
+    const input= document.getElementById('inputT');
+    const confirmBtn = document.getElementById('okCmd');
+    const cancelBtn = document.getElementById('cancelCmd');
+
+    // 定義清理函數，避免事件監聽器重複綁定造成記憶體流失
+    function cleanup() {
+      dialog.close();
+      confirmBtn.removeEventListener('click', onOkBtn);
+      cancelBtn.removeEventListener('click', onCancelBtn);
+      input.removeEventListener('keydown', onKeyDown);
+
+      //console.log("close");
+    }
+
+    // 確定按鈕的處理邏輯
+    function onOkBtn() {
+      cleanup();
+      //resolve(input.value); // 將密碼回傳給主流程，並解開 await
+	  handleID(input.value);
+	  resolve(true);
+    }
+
+    function onCancelBtn() {
+      cleanup();
+        resolve(false);
+    }
+
+
+    // [新增] 監聽鍵盤輸入的處理函式
+    function onKeyDown(event) {
+      // 判斷使用者按下的是否為 Enter 鍵
+      if (event.key === 'Enter') {
+        event.preventDefault(); // 阻擋預設行為（例如表單自動送出）
+        onOkBtn(); // 執行確認邏輯
+      }
+    }
+
+
+    // 綁定點擊事件
+    confirmBtn.addEventListener('click', onOkBtn);
+    cancelBtn.addEventListener('click', onCancelBtn);
+    input.addEventListener('keydown', onKeyDown);
+
+    // 每次打開前清空輸入框
+    input.value = ''; 
+    title.textContent = titleTxt;
+    
+    // 顯示對話框
+    dialog.showModal();
+	console.log("dialog show");
+  });
+}
 
 const IDL = 11;
 
@@ -177,8 +241,8 @@ function handleID(inID){
 			//document.getElementById('passwordInput').value = "";
 
 
-			ShowMsgInput();
-
+			//ShowMsgInput();
+			getUserInputText(id);
 			window.open(jumpA, '_blank');
 		}else {
 
@@ -190,7 +254,8 @@ function handleID(inID){
             //document.getElementById("showID").style.display = "block";
             document.getElementById("showID").style.display = "none";
 
-			ShowMsgInput();
+			//ShowMsgInput();
+			getUserInputText(id);
         }	
 	}
   
@@ -229,8 +294,9 @@ function bntStart(){
 		}
 	}
 
-ShowMsgInput();
-
+//ShowMsgInput();
+document.getElementById("passwordOverlay").style.display = "none";
+getUserInputText("畫");
 </script>
 
 <script>
