@@ -23,87 +23,18 @@ a.visited {
 
 #showID {display: none;}
 
-#helloWorld { display: block; }
-
-#passwordOverlay {
-	position: fixed;
-	top: 0; left: 0; right: 0; bottom: 0;
-	background: rgba(0,0,0,0.95);
-	display: block;
-	align-items: center;
-	flex-direction: column;
-	z-index: 999;
-}
-#passwordInput {
-	font-size: 16px;
-	margin-top: 10dvh;
-	padding: 5px 10px;
-	text-align: center;
-	border: none;
-	border-bottom: 3px solid #00ff88;
-	background: transparent;
-	color: #fff;
-	outline: none;
-}
-#passwordInput:focus { border-bottom-color: #00ff88; }
-
-#startButton {
-    margin-top: 15px;
-    padding: 2px 15px;
-    font-size: 14px;
-    color: #000000;
-    background: #00ff88;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    /* 讓所有屬性變化（如背景色、變形）都有平滑的過渡效果 */
-    transition: all 0.2s ease-in-out; 
-}
-
-/* 當滑鼠懸停（移動到上面）時觸發 */
-#startButton:hover {
-    background: #00e676; /* 微調背景色讓互動更明顯 */
-    /* 套用自訂的跳動動畫，持續 0.4 秒 */
-    animation: bounce 0.4s ease-in-out;
-    /* 動畫結束後保持稍微放大的狀態，增加回饋感 */
-    transform: scale(1.05); 
-}
-
-/* 移除錯誤的 transition，改為 focus 時的 focus-visible 樣式（選填，對無障礙網頁友好） */
-#startButton:focus-visible {
-    outline: 2px solid #000;
-}
-
-/* 定義「動一下」的關鍵字動畫 */
-@keyframes bounce {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.12) translateY(-4px); /* 向上跳並放大 */
-    }
-    75% {
-        transform: scale(0.98) translateY(1px);  /* 輕微回彈 */
-    }
-    100% {
-        transform: scale(1.05) translateY(0);    /* 回到 hover 的放大狀態 */
-    }
-}
 
 </style>
 
 </head>
 <body>
-<!--div id="helloWorld"></div-->
+
 
 <div id="showID">
 	<div id="uID"></div>
 </div>
 
-<div id="passwordOverlay">
-	<input type="text" id="passwordInput" placeholder="        貼上文字        " autocomplete="off">
-	<button id="startButton" onclick="bntStart()">走</button>
-</div>
+
 
     <dialog id="inputDialog" style="background-color: #1a1a1a; color: #d3d3d3; border: none; border-radius: 16px; padding: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
         <h2 id="inpTitle" style="margin-top: 0; color: #ffd700; font-size: 16px; font-weight: bold; margin-bottom: 5px;"></h2>
@@ -113,19 +44,6 @@ a.visited {
     </dialog>
 
 <script defer>
-
-function closeMsgInput(){
-	document.getElementById("passwordOverlay").style.display = "none";
-	//document.getElementById("helloWorld").style.display = "block";
-}
-
-function ShowMsgInput(){
-	document.getElementById("passwordOverlay").style.display = "flex";
-	document.getElementById("passwordInput").focus();
-	document.getElementById('passwordInput').value = "";
-	//document.getElementById("helloWorld").style.display = "none";
-}
-
 
 function getUserInputText(titleTxt="輸入"){
 
@@ -181,7 +99,7 @@ function getUserInputText(titleTxt="輸入"){
     
     // 顯示對話框
     dialog.showModal();
-	console.log("dialog show");
+
   });
 }
 
@@ -241,8 +159,8 @@ function handleID(inID){
 			//document.getElementById('passwordInput').value = "";
 
 
-			//ShowMsgInput();
-			getUserInputText(id);
+
+
 			window.open(jumpA, '_blank');
 		}else {
 
@@ -254,9 +172,11 @@ function handleID(inID){
             //document.getElementById("showID").style.display = "block";
             document.getElementById("showID").style.display = "none";
 
-			//ShowMsgInput();
-			getUserInputText(id);
+
+
         }	
+		
+		getUserInputText(id);
 	}
   
 function checkUrlPara() {
@@ -266,40 +186,8 @@ function checkUrlPara() {
 			handleID(lastPart);
 		}
 	}
-	
-document.getElementById("passwordInput").onkeydown = async function(e) {
-	    if (e.key === "Enter") {
-			if (this.value !=="url" && this.value.length > 0) {
-				let id = this.value;
-				handleID(id);
-				return;
-			}else{
-				closeMsgInput();
-				return;
-			}
 
-	    }else{
-
-		}
-	};
-
-function bntStart(){
-		const id = document.getElementById("passwordInput").value;
-		if (id !=="url" && id.length > 0) {
-			handleID(id);
-			return;
-		}else{
-			closeMsgInput();
-			return;
-		}
-	}
-
-//ShowMsgInput();
-document.getElementById("passwordOverlay").style.display = "none";
-getUserInputText("畫");
-</script>
-
-<script>
+getUserInputText("影片");
 
 </script>
 
