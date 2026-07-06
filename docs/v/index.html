@@ -147,20 +147,14 @@ function checkUrlPara() {
 	while(true){
 		const result = await getUserInputText("畫卷");
 		if(!result){
-			// 1. 取得容器
 			const container = document.getElementById("uID");
-
-			// 2. 建立按鈕元件
 			const restartBtn = document.createElement("button");
 			restartBtn.textContent = "再來一次";
-
-			// 3. 綁定點擊事件（重整網頁）
 			restartBtn.addEventListener("click", () => {
 				location.reload();
 			});
-
-			// 4. 放入新按鈕
 			container.appendChild(restartBtn);
+
 			break;
 		}
 	}
