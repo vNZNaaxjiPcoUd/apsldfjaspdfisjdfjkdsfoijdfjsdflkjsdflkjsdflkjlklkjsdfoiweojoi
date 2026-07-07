@@ -22,7 +22,6 @@ a, a.visited {
     text-decoration: none;
 }
 
-/* 將 Dialog 的樣式抽離到 CSS 中並加入 iOS 修正 */
 #inputDialog {
     background-color: #1a1a1a; 
     color: #d3d3d3; 
@@ -32,11 +31,10 @@ a, a.visited {
     text-align: center; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     
-    /* 核心修正：覆蓋原生預設的置中，改為靠頂部對齊 */
     position: fixed;
-    margin-top: 15dvh; /* 使用 dvh 適應虛擬鍵盤彈出後的動態高度 */
-    margin-bottom: auto; /* 抵銷預設的 margin: auto */
-    max-height: 80dvh; /* 確保內容過長時不會超出視窗 */
+    margin-top: 15dvh; 
+    margin-bottom: auto; 
+    max-height: 80dvh; 
     overflow-y: auto;
 }
 
@@ -55,7 +53,7 @@ a, a.visited {
     color: #ffffff; 
     padding: 8px 12px; 
     outline: none; 
-    font-size: 16px; /* 16px 是關鍵，低於 16px 會觸發 iOS 強制放大 */
+    font-size: 16px; 
     text-align: center; 
     width: 80%;
 }
@@ -189,7 +187,7 @@ function handleID(inID){
 			const container = document.getElementById("uID");
 			const restartBtn = document.createElement("button");
 			Object.assign(restartBtn.style, {
-				backgroundColor: "#000000", 
+				backgroundColor: "#473e0893", 
 				color: "#ffd700",           
 				border: "1px solid #FDE047",
 				borderRadius: "8px",        
