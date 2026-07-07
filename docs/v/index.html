@@ -11,10 +11,10 @@
 body {
     font-family: 'Inter', sans-serif;
     font-size: 16px; 
-    color: #f0f0f0; 
+    color: #ffd700; 
     background-color: #000000; 
-    /* 避免底部內容被拉扯導致的橡皮筋效應 */
     overscroll-behavior-y: none; 
+	fontWeight: "360"
 }
 
 a, a.visited {
@@ -176,7 +176,7 @@ function handleID(inID){
 			const c = `<a href="${nUrl}">重複轉</a>`;
 			jumpB = nUrl;
 			
-			const bc= b+"<br>"+c+"<br>";
+			const bc= b+"<br>"+c+"<br><br>";
 			document.getElementById("uID").innerHTML = bc;
 			window.open(jumpA, '_blank');
 		}else { }	
@@ -189,8 +189,8 @@ function handleID(inID){
 			const container = document.getElementById("uID");
 			const restartBtn = document.createElement("button");
 			Object.assign(restartBtn.style, {
-				backgroundColor: "#FEF08A", 
-				color: "#854D0E",           
+				backgroundColor: "#000000", 
+				color: "#ffd700",           
 				border: "1px solid #FDE047",
 				borderRadius: "8px",        
 				padding: "3px 10px",       
