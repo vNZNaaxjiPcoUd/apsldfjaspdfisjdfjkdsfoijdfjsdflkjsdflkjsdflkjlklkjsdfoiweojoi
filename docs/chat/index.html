@@ -3,20 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>聊天 🌿</title>
+    <title>可愛聊天室 🌿</title>
     <link rel="manifest" href="manifest.json">
-    <!-- 引入圓潤可愛的字體 -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* 使用 100dvh 配合 JS 動態調整，解決手機瀏覽器高度與虛擬鍵盤閃動問題 */
         :root { 
-            --app-height: 100dvh; 
             --primary-green: #73c89a;
             --primary-dark: #5bb382;
             --bg-color: #eaf6ef;
             --chat-bg: #ffffff;
-            --msg-self-bg: #dcf5e7;
-            --msg-other-bg: #f4f8f5;
+            --msg-self-bg: #f0fdf6;
+            --msg-other-bg: #ffffff;
             --text-main: #2d3e34;
             --text-light: #7b9685;
         }
@@ -29,15 +26,12 @@
         body { 
             margin: 0; 
             padding: 0; 
-            /* 移除原本的 height: var(--app-height); */
-            
-            /* 新增以下四行，把網頁死死釘在螢幕上，不讓瀏覽器往上推 */
+            /* 鎖死邊界，防止手機鍵盤將整個網頁往上推 */
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            
             background-color: var(--bg-color); 
             display: flex; 
             align-items: center; 
@@ -45,7 +39,6 @@
             overflow: hidden; 
         }
         
-        /* 容器加上圓角與柔和陰影 */
         #setup-screen, #chat-screen { 
             width: 100%; 
             max-width: 600px; 
@@ -53,108 +46,115 @@
             display: flex; 
             flex-direction: column; 
             background: var(--chat-bg); 
-            box-shadow: 0 10px 30px rgba(91, 179, 130, 0.15); 
         }
-
-        /* 讓桌面版看起來像個獨立的 App 視窗 */
+        
         @media (min-width: 601px) {
             #setup-screen, #chat-screen {
                 height: 90%;
-                border-radius: 24px;
+                border-radius: 16px;
+                box-shadow: 0 10px 30px rgba(91, 179, 130, 0.15); 
                 overflow: hidden;
             }
         }
 
         #chat-screen { display: none; }
         
-        /* 標題列設計：漸層綠色與圓潤底邊 */
+        /* ======== 1. 頂部標題極簡化 ======== */
         .header { 
             background: linear-gradient(135deg, #81d4a8, #5bb382); 
             color: white; 
-            padding: 20px 15px; 
-            text-align: center; 
+            padding: 8px 15px; /* 大幅縮小上下留白 */
+            display: flex; 
+            justify-content: space-between; /* 左右平分 */
+            align-items: center;
             flex: 0 0 auto; 
             font-weight: 700;
-            font-size: 1.1em;
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            box-shadow: 0 4px 10px rgba(91, 179, 130, 0.2);
+            font-size: 0.9em; /* 縮小字體 */
             z-index: 10;
         }
 
         #room-title {
-            font-size: 1.4em;
-            letter-spacing: 1px;
+            font-size: 1.1em;
+            letter-spacing: 0.5px;
+        }
+
+        .online-status {
+            font-size: 0.85em;
+            font-weight: 600;
+            opacity: 0.95;
         }
         
-        /* 訊息區 */
+        /* ======== 2. 訊息區與單行泡泡 ======== */
         #messages { 
             flex: 1 1 auto; 
             overflow-y: auto; 
-            padding: 20px 15px; 
+            padding: 10px 15px; /* 減少內距 */
             display: flex; 
             flex-direction: column; 
-            gap: 15px; 
+            gap: 6px; /* 訊息之間更緊湊 */
             background-color: #fafdfb;
-        }
-        
-        /* 訊息泡泡與彈出動畫 */
-        @keyframes popIn {
-            0% { opacity: 0; transform: scale(0.8) translateY(10px); }
-            80% { transform: scale(1.05) translateY(-2px); }
-            100% { opacity: 1; transform: scale(1) translateY(0); }
         }
 
         .msg { 
-            padding: 12px 16px; 
-            max-width: 75%; 
-            line-height: 1.5; 
+            padding: 6px 10px; /* 扁平化內距 */
+            width: 100%; /* 佔滿寬度 */
+            max-width: 100%; 
+            line-height: 1.4; 
             word-wrap: break-word; 
-            animation: popIn 0.35s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
             color: var(--text-main);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            border-radius: 6px;
+            
+            /* 將名字與內容變成同一行 */
+            display: flex;
+            flex-direction: row;
+            align-items: baseline;
+            gap: 5px;
         }
         
+        /* 捨棄左右排版，全部靠左，僅用極淡的底色區分 */
         .msg.self { 
-            align-self: flex-end; 
             background: var(--msg-self-bg); 
-            border-radius: 20px 20px 4px 20px; 
+            border-left: 3px solid var(--primary-green);
         }
         .msg.other { 
-            align-self: flex-start; 
-            background: var(--chat-bg); 
-            border: 1px solid #eef5f0;
-            border-radius: 20px 20px 20px 4px; 
+            background: var(--msg-other-bg); 
+            border-bottom: 1px solid #f0f5f2; /* 輕微的分隔線 */
         }
         
         .msg-name { 
-            font-size: 0.8em; 
-            color: var(--text-light); 
-            margin-bottom: 5px; 
-            font-weight: 600;
+            font-size: 0.9em; 
+            color: var(--primary-dark); 
+            font-weight: 700;
+            white-space: nowrap; /* 名字不換行 */
+            margin: 0;
         }
         
-        /* 輸入區：留白更舒適，適應 iOS */
+        /* 自動在名字後面加上冒號 */
+        .msg-name::after {
+            content: "：";
+        }
+        
+        /* ======== 3. 輸入區扁平化 ======== */
         #input-area { 
             flex: 0 0 auto; 
             display: flex; 
-            padding: 15px; 
+            padding: 8px 10px; /* 極簡留白 */
+            gap: 8px; /* 元素間距縮小 */
             background: var(--chat-bg); 
-            padding-bottom: calc(15px + env(safe-area-inset-bottom)); 
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.02);
+            padding-bottom: calc(8px + env(safe-area-inset-bottom)); 
+            border-top: 1px solid #e0ebe4;
             z-index: 10;
         }
         
-        /* 圓潤的輸入框 */
         input[type="text"] { 
             flex: 1; 
-            padding: 12px 20px; 
-            border: 2px solid #e0ebe4; 
-            border-radius: 25px; 
-            font-size: 16px; 
+            padding: 8px 15px; /* 扁平化輸入框 */
+            border: 1px solid #e0ebe4; 
+            border-radius: 20px; 
+            font-size: 16px; /* 維持 16px 避免 iOS 放大 */
             outline: none;
             background: #f9fcf9;
-            transition: border-color 0.3s;
+            transition: border-color 0.2s;
             color: var(--text-main);
         }
         
@@ -165,93 +165,32 @@
         
         input::placeholder { color: #a4bdaf; }
 
-        /* 互動按鈕 */
         button { 
-            padding: 12px 24px; 
-            margin-left: 10px; 
+            padding: 8px 16px; /* 扁平化按鈕 */
+            margin: 0; 
             border: none; 
             background: var(--primary-green); 
             color: white; 
-            border-radius: 25px; 
+            border-radius: 20px; 
             cursor: pointer; 
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 10px rgba(115, 200, 154, 0.3);
-        }
-        
-        button:hover { 
-            background: var(--primary-dark); 
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(91, 179, 130, 0.4);
         }
         
         button:active { 
-            transform: translateY(1px); 
-            box-shadow: 0 2px 5px rgba(91, 179, 130, 0.3);
+            background: var(--primary-dark);
         }
         
-        /* ======== 設定畫面（登入畫面）兩欄式微調 ======== */
-        #setup-screen { 
-            justify-content: center; 
-            padding: 30px; 
-            text-align: center;
-        }
-
-        #setup-screen h2 {
-            color: var(--primary-dark);
-            margin-bottom: 5px;
-            font-size: 2em;
-        }
-
-        /* 兩欄排版的容器 */
-        .input-row {
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            margin: 20px 0;
-        }
-
-        /* 單個欄位容器 */
-        .input-col {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            text-align: left;
-        }
-
-        /* 欄位小標題 */
-        .input-col label {
-            color: var(--primary-dark);
-            font-size: 0.9em;
-            font-weight: 700;
-            margin-bottom: 8px;
-            margin-left: 5px;
-        }
-
-        #setup-screen .input-row input {
-            width: 100%;
-            padding: 14px 20px;
-        }
-
-        #setup-screen button {
-            margin-left: 0;
-            padding: 15px;
-            font-size: 18px;
-            width: 100%; /* 讓按鈕填滿寬度，與兩欄寬度齊平 */
-            max-width: 300px;
-            margin: 0 auto;
-        }
-
-        /* 窄螢幕時自動變為上下排列 */
-        @media (max-width: 400px) {
-            .input-row {
-                flex-direction: column;
-                gap: 15px;
-            }
-        }
-        /* ================================================== */
-
+        /* ======== 設定畫面 ======== */
+        #setup-screen { justify-content: center; padding: 20px; text-align: center; }
+        #setup-screen h2 { color: var(--primary-dark); margin-bottom: 5px; font-size: 1.8em; }
+        .input-row { display: flex; gap: 10px; width: 100%; margin: 15px 0; }
+        .input-col { flex: 1; display: flex; flex-direction: column; text-align: left; }
+        .input-col label { color: var(--primary-dark); font-size: 0.85em; font-weight: 700; margin-bottom: 5px; margin-left: 5px; }
+        #setup-screen .input-row input { width: 100%; padding: 10px 15px; }
+        #setup-screen button { padding: 12px; font-size: 16px; width: 100%; max-width: 300px; margin: 0 auto; }
+        @media (max-width: 400px) { .input-row { flex-direction: column; gap: 10px; } }
+        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -259,10 +198,9 @@
 
     <!-- 登入設定畫面 -->
     <div id="setup-screen">
-        <h2>🌱 歡迎來到聊天室</h2>
-        <p style="color: var(--text-light); margin-top: 0; margin-bottom: 10px; font-size: 0.9em;">準備好開始互動了嗎？</p>
+        <h2>🌱 歡迎聊天室</h2>
+        <p style="color: var(--text-light); margin: 0 0 10px 0; font-size: 0.9em;">請輸入資訊</p>
         
-        <!-- 兩欄式輸入區塊 -->
         <div class="input-row">
             <div class="input-col">
                 <label for="setup-room">房間名稱</label>
@@ -273,57 +211,53 @@
                 <input type="text" id="setup-name" placeholder="例如: ฅ^•ﻌ•^ฅ" autocomplete="off">
             </div>
         </div>
-
         <button onclick="joinChat()">開始聊天 🚀</button>
     </div>
 
     <!-- 聊天主畫面 -->
     <div id="chat-screen">
+        <!-- 頂部扁平化，單行顯示 -->
         <div class="header">
-            <div id="room-title">Room</div>
-            <div style="font-size: 13px; font-weight: 600; margin-top: 8px; opacity: 0.9;">
-                🟢 在線人數: <span id="online-count">1</span> 人
-            </div>
+            <span id="room-title">Room</span>
+            <span class="online-status">🟢 在線: <span id="online-count">1</span></span>
         </div>
         
-        <div id="messages">
-            <!-- 訊息範例 (會由 js 動態生成) -->
-        </div>
+        <div id="messages"></div>
         
+        <!-- 輸入區扁平化 -->
         <div id="input-area">
-            <input type="text" id="msg-input" placeholder="輸入你想說的話..." autocomplete="off">
-            <button onclick="sendMsg()" id="send-btn">發送 ✨</button>
+            <input type="text" id="msg-input" placeholder="輸入訊息..." autocomplete="off">
+            <button onclick="sendMsg()" id="send-btn">發送</button>
         </div>
     </div>
 
-    <!-- 保留原本的邏輯腳本 -->
+    <!-- 原有邏輯腳本 -->
     <script src="cs.js"></script>
-<script>
-    // 1. 監聽虛擬鍵盤彈出/收起時的真實可視高度
-    if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', () => {
-            // 將 body 的高度強制設定為扣除鍵盤後的真實高度
-            document.body.style.height = window.visualViewport.height + 'px';
-            
-            // 讓聊天訊息區域自動捲動到最底部，避免被鍵盤遮擋
-            const messages = document.getElementById('messages');
-            if (messages) {
-                messages.scrollTop = messages.scrollHeight;
-            }
-        });
-    }
 
-    // 2. 解決 iOS 鍵盤收起後，畫面卡在半空中留白的 Bug
-    const inputs = document.querySelectorAll('input');
-    inputs.forEach(input => {
-        input.addEventListener('blur', () => {
-            // 延遲一點點執行，確保鍵盤已經完全收起
-            setTimeout(() => {
-                window.scrollTo(0, 0);
-            }, 100);
+    <!-- ======== 4. 解決 iOS 鍵盤擋畫面與留白的終極腳本 ======== -->
+    <script>
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                // 強制容器高度等於鍵盤彈出後的真實可視高度
+                document.body.style.height = window.visualViewport.height + 'px';
+                
+                // 自動捲動到最新訊息
+                const messages = document.getElementById('messages');
+                if (messages) {
+                    messages.scrollTop = messages.scrollHeight;
+                }
+            });
+        }
+
+        // 解決鍵盤收起後，畫面不歸位的 Bug
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('blur', () => {
+                setTimeout(() => {
+                    window.scrollTo(0, 0);
+                }, 100);
+            });
         });
-    });
-</script>
-    
+    </script>
 </body>
 </html>
