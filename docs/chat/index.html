@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>可愛聊天室 🌿</title>
+    <title>聊天 🌿</title>
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -12,7 +12,7 @@
             --primary-dark: #5bb382;
             --bg-color: #eaf6ef;
             --chat-bg: #ffffff;
-            --msg-self-bg: #f0fdf6;
+            --msg-self-bg: #d2f8e4;
             --msg-other-bg: #ffffff;
             --text-main: #2d3e34;
             --text-light: #7b9685;
@@ -184,7 +184,8 @@
         /* ======== 設定畫面 ======== */
         #setup-screen { justify-content: center; padding: 20px; text-align: center; }
         #setup-screen h2 { color: var(--primary-dark); margin-bottom: 5px; font-size: 1.8em; }
-        .input-row { display: flex; gap: 10px; width: 100%; margin: 15px 0; }
+        /*.input-row { display: flex; gap: 10px; width: 100%; margin: 15px 0; }*/
+        .input-row { flex-direction: column; display: flex; gap: 10px; width: 100%; margin: 15px 0; }
         .input-col { flex: 1; display: flex; flex-direction: column; text-align: left; }
         .input-col label { color: var(--primary-dark); font-size: 0.85em; font-weight: 700; margin-bottom: 5px; margin-left: 5px; }
         #setup-screen .input-row input { width: 100%; padding: 10px 15px; }
@@ -199,7 +200,7 @@
     <!-- 登入設定畫面 -->
     <div id="setup-screen">
         <h2>🌱 歡迎聊天室</h2>
-        <p style="color: var(--text-light); margin: 0 0 10px 0; font-size: 0.9em;">請輸入資訊</p>
+        <!--p style="color: var(--text-light); margin: 0 0 10px 0; font-size: 0.9em;">請輸入資訊</p-->
         
         <div class="input-row">
             <div class="input-col">
@@ -208,7 +209,7 @@
             </div>
             <div class="input-col">
                 <!--label for="setup-name">可愛暱稱</label-->
-                <input type="text" id="setup-name" placeholder="暱稱 例如: ฅ^•ﻌ•^ฅ" autocomplete="off">
+                <input type="text" id="setup-name" placeholder="暱稱 例如: ฅ^•ﻌ•^ฅ" autocomplete="off" onkeydown="if(event.key === 'Enter') joinChat()">
             </div>
         </div>
         <button onclick="joinChat()">開始聊天 🚀</button>
