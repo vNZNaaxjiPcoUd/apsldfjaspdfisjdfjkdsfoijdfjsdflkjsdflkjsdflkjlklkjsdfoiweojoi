@@ -61,54 +61,7 @@
     <div id="status"></div>
   </div>
 
-  <script>
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbx-zZPCI9kLiW7JbQ6gz10ey1b4f1d1EQlAVSd6zdC2DrAszbELQReOC93nND2WnF7S/exec';
-
-    async function saveUrl() {
-      const password = document.getElementById('passwordInput').value;
-      let path = document.getElementById('pathInput').value.trim();
-      path = path.replace(/[^a-zA-Z0-9-_\u4e00-\u9fa5]/g, '');
-      const url = document.getElementById('urlInput').value.trim();
-      const note = document.getElementById('noteTxt').value.trim();
-      const statusDiv = document.getElementById('status');
-
-      if (!password || !path || !url) {
-        statusDiv.innerText = "所有欄位皆為必填！";
-        statusDiv.style.color = "red";
-        return;
-      }
-
-      statusDiv.innerText = "驗證中...";
-      statusDiv.style.color = "#555";
-
-      try {
-        const response = await fetch(GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ 
-            password: password, 
-            path: path, 
-            url: url,
-            note: note 
-          })
-        });
-        
-        const result = await response.json();
-        if (result.status === 'success') {
-          statusDiv.innerHTML = '儲存成功！連結: <br> <a href="https://s.jwint.net/' + path+'" target="_blank" >https://s.jwint.net/'+path+'</a>';
-          statusDiv.style.color = "green";
-          // 清空部分輸入框，保留密碼方便連續輸入
-          document.getElementById('pathInput').value = '';
-          document.getElementById('urlInput').value = '';
-        } else {
-          statusDiv.innerText = "錯誤：" + result.message;
-          statusDiv.style.color = "red";
-        }
-      } catch (error) {
-        statusDiv.innerText = "連線失敗，請檢查網路或 GAS 設定。";
-        statusDiv.style.color = "red";
-      }
-    }
+  <script src="addsurl.js">
   </script>
 </body>
 </html>
