@@ -29,7 +29,15 @@
         body { 
             margin: 0; 
             padding: 0; 
-            height: var(--app-height); 
+            /* 移除原本的 height: var(--app-height); */
+            
+            /* 新增以下四行，把網頁死死釘在螢幕上，不讓瀏覽器往上推 */
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            
             background-color: var(--bg-color); 
             display: flex; 
             align-items: center; 
@@ -47,7 +55,7 @@
             background: var(--chat-bg); 
             box-shadow: 0 10px 30px rgba(91, 179, 130, 0.15); 
         }
-        
+
         /* 讓桌面版看起來像個獨立的 App 視窗 */
         @media (min-width: 601px) {
             #setup-screen, #chat-screen {
@@ -290,5 +298,32 @@
 
     <!-- 保留原本的邏輯腳本 -->
     <script src="cs.js"></script>
+<script>
+    // 1. 監聽虛擬鍵盤彈出/收起時的真實可視高度
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', () => {
+            // 將 body 的高度強制設定為扣除鍵盤後的真實高度
+            document.body.style.height = window.visualViewport.height + 'px';
+            
+            // 讓聊天訊息區域自動捲動到最底部，避免被鍵盤遮擋
+            const messages = document.getElementById('messages');
+            if (messages) {
+                messages.scrollTop = messages.scrollHeight;
+            }
+        });
+    }
+
+    // 2. 解決 iOS 鍵盤收起後，畫面卡在半空中留白的 Bug
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('blur', () => {
+            // 延遲一點點執行，確保鍵盤已經完全收起
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+            }, 100);
+        });
+    });
+</script>
+    
 </body>
 </html>
