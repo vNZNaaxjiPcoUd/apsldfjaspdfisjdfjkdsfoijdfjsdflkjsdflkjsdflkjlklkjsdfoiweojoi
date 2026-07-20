@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>聊天 🌿</title>
+    <title data-i18n="page_title">聊天 🌿</title>
     <link rel="manifest" href="manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -46,6 +46,7 @@
             display: flex; 
             flex-direction: column; 
             background: var(--chat-bg); 
+            position: relative; /* 為了讓語言按鈕相對定位 */
         }
         
         @media (min-width: 601px) {
@@ -59,6 +60,28 @@
 
         #chat-screen { display: none; }
         
+        /* ======== 多國語系切換按鈕 ======== */
+        .lang-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid var(--primary-green);
+            color: var(--primary-dark);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.65em;
+            font-weight: 500;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .lang-btn:active {
+            background: var(--primary-green);
+            color: white;
+        }
+
         /* ======== 1. 頂部標題極簡化 ======== */
         .header { 
             background: linear-gradient(135deg, #81d4a8, #5bb382); 
@@ -71,17 +94,24 @@
             font-weight: 700;
             font-size: 0.9em; /* 縮小字體 */
             z-index: 10;
+            /* 預留空間給語言切換按鈕 */
+            padding-right: 70px;
         }
 
         #room-title {
             font-size: 1.1em;
             letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .online-status {
             font-size: 0.85em;
             font-weight: 600;
             opacity: 0.95;
+            white-space: nowrap;
+            margin-right: 20px;
         }
         
         /* ======== 2. 訊息區與單行泡泡 ======== */
@@ -184,12 +214,11 @@
         /* ======== 設定畫面 ======== */
         #setup-screen { justify-content: center; padding: 20px; text-align: center; }
         #setup-screen h2 { color: var(--primary-dark); margin-bottom: 5px; font-size: 1.8em; }
-        /*.input-row { display: flex; gap: 10px; width: 100%; margin: 15px 0; }*/
         .input-row { flex-direction: column; display: flex; gap: 10px; width: 100%; margin: 15px 0; }
         .input-col { flex: 1; display: flex; flex-direction: column; text-align: left; }
         .input-col label { color: var(--primary-dark); font-size: 0.85em; font-weight: 700; margin-bottom: 5px; margin-left: 5px; }
         #setup-screen .input-row input { width: 100%; padding: 10px 15px; }
-        #setup-screen button { padding: 12px; font-size: 16px; width: 100%; max-width: 300px; margin: 0 auto; }
+        #setup-screen button.main-btn { padding: 12px; font-size: 16px; width: 100%; max-width: 300px; margin: 0 auto; }
         @media (max-width: 400px) { .input-row { flex-direction: column; gap: 10px; } }
         
         .hidden { display: none !important; }
@@ -199,36 +228,35 @@
 
     <!-- 登入設定畫面 -->
     <div id="setup-screen">
-        <h2>🌱 歡迎聊天室</h2>
-        <!--p style="color: var(--text-light); margin: 0 0 10px 0; font-size: 0.9em;">請輸入資訊</p-->
+        <button class="lang-btn" onclick="toggleLanguage()">中／EN</button>
+        <h2 data-i18n="setup_title">🌱 歡迎聊天室</h2>
         
         <div class="input-row">
             <div class="input-col">
-                <!--label for="setup-room">房間名稱</label-->
-                <input type="text" id="setup-room" placeholder="房間名稱" autocomplete="off">
+                <input type="text" id="setup-room" data-i18n-placeholder="setup_room_ph" placeholder="房間名稱" autocomplete="off">
             </div>
             <div class="input-col">
-                <!--label for="setup-name">可愛暱稱</label-->
-                <input type="text" id="setup-name" placeholder="暱稱 例如: ฅ^•ﻌ•^ฅ" autocomplete="off" onkeydown="if(event.key === 'Enter') joinChat()">
+                <input type="text" id="setup-name" data-i18n-placeholder="setup_name_ph" placeholder="暱稱 例如: ฅ^•ﻌ•^ฅ" autocomplete="off" onkeydown="if(event.key === 'Enter') joinChat()">
             </div>
         </div>
-        <button onclick="joinChat()">開始聊天 🚀</button>
+        <button class="main-btn" onclick="joinChat()" data-i18n="setup_btn">開始聊天 🚀</button>
     </div>
 
     <!-- 聊天主畫面 -->
     <div id="chat-screen">
+        <button class="lang-btn" onclick="toggleLanguage()" >中／EN</button>
         <!-- 頂部扁平化，單行顯示 -->
         <div class="header">
             <span id="room-title">Room</span>
-            <span class="online-status">🟢 在線: <span id="online-count">1</span></span>
+            <span class="online-status">🟢 <span data-i18n="online_label">在線:</span> <span id="online-count">1</span></span>
         </div>
         
         <div id="messages"></div>
         
         <!-- 輸入區扁平化 -->
         <div id="input-area">
-            <input type="text" id="msg-input" placeholder="輸入訊息..." autocomplete="off">
-            <button onclick="sendMsg()" id="send-btn">發送</button>
+            <input type="text" id="msg-input" data-i18n-placeholder="chat_input_ph" placeholder="輸入訊息..." autocomplete="off">
+            <button onclick="sendMsg()" id="send-btn" data-i18n="chat_send_btn">發送</button>
         </div>
     </div>
 
