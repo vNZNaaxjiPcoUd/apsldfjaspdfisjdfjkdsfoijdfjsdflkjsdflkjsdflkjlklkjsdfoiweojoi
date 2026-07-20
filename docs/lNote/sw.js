@@ -1,5 +1,5 @@
 // 每次修改 index.html 或靜態檔案時，請記得更改這個版本號，這樣才會觸發更新
-const CACHE_NAME = 'local-note-v1.9'; 
+const CACHE_NAME = 'local-note-v1.10'; 
 
 const urlsToCache = [
   './',
