@@ -61,24 +61,24 @@ html {
             </div>
             
             <div class="control-row">
-                <button class="control-btn" id="saveDBBtn" title="保存書冊">存</button>
-                <button class="control-btn" id="readDBBtn" title="讀取保存書冊">提</button>
+                <button class="control-btn" id="saveDBBtn" title="保存">存</button>
+                <button class="control-btn" id="readDBBtn" title="讀取">提</button>
 
-                <button class="control-btn" id="encryptBtn" title="加密文本">封</button>
-                <button class="control-btn" id="decryptBtn" title="解密密文">解</button>
+                <button class="control-btn" id="encryptBtn" title="加密">封</button>
+                <button class="control-btn" id="decryptBtn" title="解密">解</button>
                 <button class="control-btn" id="copyBtn" title="複製密文">謄</button>
                 
-                <button class="control-btn" id="nameBtn" title="更改本冊名稱" onclick = "changeKeyName()">名</button>
+                <button class="control-btn" id="nameBtn" title="更改本冊名" onclick = "changeKeyName()">名</button>
                 <input type="text" id="keyNameDef" title="本冊名稱"value="SSS" placeholder="本冊名稱">
                 <button class="control-btn" id="listBtn" title="列出所有書冊" onclick = "listKeyNames()">列</button>
                 <button class="control-btn" id="delBtn" title="刪除書冊" onclick = "deleteKeyName()">刪</button>
                 <input type="text" id="delNameDef" title="刪除書冊的名稱" value="" placeholder="欲刪書本名稱">
 
-                <button class="control-btn" id="exportBtn" title="下載書冊檔案">出</button>
-                <button class="control-btn" id="importBtnTrigger" title="載入書冊檔案">入</button>
+                <button class="control-btn" id="exportBtn" title="下載書冊">出</button>
+                <button class="control-btn" id="importBtnTrigger" title="載入書冊">入</button>
                 <input type="file" id="importFile" title="載入書冊名稱" placeholder="載入書冊名稱.txt" accept=".txt" style="display: none;">
 
-                <button class="control-btn" id="markdownViewBtn" title="Markdown View" onclick="showMarkdownView()">拓</button>
+                <button class="control-btn" id="markdownViewBtn" title="Markdown View ctl-M" onclick="showMarkdownView()">拓</button>
 
                 <button class="control-btn" id="aesKeyBtn" title="修改密鑰" onclick = "changeAesKey()">密</button>
                 <input type="password" id="aesKey" title="密鑰" value="YGG636zJCXhelP0SEpqN7h1xRGXOUtezGg2LSpcLWuNh8g8z!!" placeholder="密鑰">
