@@ -233,7 +233,7 @@
         
         <div class="input-row">
             <div class="input-col">
-                <input type="text" id="setup-room" data-i18n-placeholder="setup_room_ph" placeholder="房間名稱" autocomplete="off">
+                <input type="text" id="setup-room" data-i18n-placeholder="setup_room_ph" placeholder="房間名稱" autocomplete="off" value="Sky天空">
             </div>
             <div class="input-col">
                 <input type="text" id="setup-name" data-i18n-placeholder="setup_name_ph" placeholder="暱稱 例如: ฅ^•ﻌ•^ฅ" autocomplete="off" onkeydown="if(event.key === 'Enter') joinChat()">
@@ -287,6 +287,7 @@
                 }, 100);
             });
         });
+        document.getElementById("setup-name").focus();
     </script>
 </body>
 </html>
