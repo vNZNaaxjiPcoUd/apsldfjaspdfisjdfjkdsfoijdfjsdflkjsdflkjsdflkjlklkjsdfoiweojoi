@@ -43,7 +43,8 @@ html {
 
     <div class="main-container">
         <div class="tabs" id="TAB-BTN">
-            <button class="tab-button" title="查看書冊本文" onclick="openTab(event, 'TabB')">書</button>
+            <!--button class="tab-button" title="查看書冊本文" onclick="openTab(event, 'TabB')">書</button-->
+            <button class="tab-button" title="讀取" onclick="readDBBtnHandler()">提</button>
             <button class="tab-button" title="查看各指令" onclick="openTab(event, 'TabA')">令</button>
             <button class="tab-button" id="mdvwBtn" title="markdown view" onclick="showMarkdownView()">拓</button>
             <button class="tab-button" id="addSubPageBtn" title="新增小冊">增</button>
@@ -78,7 +79,8 @@ html {
                 <button class="control-btn" id="importBtnTrigger" title="載入書冊">入</button>
                 <input type="file" id="importFile" title="載入書冊名稱" placeholder="載入書冊名稱.txt" accept=".txt" style="display: none;">
 
-                <button class="control-btn" id="markdownViewBtn" title="Markdown View ctl-E" onclick="showMarkdownView()">拓</button>
+                <!--button class="control-btn" id="markdownViewBtn" title="Markdown View ctl-E" onclick="showMarkdownView()">拓</button-->
+                <button class="control-btn" id="markdownViewBtn" title="Markdown View ctl-E" onclick="openTab(event, 'TabB')">書</button>
 
                 <button class="control-btn" id="aesKeyBtn" title="修改密鑰" onclick = "changeAesKey()">密</button>
                 <input type="password" id="aesKey" title="密鑰" value="YGG636zJCXhelP0SEpqN7h1xRGXOUtezGg2LSpcLWuNh8g8z!!" placeholder="密鑰">
