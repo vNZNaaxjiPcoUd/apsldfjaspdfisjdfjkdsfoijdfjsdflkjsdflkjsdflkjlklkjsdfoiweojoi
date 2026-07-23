@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
@@ -14,7 +13,7 @@ body {
     color: #ffd700; 
     background-color: #000000; 
     overscroll-behavior-y: none; 
-	font-weight: 360;
+    font-weight: 360;
 }
 
 a, a.visited {
@@ -82,6 +81,7 @@ a, a.visited {
     <input type="text" id="inputT" placeholder="輸入內容"><br><br>
     <button id="okCmd" class="btn-cmd">確定</button>
     <button id="cancelCmd" class="btn-cmd">取消</button>    
+    <button id="pasteCmd" class="btn-cmd">貼上</button>    
 </dialog>
 
 
@@ -94,16 +94,29 @@ function getUserInputText(titleTxt="輸入"){
     const input= document.getElementById('inputT');
     const confirmBtn = document.getElementById('okCmd');
     const cancelBtn = document.getElementById('cancelCmd');
+    const pasteBtn = document.getElementById('pasteCmd'); // 取得貼上按鈕
 
     function onOkBtn() {
       cleanup();
-	  handleID(input.value);
-	  resolve(true);
+      handleID(input.value);
+      resolve(true);
     }
 
     function onCancelBtn() {
       cleanup();
       resolve(false);
+    }
+
+    // 新增貼上按鈕的執行函式
+    async function onPasteBtn() {
+      try {
+        const text = await navigator.clipboard.readText(); // 讀取剪貼簿內容
+        input.value = text;                                // 貼上到 inputT
+        onOkBtn();                                         // 執行 onOkBtn()
+      } catch (err) {
+        console.error('無法讀取剪貼簿內容: ', err);
+        alert('無法讀取剪貼簿，請確認瀏覽器是否允許剪貼簿權限。');
+      }
     }
 
     function onKeyDown(event) {
@@ -117,11 +130,14 @@ function getUserInputText(titleTxt="輸入"){
       dialog.close();
       confirmBtn.removeEventListener('click', onOkBtn);
       cancelBtn.removeEventListener('click', onCancelBtn);
+      pasteBtn.removeEventListener('click', onPasteBtn); // 移除貼上按鈕事件
       input.removeEventListener('keydown', onKeyDown);
     }
 
-	confirmBtn.addEventListener('click', onOkBtn);
+    confirmBtn.addEventListener('click', onOkBtn);
     cancelBtn.addEventListener('click', onCancelBtn);
+    pasteBtn.addEventListener('click', onPasteBtn); // 綁定貼上按鈕事件
+    
     input.addEventListener('keydown', onKeyDown);
     input.value = ''; 
     title.textContent = titleTxt;
@@ -132,81 +148,81 @@ function getUserInputText(titleTxt="輸入"){
 const IDL = 11;
 
 function getID(url) {
-		const regex = /[?&]v=([A-Za-z0-9_-]{11})|youtu\.be\/([A-Za-z0-9_-]{11})|\/shorts\/([A-Za-z0-9_-]{11})|\/live\/([A-Za-z0-9_-]{11})/;
-		const match = url.match(regex);
-		return match ? (match[1] || match[2] || match[3]|| match[4]) : "no";
-	}
+        const regex = /[?&]v=([A-Za-z0-9_-]{11})|youtu\.be\/([A-Za-z0-9_-]{11})|\/shorts\/([A-Za-z0-9_-]{11})|\/live\/([A-Za-z0-9_-]{11})/;
+        const match = url.match(regex);
+        return match ? (match[1] || match[2] || match[3]|| match[4]) : "no";
+    }
 
 let jumpA = "";
 let jumpB = "";
 
 function handleID(inID){
-		let id = inID;
-	    const prefix = "FsdGVkX19JAx6y6XDUsl0czQsdOahaolUSW";
+        let id = inID;
+        const prefix = "FsdGVkX19JAx6y6XDUsl0czQsdOahaolUSW";
         const suffix = "TiT62peYwEcQqvk4bBB7Kb5cBGVAW";
 
-		const idMap = {
-		  "test": "wM0g8EoUZ_E",   // 華視
-		  "news": "wM0g8EoUZ_E",   // 華視
-		  "abc":  "iipR5yUp36o",   // ABC news
-		  "sea":  "NSXavEj1R9E",   // 海 聲
-		  "500":  "Uk3aOuBV6i0",   // 500
-		  "sing": "fzyO3fLV5O0",   // 貝多芬合唱
-		  "run":  "KyT4qSK8lJo",   // 地震
-		  "eng":  "rpDgKy_KnEM",   // 英文
-		  "qin":  "XWmb1BYNOLg",   // 蜀中琴韻
-		  "dong": "t8hTKQeLHqk",   // 東海漁歌
-		};
-		
-		id = idMap[id?.toLowerCase()] || id; 
+        const idMap = {
+          "test": "wM0g8EoUZ_E",   // 華視
+          "news": "wM0g8EoUZ_E",   // 華視
+          "abc":  "iipR5yUp36o",   // ABC news
+          "sea":  "NSXavEj1R9E",   // 海 聲
+          "500":  "Uk3aOuBV6i0",   // 500
+          "sing": "fzyO3fLV5O0",   // 貝多芬合唱
+          "run":  "KyT4qSK8lJo",   // 地震
+          "eng":  "rpDgKy_KnEM",   // 英文
+          "qin":  "XWmb1BYNOLg",   // 蜀中琴韻
+          "dong": "t8hTKQeLHqk",   // 東海漁歌
+        };
+        
+        id = idMap[id?.toLowerCase()] || id; 
 
-		if(id.length > IDL){
-			id = getID(id);
-		}
-		if (id.length === IDL){
+        if(id.length > IDL){
+            id = getID(id);
+        }
+        if (id.length === IDL){
 
             let nUrl= "";
-			nUrl=  "https://h.jwint.net/b?"+prefix+id+suffix;
-			const b = `<a href="${nUrl}">一回看</a>`;
-			jumpA = nUrl;
-			
-			nUrl= "https://h.jwint.net/c?"+prefix+id+suffix;
-			const c = `<a href="${nUrl}">重複轉</a>`;
-			jumpB = nUrl;
-			
-			const bc= b+"<br>"+c+"<br><br>";
-			document.getElementById("uID").innerHTML = bc;
-			window.open(jumpA, '_blank');
-		}else { }	
-	}
+            nUrl=  "https://h.jwint.net/b?"+prefix+id+suffix;
+            const b = `<a href="${nUrl}">一回看</a>`;
+            jumpA = nUrl;
+            
+            nUrl= "https://h.jwint.net/c?"+prefix+id+suffix;
+            const c = `<a href="${nUrl}">重複轉</a>`;
+            jumpB = nUrl;
+            
+            const bc= b+"<br>"+c+"<br><br>";
+            document.getElementById("uID").innerHTML = bc;
+            window.open(jumpA, '_blank');
+        }else { }   
+    }
 
 (async () => {
-	while(true){
-		const result = await getUserInputText("畫卷");
-		if(!result){
-			const container = document.getElementById("uID");
-			const restartBtn = document.createElement("button");
-			Object.assign(restartBtn.style, {
-				backgroundColor: "#1a1a1a", 
-				color: "#ffd700",           
-				border: "1px solid #FDE047",
-				borderRadius: "8px",        
-				padding: "3px 10px",       
-				fontSize: "16px",           
-				fontWeight: "360",          
-				cursor: "pointer",          
-				boxShadow: "0 2px 4px rgba(0,0,0,0.05)", 
-				transition: "all 0.2s ease" 
-			});
-			restartBtn.textContent = "再來一次";
-			restartBtn.addEventListener("click", () => {
-				location.reload();
-			});
-			container.appendChild(restartBtn);
+    while(true){
+        const result = await getUserInputText("畫卷");
+        if(!result){
+            const container = document.getElementById("uID");
+            const restartBtn = document.createElement("button");
+            Object.assign(restartBtn.style, {
+                backgroundColor: "#1a1a1a", 
+                color: "#ffd700",           
+                border: "1px solid #FDE047",
+                borderRadius: "8px",        
+                padding: "3px 10px",       
+                fontSize: "16px",           
+                fontWeight: "360",          
+                cursor: "pointer",          
+                boxShadow: "0 2px 4px rgba(0,0,0,0.05)", 
+                transition: "all 0.2s ease" 
+            });
+            restartBtn.textContent = "再來一次";
+            restartBtn.addEventListener("click", () => {
+                location.reload();
+            });
+            container.appendChild(restartBtn);
 
-			break;
-		}
-	}
+            break;
+        }
+    }
 })();
 </script>
 
