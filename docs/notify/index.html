@@ -34,36 +34,42 @@
             box-shadow: 0 10px 20px rgba(168, 230, 207, 0.3); /* 柔和的綠色陰影 */
         }
 
-        /* 輸入區塊的彈性排版 */
+        /* 輸入區塊的彈性排版 - 改為垂直排列 */
         .input-group {
             display: flex;
-            gap: 10px; /* 輸入框與按鈕之間的間距 */
-            align-items: flex-end; /* 讓按鈕與多行輸入框的底部對齊 */
+            flex-direction: column; /* 垂直排列的關鍵 */
+            gap: 15px; /* 輸入框與按鈕之間的間距 */
+            align-items: stretch; /* 讓內部元素寬度自動填滿 */
         }
 
-        /* 多行文字輸入框美化 */
-        textarea {
-            flex: 1; /* 佔滿剩餘空間 */
+        /* 單行與多行文字輸入框共用美化 */
+        input, textarea {
+            width: 100%;
             padding: 14px 18px;
             font-size: 16px;
-            font-family: inherit; /* 讓 textarea 繼承 body 的字體 */
+            font-family: inherit; /* 繼承 body 的字體 */
             border: 2px solid #d1eadd;
-            border-radius: 16px; /* 稍微收斂圓角以適合方塊造型 */
+            border-radius: 16px; /* 適合方塊造型 */
             outline: none;
-            resize: vertical; /* 允許使用者垂直拉伸高度，禁止水平拉伸 */
-            min-height: 80px; /* 預設高度 */
-            max-height: 200px; /* 最大高度限制 */
             transition: border-color 0.3s, box-shadow 0.3s;
         }
 
         /* 輸入框點擊時的效果 */
-        textarea:focus {
+        input:focus, textarea:focus {
             border-color: #80c4a3;
             box-shadow: 0 0 8px rgba(128, 196, 163, 0.4);
         }
 
+        /* 針對多行輸入框的特殊設定 */
+        textarea {
+            resize: vertical; /* 允許垂直拉伸高度，禁止水平拉伸 */
+            min-height: 80px; /* 預設高度 */
+            max-height: 200px; /* 最大高度限制 */
+        }
+
         /* 傳送按鈕美化 */
         button {
+            width: 100%; /* 讓按鈕寬度填滿 */
             background-color: #a8e6cf; /* 淡綠色 */
             color: #2c543e; /* 深綠色文字增加對比度 */
             border: none;
@@ -72,9 +78,9 @@
             font-weight: bold;
             border-radius: 30px; /* 膠囊形狀的圓角 */
             cursor: pointer;
-            white-space: nowrap; /* 確保文字不會換行 */
+            white-space: nowrap;
             transition: background-color 0.2s, transform 0.1s;
-            height: 50px; /* 固定按鈕高度，避免跟著 textarea 變形 */
+            height: 50px; /* 固定按鈕高度 */
         }
 
         /* 滑鼠懸浮時稍微變深 */
@@ -93,7 +99,9 @@
 
     <div class="chat-container">
         <div class="input-group">
-            <textarea id="msgInput" placeholder=""></textarea>
+            <!-- 修正 input 標籤不需要閉合 -->
+            <input id="name" placeholder="Name">
+            <textarea id="msgInput" placeholder="Message"></textarea>
             <button id="sendBtn">Go!</button>
         </div>
     </div>
@@ -102,15 +110,19 @@
     <script>
         const msgInputElement = document.getElementById('msgInput');
         const sendBtnElement = document.getElementById('sendBtn');
-        const key = "db7a8814d8063359e227f918599d3c0a17";
+        const uName = document.getElementById('name');
 
         // 將「發送邏輯」獨立寫成一個函式，方便重複呼叫
         async function handleSend() {
             const textValue = msgInputElement.value.trim();
+            let name = uName.value.trim();
+            name = name ? name : "nono";
+
             if (textValue !== "") {
-                // 呼叫您的 sendMsg 函式 (來自 notify.org.js)
-                const ret = await sendMsg(key, textValue);
+                // 這裡微調了變數，將 uName(DOM元素) 改為 name(字串值)
+                const ret = await sendMsg(name, textValue);
                 if ( ret === false ) console.log("notify fail");
+                
                 // 清空輸入框
                 msgInputElement.value = "";
                 // 發送後讓輸入框重新獲得焦點
