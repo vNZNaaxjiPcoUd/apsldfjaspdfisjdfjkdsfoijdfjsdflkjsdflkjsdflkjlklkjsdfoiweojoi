@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <!-- 確保在手機上正確縮放，並防止使用者雙擊放大影響體驗 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Notification</title>
+    <style>
+        /* 全域設定，讓寬度計算包含 padding */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            /* 使用稍微活潑的字體，並設定極淡的綠色背景 */
+            font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            background-color: #f2fcf6;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #4a7c59; 
+        }
+
+        /* 聊天室主容器 */
+        .chat-container {
+            background-color: #ffffff;
+            border: 2px solid #b8e0d2;
+            border-radius: 24px; /* 可愛的大圓角 */
+            padding: 24px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 10px 20px rgba(168, 230, 207, 0.3); /* 柔和的綠色陰影 */
+        }
+
+        /* 輸入區塊的彈性排版 */
+        .input-group {
+            display: flex;
+            gap: 10px; /* 輸入框與按鈕之間的間距 */
+            align-items: flex-end; /* 讓按鈕與多行輸入框的底部對齊 */
+        }
+
+        /* 多行文字輸入框美化 */
+        textarea {
+            flex: 1; /* 佔滿剩餘空間 */
+            padding: 14px 18px;
+            font-size: 16px;
+            font-family: inherit; /* 讓 textarea 繼承 body 的字體 */
+            border: 2px solid #d1eadd;
+            border-radius: 16px; /* 稍微收斂圓角以適合方塊造型 */
+            outline: none;
+            resize: vertical; /* 允許使用者垂直拉伸高度，禁止水平拉伸 */
+            min-height: 80px; /* 預設高度 */
+            max-height: 200px; /* 最大高度限制 */
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        /* 輸入框點擊時的效果 */
+        textarea:focus {
+            border-color: #80c4a3;
+            box-shadow: 0 0 8px rgba(128, 196, 163, 0.4);
+        }
+
+        /* 傳送按鈕美化 */
+        button {
+            background-color: #a8e6cf; /* 淡綠色 */
+            color: #2c543e; /* 深綠色文字增加對比度 */
+            border: none;
+            padding: 14px 22px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 30px; /* 膠囊形狀的圓角 */
+            cursor: pointer;
+            white-space: nowrap; /* 確保文字不會換行 */
+            transition: background-color 0.2s, transform 0.1s;
+            height: 50px; /* 固定按鈕高度，避免跟著 textarea 變形 */
+        }
+
+        /* 滑鼠懸浮時稍微變深 */
+        button:hover {
+            background-color: #8cd8be;
+        }
+
+        /* 點擊時會有可愛的微縮放回饋感 */
+        button:active {
+            transform: scale(0.92);
+        }
+    </style>
+
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="input-group">
+            <textarea id="msgInput" placeholder=""></textarea>
+            <button id="sendBtn">Go!</button>
+        </div>
+    </div>
+
+    <script src="notify.js"></script>
+    <script>
+        const msgInputElement = document.getElementById('msgInput');
+        const sendBtnElement = document.getElementById('sendBtn');
+        const key = "db7a8814d8063359e227f918599d3c0a17";
+
+        // 將「發送邏輯」獨立寫成一個函式，方便重複呼叫
+        async function handleSend() {
+            const textValue = msgInputElement.value.trim();
+            if (textValue !== "") {
+                // 呼叫您的 sendMsg 函式 (來自 notify.org.js)
+                const ret = await sendMsg(key, textValue);
+                if ( ret === false ) console.log("notify fail");
+                // 清空輸入框
+                msgInputElement.value = "";
+                // 發送後讓輸入框重新獲得焦點
+                msgInputElement.focus();
+            }
+        }
+
+        // 1. 監聽鍵盤事件 (支援 Shift+Enter 換行)
+        msgInputElement.addEventListener('keydown', function(event) {
+            // 判斷是否按下 Enter 且「沒有」按住 Shift 鍵
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault(); // 阻止預設的換行行為
+                handleSend();
+            }
+        });
+
+        // 2. 監聽點擊「傳送」按鈕發送
+        sendBtnElement.addEventListener('click', function() {
+            handleSend();
+        });
+    </script>
+
+</body>
+</html>
