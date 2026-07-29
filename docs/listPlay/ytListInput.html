@@ -113,6 +113,8 @@
 
                 // 組合網址，並使用 encodeURIComponent 確保特殊字元不會破壞網址結構
                 var targetUrl = 'https://h.jwint.net/ytListPly?' + encodeURIComponent(playlistId);
+                const input= document.getElementById('playlistIdInput');
+                input.value = ''; 
                 
                 // 使用 window.open 在新分頁開啟網址
                 window.open(targetUrl, '_blank');
