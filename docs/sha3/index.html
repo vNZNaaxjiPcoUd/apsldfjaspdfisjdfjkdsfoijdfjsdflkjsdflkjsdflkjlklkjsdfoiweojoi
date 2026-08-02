@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHA3-512</title>
+    <title>SHA3</title>
     <!-- 引入 js-sha3 函式庫以支援 SHA3-512 運算 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha3/0.8.0/sha3.min.js"></script>
+    <!--script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha3/0.8.0/sha3.min.js"></script-->
+    <script src="sha3.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -59,23 +60,23 @@
 
     <div class="form-group">
         <label for="valA">A:</label>
-        <input type="text" id="valA" placeholder="輸入明文 A">
+        <input type="text" id="valA" placeholder="A">
     </div>
 
     <div class="form-group">
         <label for="valB">B:</label>
-        <input type="password" id="valB" placeholder="輸入密碼 B">
+        <input type="password" id="valB" placeholder="B">
     </div>
 
     <div class="form-group">
         <label for="valC">C:</label>
-        <input type="password" id="valC" placeholder="輸入密碼 C">
+        <input type="password" id="valC" placeholder="C">
     </div>
 
     <div class="form-group">
         <label for="valD">D:</label>
         <div class="input-group">
-            <input type="text" id="valD" readonly placeholder="計算結果將在此即時顯示">
+            <input type="text" id="valD" readonly placeholder="D">
             <button id="copyBtn">複製</button>
         </div>
     </div>
