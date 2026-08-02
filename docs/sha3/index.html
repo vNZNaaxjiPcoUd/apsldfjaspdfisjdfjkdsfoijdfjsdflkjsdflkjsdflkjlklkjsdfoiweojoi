@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHA3-512</title>
+    <!-- 引入 js-sha3 函式庫以支援 SHA3-512 運算 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha3/0.8.0/sha3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        label {
+            width: 40px;
+            font-weight: bold;
+        }
+        input {
+            flex: 1;
+            padding: 8px;
+            font-size: 16px;
+            font-family: monospace;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        /* 特別針對 D 欄位與複製按鈕的排版 */
+        .input-group {
+            display: flex;
+            flex: 1;
+        }
+        .input-group input {
+            border-radius: 4px 0 0 4px; /* 左側圓角 */
+            border-right: none;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .input-group button {
+            padding: 8px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: 1px solid #007bff;
+            border-radius: 0 4px 4px 0; /* 右側圓角 */
+            transition: background-color 0.3s;
+        }
+        .input-group button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-group">
+        <label for="valA">A:</label>
+        <input type="text" id="valA" placeholder="輸入明文 A">
+    </div>
+
+    <div class="form-group">
+        <label for="valB">B:</label>
+        <input type="password" id="valB" placeholder="輸入密碼 B">
+    </div>
+
+    <div class="form-group">
+        <label for="valC">C:</label>
+        <input type="password" id="valC" placeholder="輸入密碼 C">
+    </div>
+
+    <div class="form-group">
+        <label for="valD">D:</label>
+        <div class="input-group">
+            <input type="text" id="valD" readonly placeholder="計算結果將在此即時顯示">
+            <button id="copyBtn">複製</button>
+        </div>
+    </div>
+
+    <script>
+        // 取得所有輸入欄位與按鈕的 DOM 元素
+        const inputA = document.getElementById('valA');
+        const inputB = document.getElementById('valB');
+        const inputC = document.getElementById('valC');
+        const outputD = document.getElementById('valD');
+        const copyBtn = document.getElementById('copyBtn');
+
+        // 定義計算 D 值的函式
+        function calculateHash() {
+            const A = inputA.value;
+            const B = inputB.value;
+            const C = inputC.value;
+
+            // 如果三個欄位都為空，則清空 D 欄位
+            if (A === '' && B === '' && C === '') {
+                outputD.value = '';
+                return;
+            }
+
+            // 步驟 1: 算出 sha3-512(A + B)
+            const step1 = sha3_512(A + B);
+            
+            // 步驟 2: 算出 sha3-512(步驟1的結果 + C)
+            const step2 = sha3_512(step1 + C);
+
+            // 將最終結果顯示在 D 欄位
+            outputD.value = step2;
+        }
+
+        // 複製功能實作
+        function copyToClipboard() {
+            const textToCopy = outputD.value;
+            
+            // 確保有內容才進行複製
+            if (!textToCopy) return;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                // 複製成功時，暫時改變按鈕文字
+                const originalText = copyBtn.innerText;
+                copyBtn.innerText = '已複製！';
+                copyBtn.style.backgroundColor = '#28a745'; // 變成綠色
+                copyBtn.style.borderColor = '#28a745';
+
+                // 1.5 秒後恢復按鈕原狀
+                setTimeout(() => {
+                    copyBtn.innerText = originalText;
+                    copyBtn.style.backgroundColor = '';
+                    copyBtn.style.borderColor = '';
+                }, 1500);
+            }).catch(err => {
+                console.error('複製失敗:', err);
+                alert('複製失敗，請手動選取複製。');
+            });
+        }
+
+        // 為 A、B、C 欄位加入 'input' 事件監聽器
+        inputA.addEventListener('input', calculateHash);
+        inputB.addEventListener('input', calculateHash);
+        inputC.addEventListener('input', calculateHash);
+
+        // 為複製按鈕加入 'click' 事件監聽器
+        copyBtn.addEventListener('click', copyToClipboard);
+    </script>
+
+</body>
+</html>
