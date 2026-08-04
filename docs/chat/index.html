@@ -166,6 +166,15 @@
         .polling-icon.active {
             animation: heartbeat 0.8s ease-in-out ; /*infinite*/
         }
+        @keyframes losebeat {
+            0% { transform: scale(0.2); opacity: 0.5; }
+            50% { transform: scale(0.5); opacity: 1; filter: drop-shadow(0 0 2px #ff0505); }
+            100% { transform: scale(0.2); opacity: 0.5; }
+        }
+
+        .polling-icon.lose {
+            animation: losebeat 1s ease-in-out infinite; /*infinite*/
+        }
         
         #messages { 
             flex: 1 1 auto; 
