@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title data-i18n="page_title">聊天 🌿</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <!--link rel="manifest" href="manifest.json"-->
+    <script>
+        // PWA Manifest
+        (function() {
+            let currentUrl = window.location.href;
+            let dbId = "";
+            if (currentUrl.includes('id=')) dbId = currentUrl.split('id=')[1].split('&')[0];
+            else if (currentUrl.includes('?')) dbId = currentUrl.split('?')[1].split('&')[0];
+
+            const manifestName = dbId ? dbId : "Sky聊天";
+            const startUrl = new URL(`./index.html${dbId ? '?' + dbId : ''}`, currentUrl).href;
+            const icon192Url = new URL('./favicon192.png', currentUrl).href;
+            const icon512Url = new URL('./favicon512.png', currentUrl).href;
+
+            const manifest = {
+                "name": `Items - ${manifestName}`,
+                "short_name": manifestName,
+                "description": `(${manifestName})`,
+                "start_url": startUrl,
+                "display": "standalone",
+                "background_color": "#f1f8f1",
+                "theme_color": "#66bb6a",
+                "icons": [
+                    { "src": icon192Url, "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+                    { "src": icon512Url, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+                ]
+            };
+            const stringManifest = JSON.stringify(manifest);
+            const blob = new Blob([stringManifest], { type: 'application/json' });
+            const manifestURL = URL.createObjectURL(blob);
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = manifestURL;
+            document.head.appendChild(link);
+        })();
+
+    </script>
+
+    <style>
+        :root { 
+            --primary-green: #73c89a;
+            --primary-dark: #5bb382;
+            --bg-color: #eaf6ef;
+            --chat-bg: #ffffff;
+            --msg-self-bg: #d2f8e4;
+            --msg-other-bg: #ffffff;
+            --text-main: #2d3e34;
+            --text-light: #7b9685;
+            font-size: 16px; /* 調整基準字體大小 */
+        }
+        
+        * { 
+            box-sizing: border-box; 
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+        }
+        
+        body { 
+            margin: 0; 
+            padding: 0; 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%; 
+            height: 100dvh; 
+            background-color: var(--bg-color); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+        }
+        
+        #setup-screen, #chat-screen { 
+            width: 100%; 
+            max-width: 600px; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            background: var(--chat-bg); 
+            position: relative; 
+        }
+        
+        @media (min-width: 601px) {
+            #setup-screen, #chat-screen {
+                height: 90%;
+                border-radius: 16px;
+                box-shadow: 0 10px 30px rgba(91, 179, 130, 0.15); 
+                overflow: hidden;
+            }
+        }
+
+        #chat-screen { display: none; }
+        
+        .lang-btn {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid var(--primary-green);
+            color: var(--primary-dark);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8em; /* 字體放大 */
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .lang-btn:active {
+            background: var(--primary-green);
+            color: white;
+        }
+        
+        /* 登入畫面的語系按鈕在右上 */
+        #setup-screen .lang-btn {
+            top: 10px;
+            right: 10px;
+        }
+        /* 聊天畫面的語系按鈕移到右下 (配合資訊列置底) */
+        #chat-screen .lang-btn {
+            bottom: calc(10px + env(safe-area-inset-bottom));
+            right: 10px;
+        }
+
+        /* 資訊列：放到最底部 */
+        .header { 
+            background: linear-gradient(135deg, #81d4a8, #5bb382); 
+            color: white; 
+            padding: 12px 15px; 
+            padding-bottom: calc(12px + env(safe-area-inset-bottom)); /* 支援手機底部安全區 */
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            flex: 0 0 auto; 
+            font-weight: 700;
+            font-size: 1.1em; /* 字體放大 */
+            z-index: 10;
+            padding-right: 90px; /* 保留給語系按鈕的空間 */
+        }
+
+        #room-title {
+            font-size: 1.25em; /* 字體放大 */
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .online-status {
+            font-size: 1em; /* 字體放大 */
+            font-weight: 600;
+            opacity: 0.95;
+            white-space: nowrap;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        @keyframes heartbeat {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.3); opacity: 1; filter: drop-shadow(0 0 2px #fff); }
+            100% { transform: scale(1); opacity: 0.5; }
+        }
+        .polling-icon {
+            font-size: 1em;
+            display: inline-block;
+            opacity: 0.5; 
+            transition: opacity 0.3s;
+        }
+        .polling-icon.active {
+            animation: heartbeat 0.8s ease-in-out;
+        }
+        @keyframes losebeat {
+            0% { transform: scale(0.1); opacity: 0.5; }
+            50% { transform: scale(0.3); opacity: 1; filter: drop-shadow(0 0 15px #ff0505); }
+            100% { transform: scale(0.1); opacity: 0.5; }
+        }
+
+        .polling-icon.lose {
+            animation: losebeat 1s ease-in-out infinite;
+        }
+        
+        /* 訊息區塊：最新訊息會緊貼上方 */
+        #messages { 
+            flex: 1 1 auto; 
+            overflow-y: auto; 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column-reverse; /* 反轉排列，最新(DOM最後)會在最上方 */
+            gap: 10px; 
+            background-color: #fafdfb;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* 利用 ::before 將畫面未滿時的訊息推往最上方 */
+        #messages::before {
+            content: '';
+            flex: 1 1 auto;
+        }
+
+        .msg { 
+            padding: 10px 14px; /* 增加內距以適應大字體 */
+            width: 100%; 
+            max-width: 100%; 
+            line-height: 1.5; 
+            word-wrap: break-word; 
+            color: var(--text-main);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: row;
+            align-items: baseline;
+            gap: 8px;
+            font-size: 1.15em; /* 字體放大 */
+        }
+        
+        .msg.self { 
+            background: var(--msg-self-bg); 
+            border-left: 4px solid var(--primary-green);
+        }
+        .msg.other { 
+            background: var(--msg-other-bg); 
+            border-bottom: 2px solid #f0f5f2; 
+        }
+        
+        .msg-name { 
+            font-size: 0.95em; 
+            color: var(--primary-dark); 
+            font-weight: 700;
+            white-space: nowrap; 
+            margin: 0;
+            flex-shrink: 0;
+        }
+        .msg-name::after { content: "："; }
+        
+        .msg-text {
+            flex-grow: 1;
+        }
+
+        @keyframes spin { 
+            100% { transform: rotate(360deg); } 
+        }
+        .msg-status {
+            font-size: 0.85em;
+            margin-left: auto; 
+            padding-left: 8px;
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .status-sending { color: #8b9d93; }
+        .status-sending::after { 
+            content: "⏳"; 
+            display: inline-block; 
+            animation: spin 2s linear infinite; 
+        }
+        .status-success { color: #4caf50; }
+        .status-success::after { content: "✓"; }
+        
+        .status-error { color: #e74c3c; cursor: pointer; }
+        .status-error::after { content: "❌"; }
+
+        /* 輸入區塊：移到最頂部 */
+        #input-area { 
+            flex: 0 0 auto; 
+            display: flex; 
+            padding: 12px 10px; 
+            padding-top: calc(12px + env(safe-area-inset-top)); /* 支援手機頂部安全區瀏海 */
+            gap: 10px; 
+            background: var(--chat-bg); 
+            border-bottom: 1px solid #e0ebe4;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+        
+        input[type="text"] { 
+            flex: 1; 
+            padding: 10px 18px; 
+            border: 1px solid #e0ebe4; 
+            border-radius: 25px; 
+            font-size: 18px; /* 字體放大 */
+            outline: none;
+            background: #f9fcf9;
+            transition: border-color 0.2s;
+            color: var(--text-main);
+        }
+        
+        input[type="text"]:focus { border-color: var(--primary-green); background: #ffffff; }
+        input::placeholder { color: #a4bdaf; }
+
+        button { 
+            padding: 10px 20px; 
+            margin: 0; 
+            border: none; 
+            background: var(--primary-green); 
+            color: white; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-size: 18px; /* 字體放大 */
+            font-weight: 700;
+        }
+        button:active { background: var(--primary-dark); }
+        
+        #setup-screen { justify-content: center; padding: 20px; text-align: center; }
+        #setup-screen h2 { color: var(--primary-dark); margin-bottom: 10px; font-size: 2.2em; } /* 字體放大 */
+        .input-row { flex-direction: column; display: flex; gap: 15px; width: 100%; margin: 20px 0; }
+        .input-col { flex: 1; display: flex; flex-direction: column; text-align: left; }
+        .input-col label { color: var(--primary-dark); font-size: 1em; font-weight: 700; margin-bottom: 5px; margin-left: 5px; } /* 字體放大 */
+        #setup-screen .input-row input { width: 100%; padding: 12px 18px; }
+        #setup-screen button.main-btn { padding: 14px; font-size: 20px; width: 100%; max-width: 320px; margin: 0 auto; } /* 字體放大 */
+        @media (max-width: 400px) { .input-row { flex-direction: column; gap: 12px; } }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="setup-screen">
+        <button class="lang-btn" onclick="toggleLanguage()">中／EN</button>
+        <h2 data-i18n="setup_title">🌱 歡迎聊天室</h2>
+        
+        <div class="input-row">
+            <div class="input-col">
+                <input type="text" id="setup-room" data-i18n-placeholder="setup_room_ph" placeholder="房間名稱" autocomplete="off" value="Sky天空">
+            </div>
+            <div class="input-col">
+                <input type="text" id="setup-name" data-i18n-placeholder="setup_name_ph" placeholder="暱稱 例如: ฅ^•ﻌ•^ฅ" autocomplete="off" onkeydown="if(event.key === 'Enter') joinChat()">
+            </div>
+        </div>
+        <button class="main-btn" onclick="joinChat()" data-i18n="setup_btn">開始聊天 🚀</button>
+    </div>
+
+    <div id="chat-screen">
+        <!-- 1. 文字輸入欄改放最上面 -->
+        <div id="input-area">
+            <input type="text" id="msg-input" data-i18n-placeholder="chat_input_ph" placeholder="輸入訊息..." autocomplete="off">
+            <button onclick="sendMsg()" id="send-btn" data-i18n="chat_send_btn">發送</button>
+        </div>
+        
+        <!-- 2. 對話區塊：新到舊由上往下排 -->
+        <div id="messages"></div>
+
+        <!-- 3. 資訊欄放最下面 -->
+        <div class="header">
+            <span id="room-title">Room</span>
+            <span class="online-status"><span id="polling-heartbeat" class="polling-icon">🟢</span> <span data-i18n="online_label">在線:</span> <span id="online-count">?</span> </span>
+        </div>
+        <button class="lang-btn" onclick="toggleLanguage()" >中／EN</button>
+    </div>
+
+    <script src="teslaChat.js"></script>
+
+   <script>
+        if (window.visualViewport) {
+            const viewportHandler = () => {
+                document.body.style.height = window.visualViewport.height + 'px';
+                document.body.style.top = window.visualViewport.offsetTop + 'px';
+                const messages = document.getElementById('messages');
+                if (messages) {
+                    // 針對 column-reverse，強制推到底部視窗(視覺最頂端)
+                    messages.scrollTop = -messages.scrollHeight; 
+                }
+            };
+            window.visualViewport.addEventListener('resize', viewportHandler);
+            window.visualViewport.addEventListener('scroll', viewportHandler);
+            viewportHandler();
+        }
+
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('blur', () => {
+                setTimeout(() => {
+                    window.scrollTo(0, 0);
+                }, 100);
+            });
+        });
+
+        // 確保新訊息加入時畫面維持在最上方
+        window.addEventListener('DOMContentLoaded', () => {
+            const msgsContainer = document.getElementById('messages');
+            if (msgsContainer) {
+                const observer = new MutationObserver(() => {
+                    // 方法 1：直接讓最後新增的對話框（視覺上的最上方）對齊頂部
+                    if (msgsContainer.lastElementChild) {
+                        msgsContainer.lastElementChild.scrollIntoView({ block: 'start' });
+                    }
+                    // 方法 2：備用相容性處理 (Safari / Chrome 對 column-reverse 的頂部為負值)
+                    msgsContainer.scrollTop = -msgsContainer.scrollHeight;
+                });
+                observer.observe(msgsContainer, { childList: true, subtree: true });
+            }
+        });
+        
+        document.getElementById("setup-name").focus();
+    </script>
+</body>
+</html>
