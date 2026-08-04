@@ -63,7 +63,6 @@
         body { 
             margin: 0; 
             padding: 0; 
-            /* 修正1：取消 bottom 和 right，改用寬高 100%，並加入 100dvh 支援 */
             position: fixed;
             top: 0;
             left: 0;
@@ -98,7 +97,6 @@
 
         #chat-screen { display: none; }
         
-        /* ======== 多國語系切換按鈕 ======== */
         .lang-btn {
             position: absolute;
             top: 5px;
@@ -120,7 +118,6 @@
             color: white;
         }
 
-        /* ======== 1. 頂部標題極簡化 ======== */
         .header { 
             background: linear-gradient(135deg, #81d4a8, #5bb382); 
             color: white; 
@@ -149,9 +146,27 @@
             opacity: 0.95;
             white-space: nowrap;
             margin-right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
         
-        /* ======== 2. 訊息區與單行泡泡 ======== */
+        /* ======== 新增：輪詢心跳圖示與動畫 ======== */
+        @keyframes heartbeat {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.3); opacity: 1; filter: drop-shadow(0 0 2px #fff); }
+            100% { transform: scale(1); opacity: 0.5; }
+        }
+        .polling-icon {
+            font-size: 0.9em;
+            display: inline-block;
+            opacity: 0.5; /* 預設半透明表示閒置 */
+            transition: opacity 0.3s;
+        }
+        .polling-icon.active {
+            animation: heartbeat 0.8s ease-in-out ; /*infinite*/
+        }
+        
         #messages { 
             flex: 1 1 auto; 
             overflow-y: auto; 
@@ -160,7 +175,6 @@
             flex-direction: column; 
             gap: 6px; 
             background-color: #fafdfb;
-            /* 讓捲動更順暢 */
             -webkit-overflow-scrolling: touch;
         }
 
@@ -193,13 +207,39 @@
             font-weight: 700;
             white-space: nowrap; 
             margin: 0;
+            flex-shrink: 0;
         }
+        .msg-name::after { content: "："; }
         
-        .msg-name::after {
-            content: "：";
+        .msg-text {
+            flex-grow: 1;
         }
+
+        /* ======== 新增：訊息發送狀態圖示 ======== */
+        @keyframes spin { 
+            100% { transform: rotate(360deg); } 
+        }
+        .msg-status {
+            font-size: 0.8em;
+            margin-left: auto; /* 利用 Flexbox 自動推到最右邊 */
+            padding-left: 8px;
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .status-sending { color: #8b9d93; }
+        .status-sending::after { 
+            content: "⏳"; 
+            display: inline-block; 
+            animation: spin 2s linear infinite; 
+        }
+        .status-success { color: #4caf50; }
+        .status-success::after { content: "✓"; }
         
-        /* ======== 3. 輸入區扁平化 ======== */
+        .status-error { color: #e74c3c; cursor: pointer; }
+        .status-error::after { content: "❌"; }
+        /* ======================================= */
+
         #input-area { 
             flex: 0 0 auto; 
             display: flex; 
@@ -223,11 +263,7 @@
             color: var(--text-main);
         }
         
-        input[type="text"]:focus {
-            border-color: var(--primary-green);
-            background: #ffffff;
-        }
-        
+        input[type="text"]:focus { border-color: var(--primary-green); background: #ffffff; }
         input::placeholder { color: #a4bdaf; }
 
         button { 
@@ -241,12 +277,8 @@
             font-size: 15px;
             font-weight: 700;
         }
+        button:active { background: var(--primary-dark); }
         
-        button:active { 
-            background: var(--primary-dark);
-        }
-        
-        /* ======== 設定畫面 ======== */
         #setup-screen { justify-content: center; padding: 20px; text-align: center; }
         #setup-screen h2 { color: var(--primary-dark); margin-bottom: 5px; font-size: 1.8em; }
         .input-row { flex-direction: column; display: flex; gap: 10px; width: 100%; margin: 15px 0; }
@@ -261,7 +293,6 @@
 </head>
 <body>
 
-    <!-- 登入設定畫面 -->
     <div id="setup-screen">
         <button class="lang-btn" onclick="toggleLanguage()">中／EN</button>
         <h2 data-i18n="setup_title">🌱 歡迎聊天室</h2>
@@ -277,12 +308,12 @@
         <button class="main-btn" onclick="joinChat()" data-i18n="setup_btn">開始聊天 🚀</button>
     </div>
 
-    <!-- 聊天主畫面 -->
     <div id="chat-screen">
         <button class="lang-btn" onclick="toggleLanguage()" >中／EN</button>
         <div class="header">
             <span id="room-title">Room</span>
-            <span class="online-status">🟢 <span data-i18n="online_label">在線:</span> <span id="online-count">1</span></span>
+            <!-- 修改：加上 heartbeat 圖示 -->
+            <span class="online-status"><span id="polling-heartbeat" class="polling-icon">🟢</span> <span data-i18n="online_label">在線:</span> <span id="online-count">?</span> </span>
         </div>
         
         <div id="messages"></div>
@@ -293,35 +324,23 @@
         </div>
     </div>
 
-    <!-- 原有邏輯腳本 -->
     <script src="cs.js"></script>
 
-    <!-- ======== 4. 解決手機鍵盤擋畫面與偏移的終極腳本 ======== -->
     <script>
         if (window.visualViewport) {
             const viewportHandler = () => {
-                // 修正 2：強制 body 高度等於鍵盤彈出後的剩餘可視高度
                 document.body.style.height = window.visualViewport.height + 'px';
-                
-                // 修正 3：利用 offsetTop 將 body 往下推回可視區域，抵銷瀏覽器的強制捲動
                 document.body.style.top = window.visualViewport.offsetTop + 'px';
-                
-                // 自動捲動到最新訊息
                 const messages = document.getElementById('messages');
                 if (messages) {
                     messages.scrollTop = messages.scrollHeight;
                 }
             };
-
-            // 同時監聽 resize (高度改變) 與 scroll (畫面被推移)
             window.visualViewport.addEventListener('resize', viewportHandler);
             window.visualViewport.addEventListener('scroll', viewportHandler);
-            
-            // 初始化執行一次
             viewportHandler();
         }
 
-        // 解決鍵盤收起後，畫面不歸位留白的問題
         const inputs = document.querySelectorAll('input');
         inputs.forEach(input => {
             input.addEventListener('blur', () => {
@@ -331,7 +350,6 @@
             });
         });
         
-        // 進入網頁自動 Focus
         document.getElementById("setup-name").focus();
     </script>
 </body>
