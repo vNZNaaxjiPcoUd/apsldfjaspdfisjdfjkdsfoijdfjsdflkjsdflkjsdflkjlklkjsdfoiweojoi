@@ -413,6 +413,44 @@
         });
         
         document.getElementById("setup-name").focus();
+
+        // 自動發文字
+        // 取得輸入框元素
+        const msgInput = document.getElementById('msg-input');
+
+        // 設定計時器變數與閒置時間（60秒 = 60000毫秒）
+        let typingTimer;
+        const doneTypingInterval = 10000; 
+
+        // 監聽輸入框的變動事件
+        msgInput.addEventListener('input', () => {
+            // 每次使用者輸入時，清除先前的計時器
+            clearTimeout(typingTimer);
+            
+            // 檢查輸入框內是否有實質文字（排除純空白字元）
+            if (msgInput.value.trim() !== '') {
+                // 重新啟動 60 秒計時器
+                typingTimer = setTimeout(autoSendMsg, doneTypingInterval);
+            }
+        });
+
+        // 當使用者按下 Enter 送出或清空輸入框時，也應該清除計時器
+        msgInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                clearTimeout(typingTimer);
+            }
+        });
+
+        // 自動發送的執行函數
+        function autoSendMsg() {
+            // 再次確認輸入框有文字後，呼叫現有的 sendMsg() 函數發送
+            if (msgInput.value.trim() !== '') {
+                sendMsg();
+                
+                // 若 sendMsg() 沒有自帶清空輸入框的功能，可在這裡手動清空（視你的 smCS.js 實作而定）
+                // msgInput.value = ''; 
+            }
+        }
     </script>
 </body>
 </html>
