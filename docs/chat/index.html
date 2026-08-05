@@ -96,6 +96,23 @@
         }
 
         #chat-screen { display: none; }
+
+
+        .v-btn {
+            position: absolute;
+            top: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid var(--primary-green);
+            color: var(--primary-dark);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.5em; /* 字體放大 */
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }        
         
         .lang-btn {
             position: absolute;
@@ -303,7 +320,7 @@
 <body>
 
     <div id="setup-screen">
-        <button class="lang-btn" onclick="toggleLanguage()">中／EN</button>
+        <button class="v-btn" onclick="window.location.href='topChat.html'">大字</button><button class="lang-btn" onclick="toggleLanguage()">中／EN</button>
         <h2 data-i18n="setup_title">🌱 歡迎聊天室</h2>
         
         <div class="input-row">
@@ -319,7 +336,7 @@
 
     <div id="chat-screen">
         <button class="lang-btn" onclick="toggleLanguage()" >中／EN</button>
-        <div class="header" onclick="window.location.href='topChat.html'">
+        <div class="header">
             <span id="room-title">Room</span>
             <!-- 修改：加上 heartbeat 圖示 -->
             <span class="online-status"><span id="polling-heartbeat" class="polling-icon">🟢</span> <span data-i18n="online_label">在線:</span> <span id="online-count">?</span> </span>
