@@ -15,7 +15,7 @@
             else if (currentUrl.includes('?')) dbId = currentUrl.split('?')[1].split('&')[0];
 
             const manifestName = dbId ? dbId : "Sky聊天";
-            const startUrl = new URL(`./index.html${dbId ? '?' + dbId : ''}`, currentUrl).href;
+            const startUrl = new URL(`./topChat.html${dbId ? '?' + dbId : ''}`, currentUrl).href;
             const icon192Url = new URL('./favicon192.png', currentUrl).href;
             const icon512Url = new URL('./favicon512.png', currentUrl).href;
 
