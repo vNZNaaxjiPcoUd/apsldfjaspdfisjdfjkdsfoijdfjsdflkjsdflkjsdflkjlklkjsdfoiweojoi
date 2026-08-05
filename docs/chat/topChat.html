@@ -53,7 +53,7 @@
             --msg-other-bg: #ffffff;
             --text-main: #2d3e34;
             --text-light: #7b9685;
-            font-size: 16px; /* 調整基準字體大小 */
+            font-size: 22px; /* 調整基準字體大小 */
         }
         
         * { 
@@ -105,7 +105,7 @@
             color: var(--primary-dark);
             padding: 6px 14px;
             border-radius: 20px;
-            font-size: 0.8em; /* 字體放大 */
+            font-size: 0.5em; /* 字體放大 */
             font-weight: 700;
             cursor: pointer;
             z-index: 1000;
@@ -139,7 +139,7 @@
             align-items: center;
             flex: 0 0 auto; 
             font-weight: 700;
-            font-size: 1.1em; /* 字體放大 */
+            font-size: 0.5em; /* 字體放大 */
             z-index: 10;
             padding-right: 90px; /* 保留給語系按鈕的空間 */
         }
@@ -217,7 +217,7 @@
             flex-direction: row;
             align-items: baseline;
             gap: 8px;
-            font-size: 1.15em; /* 字體放大 */
+            font-size: 1.0em; /* 字體放大 */
         }
         
         .msg.self { 
@@ -284,7 +284,7 @@
             padding: 10px 18px; 
             border: 1px solid #e0ebe4; 
             border-radius: 25px; 
-            font-size: 18px; /* 字體放大 */
+            font-size: 1.0em; /* 字體放大 */
             outline: none;
             background: #f9fcf9;
             transition: border-color 0.2s;
@@ -302,12 +302,12 @@
             color: white; 
             border-radius: 25px; 
             cursor: pointer; 
-            font-size: 18px; /* 字體放大 */
+            font-size: 0.85em; /* 字體放大 */
             font-weight: 700;
         }
         button:active { background: var(--primary-dark); }
         
-        #setup-screen { justify-content: center; padding: 20px; text-align: center; }
+        #setup-screen { justify-content: flex-start; padding: 20px; text-align: center; }
         #setup-screen h2 { color: var(--primary-dark); margin-bottom: 10px; font-size: 2.2em; } /* 字體放大 */
         .input-row { flex-direction: column; display: flex; gap: 15px; width: 100%; margin: 20px 0; }
         .input-col { flex: 1; display: flex; flex-direction: column; text-align: left; }
