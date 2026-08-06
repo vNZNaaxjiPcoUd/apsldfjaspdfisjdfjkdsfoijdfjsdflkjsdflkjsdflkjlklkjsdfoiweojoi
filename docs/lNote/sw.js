@@ -1,5 +1,5 @@
 // 每次修改 index.html 或靜態檔案時，請記得更改這個版本號，這樣才會觸發更新
-const CACHE_NAME = 'local-note-v1.11'; 
+const CACHE_NAME = 'local-note-v1.111'; 
 
 const urlsToCache = [
   './',
@@ -10,7 +10,8 @@ const urlsToCache = [
   './mermaid.min.js',
   './marked-gfm-heading-id.umd.js',
   './icon-192x192.png',
-  './style_black.css'
+  './style_black.css',
+  './keep.v1.js'
 ];
 
 // 1. 安裝階段：快取核心檔案
