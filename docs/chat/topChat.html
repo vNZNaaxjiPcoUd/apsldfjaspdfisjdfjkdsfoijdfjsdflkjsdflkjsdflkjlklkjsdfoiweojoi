@@ -87,14 +87,7 @@
             position: relative; 
         }
         
-        @media (min-width: 601px) {
-            #setup-screen, #chat-screen {
-                height: 90%;
-                border-radius: 16px;
-                box-shadow: 0 10px 30px rgba(91, 179, 130, 0.15); 
-                overflow: hidden;
-            }
-        }
+
 
         #chat-screen { display: none; }
 
@@ -329,8 +322,51 @@
         .input-col label { color: var(--primary-dark); font-size: 1em; font-weight: 700; margin-bottom: 5px; margin-left: 5px; } /* 字體放大 */
         #setup-screen .input-row input { width: 100%; padding: 12px 18px; }
         #setup-screen button.main-btn { padding: 14px; font-size: 20px; width: 100%; max-width: 320px; margin: 0 auto; } /* 字體放大 */
-        @media (max-width: 400px) { .input-row { flex-direction: column; gap: 12px; } }
-        
+        @media (max-width: 400px) { .input-row { flex-direction: column; gap: 2px; } }
+        @media (min-width: 601px) {
+            #setup-screen, #chat-screen {
+                height: 90%;
+                border-radius: 16px;
+                box-shadow: 0 10px 30px rgba(91, 179, 130, 0.15); 
+                overflow: hidden;
+            }
+            :root { 
+                --primary-green: #73c89a;
+                --primary-dark: #5bb382;
+                --bg-color: #eaf6ef;
+                --chat-bg: #ffffff;
+                --msg-self-bg: #d2f8e4;
+                --msg-other-bg: #ffffff;
+                --text-main: #2d3e34;
+                --text-light: #7b9685;
+                font-size: 22px; /* 調整基準字體大小 */
+            }            
+        }      
+        @media (max-width: 601px) {
+            #setup-screen, #chat-screen {
+                height: 100%;
+                border-radius: 3px;
+                box-shadow: 0 1px 3px rgba(91, 179, 130, 0.15); 
+                overflow: hidden;
+            }
+            .header { 
+                display: none;
+            }
+            :root { 
+                --primary-green: #73c89a;
+                --primary-dark: #5bb382;
+                --bg-color: #eaf6ef;
+                --chat-bg: #ffffff;
+                --msg-self-bg: #d2f8e4;
+                --msg-other-bg: #ffffff;
+                --text-main: #2d3e34;
+                --text-light: #7b9685;
+                font-size: 16px; /* 調整基準字體大小 */
+            }            
+            .lang-btn {
+                display: none;
+            }
+        }    
         .hidden { display: none !important; }
     </style>
 </head>
@@ -369,7 +405,7 @@
         <button class="lang-btn" onclick="toggleLanguage()" >中／EN</button>
     </div>
 
-    <script src="smCS.js"></script>
+    <script src="smCS.org.js"></script>
 
    <script>
         if (window.visualViewport) {
