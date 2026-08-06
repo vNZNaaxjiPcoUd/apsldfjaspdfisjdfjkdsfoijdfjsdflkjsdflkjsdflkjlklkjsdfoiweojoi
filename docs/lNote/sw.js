@@ -11,6 +11,7 @@ const urlsToCache = [
   './marked-gfm-heading-id.umd.js',
   './icon-192x192.png',
   './style_black.css',
+  './note.obf.js',
   './keep.v1.js'
 ];
 
