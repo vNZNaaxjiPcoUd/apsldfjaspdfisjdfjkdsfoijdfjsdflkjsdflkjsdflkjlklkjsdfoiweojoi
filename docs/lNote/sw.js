@@ -1,5 +1,5 @@
 // 每次修改 index.html 或靜態檔案時，請記得更改這個版本號，這樣才會觸發更新
-const CACHE_NAME = 'local-note-v2'; 
+const CACHE_NAME = 'local-note-v22'; 
 
 const urlsToCache = [
   './',
@@ -17,13 +17,25 @@ const urlsToCache = [
 
 // 1. 安裝階段：快取核心檔案
 self.addEventListener('install', event => {
-  self.skipWaiting(); // 強制新的 Service Worker 立即接管控制權，不需要等待使用者關閉所有分頁
+  self.skipWaiting();
+  
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('[Service Worker] Caching App Shell');
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(async cache => {
+      console.log('[Service Worker] 開始快取資源...');
+      
+      // 使用 Promise.allSettled 代替 cache.addAll
+      const results = await Promise.allSettled(
+        urlsToCache.map(async url => {
+          try {
+            await cache.add(url);
+            console.log(`[SW] 快取成功: ${url}`);
+          } catch (err) {
+            // 捕捉單一檔案失敗，列出具體網址，不讓整個流程崩潰
+            console.error(`[SW] 快取失敗 (請檢查路徑或404): ${url}`, err);
+          }
+        })
+      );
+    })
   );
 });
 
