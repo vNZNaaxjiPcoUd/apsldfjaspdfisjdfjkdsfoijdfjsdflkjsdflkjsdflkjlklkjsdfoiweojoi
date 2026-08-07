@@ -126,55 +126,8 @@ html {
 
     <div id="statusMessage" class="status-info"  onclick="showMarkdownView()">待...</div>
 
-    <script src="./note.obf.js">
+    <script src="./note.obf.js" defer></script>
 
-    </script>
-
-
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('SW registered!', reg))
-        .catch(err => console.log('SW registration failed: ', err));
-    });
-  }
-
-        // 取得 DOM 元素
-        const openModalBtn = document.getElementById('goSky');
-        const skyModal = document.getElementById('skyModal');
-        
-        const btnUploadSky = document.getElementById('btnUploadSky');
-        const btnDownloadSky = document.getElementById('btnDownloadSky');
-        const btnExitSky = document.getElementById('btnExitSky');
-
-        // 開啟浮動框
-        openModalBtn.addEventListener('click', () => {
-            skyModal.showModal();
-            console.log("showModal");
-        });
-
-        // 綁定按鈕事件：執行相應功能並關閉框
-        btnUploadSky.addEventListener('click', () => {
-            const dbName = document.getElementById('dbName').value;
-            const sKeyA = document.getElementById('sKeyA').value;
-            const sKeyB = document.getElementById('sKeyB').value;
-            upLoadToSky(dbName,sKeyA,sKeyB);
-            skyModal.close();
-        });
-
-        btnDownloadSky.addEventListener('click', () => {
-            const dbName = document.getElementById('dbName').value;
-            const sKeyA = document.getElementById('sKeyA').value;
-            downloadFromSky(dbName, sKeyA);
-            skyModal.close();
-        });
-
-        // 退出按鈕：僅關閉框
-        btnExitSky.addEventListener('click', () => {
-            skyModal.close();
-        });
-</script>
 
 </body>
 </html>
