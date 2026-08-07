@@ -1,11 +1,11 @@
 // 每次修改 index.html 或靜態檔案時，請記得更改這個版本號，這樣才會觸發更新
-const CACHE_NAME = 'local-note-v1.11111'; 
+const CACHE_NAME = 'local-note-v2'; 
 
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
-  './lcrypto-js.min.js',
+  './crypto-js.min.js',
   './marked.min.js',
   './mermaid.min.js',
   './marked-gfm-heading-id.umd.js',
