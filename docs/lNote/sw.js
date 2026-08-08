@@ -1,11 +1,11 @@
 // 每次修改 index.html 或靜態檔案時，請記得更改這個版本號，這樣才會觸發更新
 const CACHE_PREFIX = 'lnote-cache';
-const CACHE_NAME = `${CACHE_PREFIX}-v3.1`;
+const CACHE_NAME = `${CACHE_PREFIX}-v3.2`;
 
 const urlsToCache = [
   '/lNote/',
   '/lNote/index.html',
-  '/lNote/manifest.json',
+  '/lNote/manifest.js',
   '/lNote/lcrypto-js.min.js',
   '/lNote/marked.min.js',
   '/lNote/mermaid.min.js',
