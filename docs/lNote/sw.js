@@ -1,17 +1,19 @@
 // 每次修改 index.html 或靜態檔案時，請記得更改這個版本號，這樣才會觸發更新
-const CACHE_NAME = 'local-note-v3'; 
+const CACHE_PREFIX = 'lnote-cache';
+const CACHE_NAME = `${CACHE_PREFIX}-v3`;
 
 const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json',
-  './crypto-js.min.js',
-  './marked.min.js',
-  './mermaid.min.js',
-  './icon-192x192.png',
-  './style_black.css',
-  './note.obf.js',
-  './keep.v1.js'
+  '/lNote/',
+  '/lNote/index.html',
+  '/lNote/manifest.json',
+  '/lNote/lcrypto-js.min.js',
+  '/lNote/marked.min.js',
+  '/lNote/mermaid.min.js',
+  '/lNote/marked-gfm-heading-id.umd.js',
+  '/lNote/icon-192x192.png',
+  '/lNote/style_black.css',
+  '/lNote/note.obf.js',
+  '/lNote/keep.v1.js'
 ];
 
 // 1. 安裝階段：快取核心檔案
@@ -44,47 +46,47 @@ self.addEventListener('activate', event => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          // 如果快取名稱不等於當前版本，就將其刪除
-          if (cacheName !== CACHE_NAME) {
-            console.log('[Service Worker] Deleting old cache:', cacheName);
+          // 只刪除前綴為 lnote-cache 且非當前版本的舊快取
+          if (cacheName.startsWith(CACHE_PREFIX) && cacheName !== CACHE_NAME) {
+            console.log('[lNote SW] 刪除舊快取:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => self.clients.claim()) // 立即控制所有打開的客戶端
+    }).then(() => self.clients.claim())
   );
 });
 
 // 3. 攔截請求：Cache First + 動態快取 (Dynamic Caching)
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+
+  // 如果請求非同源，或是非 /lNote/ 路徑，直接放行不做快取管理
+  if (!url.pathname.startsWith('/lNote/')) return;
+
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // 如果在快取中找到，直接回傳 (離線時會走這條路)
-        if (response) {
-          return response;
-        }
-        
-        // 如果快取沒有，則發起網路請求
-        return fetch(event.request).then(networkResponse => {
-          // 確保請求有效 (過濾掉跨域錯誤或非預期的回應)
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-            return networkResponse;
-          }
+    caches.match(event.request).then(response => {
+      if (response) {
+        return response;
+      }
 
-          // 將新的網路請求結果複製一份存入快取 (動態快取)
-          // 這樣下次斷網時，這個新資源也能被讀取
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME)
-            .then(cache => {
-              cache.put(event.request, responseToCache);
-            });
-
+      return fetch(event.request).then(networkResponse => {
+        if (!networkResponse || networkResponse.status !== 200) {
           return networkResponse;
-        }).catch(error => {
-           // 如果網路斷線，且快取裡也找不到資源的處理邏輯
-           console.log('[Service Worker] Fetch failed; returning offline page instead.', error);
-        });
-      })
+        }
+
+        // 動態寫入快取
+        if (networkResponse.type === 'basic' || networkResponse.type === 'cors') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+
+        return networkResponse;
+      }).catch(error => {
+        console.log('[lNote SW] 網路請求失敗，且無快取可用:', error);
+      });
+    })
   );
 });
