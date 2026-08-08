@@ -9,7 +9,8 @@ const urlsToCache = [
   '/lNote/crypto-js.min.js',
   '/lNote/marked.min.js',
   '/lNote/mermaid.min.js',
-  '/lNote/icon-192x192.png',
+  '/lNote/favicon192.png',
+  '/lNote/favicon512.png',
   '/lNote/style_black.css',
   '/lNote/note.obf.js',
   '/lNote/keep.v1.js'
