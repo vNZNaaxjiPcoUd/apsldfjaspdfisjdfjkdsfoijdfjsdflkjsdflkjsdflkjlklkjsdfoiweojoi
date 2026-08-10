@@ -36,6 +36,32 @@ html {
     height: 100dvh;
 }
 
+
+/* Dialog 本體與遮罩 */
+#skyModal {
+    border: none; padding: 20px; border-radius: 12px; width: 90%; max-width: 350px;
+    background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.15); box-sizing: border-box;
+}
+#skyModal::backdrop { background: rgba(0, 0, 0, 0.4); }
+
+/* 輸入框排版 */
+#skyModal .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+#skyModal input {
+    width: 100%; padding: 12px; border: 1px solid #c8e6c9; border-radius: 6px;
+    background: #eafbf1; font-size: 1rem; color: #2e3d32; box-sizing: border-box; outline-color: #4caf50;
+}
+
+/* 按鈕排版 (均分寬度) */
+#skyModal .button-group { display: flex; gap: 8px; }
+#skyModal button {
+    flex: 1; padding: 12px 0; border: none; border-radius: 6px; font-size: 1rem;
+    background: #4caf50; color: #fff; font-weight: bold; cursor: pointer;
+}
+
+/* 退出按鈕改為淺綠底深色字作區隔 */
+#btnExitSky { background: #c8e6c9; color: #2e3d32; }
+
+
 </style>
 </head>
 <body>
@@ -117,8 +143,8 @@ html {
         </div>
         <div class="button-group">
             <button id="btnUploadSky">上天</button>
-            <button id="btnDownloadSky">下地</button>
             <button id="btnExitSky">退出</button>
+            <button id="btnDownloadSky">下地</button>
         </div>
     </dialog>
 
