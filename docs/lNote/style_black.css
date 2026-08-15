@@ -5,7 +5,7 @@
         overflow: hidden;
         font-family: Arial, sans-serif;
         background-color: #f4f4f9a9;
-        font-size: 17px; 
+        font-size: 100%; 
         touch-action: manipulation;
     }
 
@@ -742,7 +742,7 @@ footer {
             font-family: Arial, sans-serif;
             background-color: rgba(128, 128, 128, 0.389); /* 你可以根據喜好修改背景色 */
             color: white;
-            font-size: 16px; 
+            font-size: 1rem; 
         }
 
 /* --- 按鈕樣式 --- */
