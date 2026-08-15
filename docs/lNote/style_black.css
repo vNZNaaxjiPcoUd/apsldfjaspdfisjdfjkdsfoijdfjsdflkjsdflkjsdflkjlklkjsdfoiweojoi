@@ -472,7 +472,7 @@ h2 {
     letter-spacing: 0.03em;
     margin: 1.5em 0 0.2em;
     padding-bottom: 0.1em; /* 添加輕微底部間距，與h1一致 */
-    border-bottom: 1px solid rgba(212, 160, 23, 0.3); /* 淺金色底線，增加層次 */
+    /*border-bottom: 1px solid rgba(212, 160, 23, 0.3); /* 淺金色底線，增加層次 */
     transition: color 0.3s ease, transform 0.3s ease; /* 添加transform動畫 */
 }
 
