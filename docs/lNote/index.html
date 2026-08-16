@@ -38,28 +38,28 @@ html {
 
 
 /* Dialog 本體與遮罩 */
-#skyModal {
+.inputModal {
     border: none; padding: 20px; border-radius: 12px; width: 90%; max-width: 350px;
     background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.15); box-sizing: border-box;
 }
-#skyModal::backdrop { background: rgba(0, 0, 0, 0.4); }
+.inputModal::backdrop { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(3px); }
 
 /* 輸入框排版 */
-#skyModal .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-#skyModal input {
+.inputModal .input-group { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.inputModal input {
     width: 100%; padding: 12px; border: 1px solid #c8e6c9; border-radius: 6px;
-    background: #eafbf1; font-size: 1rem; color: #2e3d32; box-sizing: border-box; outline-color: #4caf50;
+    background: #eafbf1; font-size: 0.8rem; color: #2e3d32; box-sizing: border-box; outline-color: #4caf50;
 }
 
 /* 按鈕排版 (均分寬度) */
-#skyModal .button-group { display: flex; gap: 8px; }
-#skyModal button {
-    flex: 1; padding: 12px 0; border: none; border-radius: 6px; font-size: 1rem;
+.inputModal .button-group { display: flex; gap: 8px; }
+.inputModal button {
+    flex: 1; padding: 12px 0; border: none; border-radius: 6px; font-size: 0.8rem;
     background: #4caf50; color: #fff; font-weight: bold; cursor: pointer;
 }
 
 /* 退出按鈕改為淺綠底深色字作區隔 */
-#btnExitSky { background: #c8e6c9; color: #2e3d32; }
+.inputModal .btnExit { background: #c8e6c9; color: #2e3d32; }
 
 
 </style>
@@ -108,7 +108,8 @@ html {
                 <button class="control-btn" id="markdownViewBtn" title="回文本編輯" onclick="openTab(event, 'TabB')">書</button>
 
                 <button class="control-btn" id="aesKeyBtn" title="修改密鑰" onclick = "changeAesKey()">密</button>
-                <input type="password" id="aesKey" title="密鑰" value="YGG636zJCXhelP0SEpqN7h1xRGXOUtezGg2LSpcLWuNh8g8z!!" placeholder="密鑰">
+                <input type="password" id="aesKey" title="密鑰" placeholder="密鑰">
+                <button class="control-btn" id="sendUpToSkeyBtn" title="上升到天城" >上</button>
                 <button class="control-btn" id="goSky" title="天空之城" >天</button>
 
 
@@ -135,7 +136,7 @@ html {
         </div>
     </div>
     
-    <dialog id="skyModal">
+    <dialog class="inputModal" id="skyModal">
         <div class="input-group">
             <input type="text" id="dbName" placeholder="天上的名">
             <input type="password" id="sKeyA" placeholder="密碼">
@@ -143,10 +144,19 @@ html {
         </div>
         <div class="button-group">
             <button id="btnUploadSky">上天</button>
-            <button id="btnExitSky">退出</button>
+            <button class="btnExit" id="btnExitSky">退出</button>
             <button id="btnDownloadSky">下地</button>
         </div>
     </dialog>
+
+    <dialog class="inputModal" id="msgModal">
+        <div class="input-group">
+            <span id="msgModalText"></span>
+        </div>
+        <div class="button-group">
+            <button class="btnExit" id="msgModalExit">退出</button>
+        </div>
+    </dialog>    
 
     <div id="statusMessage" class="status-info"  onclick="showMarkdownView()">待...</div>
 
