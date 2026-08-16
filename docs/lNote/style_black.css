@@ -22,6 +22,10 @@ body {
   touch-action: manipulation;
 }
 
+button {
+  font-size: 0.8rem;
+}
+
 /* 提取共用基礎樣式 */
 .main-container,
 .main-container-readonly {
@@ -81,7 +85,6 @@ body {
   transition: 0.3s;
   margin-right: 11px;
   border-radius: 10px;
-  font-size: 1rem;
   color: white;
 }
 
@@ -144,7 +147,6 @@ body {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1rem;
 }
 
 /* 按鈕顏色分類 */
@@ -239,7 +241,6 @@ body {
   transition: 0.3s;
   border-radius: 5px 5px 0 0;
   margin-right: 2px;
-  font-size: 1rem;
   margin-bottom: 0px; /* 換行時增加上下間距 */
   display: flex;
   align-items: center;
@@ -265,7 +266,6 @@ body {
   margin-left: 8px;
   color: #999;
   font-weight: bold;
-  font-size: 1rem;
   line-height: 1;
   padding: 0 2px;
 }
@@ -350,7 +350,6 @@ body {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1rem;
 }
 
 #nameBtn,
@@ -370,7 +369,6 @@ body {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1rem;
 }
 
 #delNameDef {
@@ -774,7 +772,6 @@ body {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.8rem;
 }
 
 #mainTabs {
@@ -784,7 +781,6 @@ body {
 #mdvBtn {
   background-color: #f4f4f9;
   color: #f4f4f9;
-  font-size: 1rem;
   padding: 0px;
   margin: 0px;
 }
@@ -800,7 +796,6 @@ body {
   background-color: #26ff003f; /* 按鈕背景顏色 (藍色) */
   color: white; /* 箭頭顏色 (白色) */
   border: none; /* 移除預設邊框 */
-  font-size: 0.8rem; /* 箭頭大小 */
   cursor: pointer; /* 滑鼠移過去變成手指形狀 */
   z-index: 1000; /* 確保按鈕不會被其他元素蓋住 */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 加上一點陰影增加立體感 */
@@ -878,7 +873,6 @@ body {
   display: flex !important;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.8rem;
   user-select: none;
   box-sizing: border-box;
 }
@@ -888,7 +882,6 @@ body {
   color: #2b3a2c;
   border: 1px solid #e6c5a5;
   border-radius: 3px;
-  font-size: 0.7rem;
   font-weight: 600;
   padding: 1px 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
