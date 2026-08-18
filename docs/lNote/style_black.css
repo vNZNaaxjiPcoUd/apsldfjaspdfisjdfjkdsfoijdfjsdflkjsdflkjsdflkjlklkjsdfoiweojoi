@@ -435,10 +435,10 @@ button {
 }
 
 #mdShowArea {
-  width: 100%;
-  max-width: 100%; /* 確保絕對不會超過父層 */
-  height: auto;
-  overflow-y: auto;
+  /*width: 96dvw;
+  max-width: 96dvw;  確保絕對不會超過父層
+  height: 96dvwh; 
+  overflow-y: hidden;*/
   overflow-x: hidden; /* 強制隱藏水平捲軸，防止意外溢出 */
   -webkit-overflow-scrolling: touch;
 
@@ -824,10 +824,11 @@ button {
 
 /* 確保心智圖容器有足夠的空間展開 */
 #mdShowArea {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
+  width: 99dvw;
+  height: 96dvh;
+  display: block;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 #markmap {
