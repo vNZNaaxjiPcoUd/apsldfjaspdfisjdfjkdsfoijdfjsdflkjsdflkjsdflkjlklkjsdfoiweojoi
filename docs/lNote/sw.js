@@ -1,6 +1,6 @@
 // 每次修改 index.html 或靜態檔案時，請記得更改這個版本號，這樣才會觸發更新
 const CACHE_PREFIX = 'lnote-cache';
-const CACHE_NAME = `${CACHE_PREFIX}-v3.36`;
+const CACHE_NAME = `${CACHE_PREFIX}-v3.366`;
 
 const urlsToCache = [
   '/lNote/',
@@ -13,6 +13,7 @@ const urlsToCache = [
   '/lNote/favicon512.png',
   '/lNote/style_black.css',
   '/lNote/note.obf.js',
+  '/lNote/index.umd.js',
   '/lNote/keep.v1.js'
 ];
 
