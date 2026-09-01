@@ -1,6 +1,6 @@
-// 每次修改 index.html 或靜態檔案時，請記得更改這個版本號，這樣才會觸發更新
+
 const CACHE_PREFIX = 'lnote-cache';
-const CACHE_NAME = `${CACHE_PREFIX}-v3.37`;
+const CACHE_NAME = `${CACHE_PREFIX}-v3.376`;
 
 const urlsToCache = [
   '/lNote/',
@@ -58,6 +58,7 @@ self.addEventListener('activate', event => {
 });
 
 // 3. 攔截請求：Cache First + 動態快取 (Dynamic Caching)
+/*
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
@@ -80,6 +81,43 @@ self.addEventListener('fetch', event => {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then(cache => {
             cache.put(event.request, responseToCache);
+          });
+        }
+
+        return networkResponse;
+      }).catch(error => {
+        console.log('[lNote SW] 網路請求失敗，且無快取可用:', error);
+      });
+    })
+  );
+});*/
+
+// 3. 攔截請求：Cache First + 動態快取 (Dynamic Caching)
+self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+
+  // 如果請求非同源，或是非 /lNote/ 路徑，直接放行不做快取管理
+  if (!url.pathname.startsWith('/lNote/')) return;
+
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      if (response) {
+        return response;
+      }
+
+      return fetch(event.request).then(networkResponse => {
+        if (!networkResponse || networkResponse.status !== 200) {
+          return networkResponse;
+        }
+
+        // 動態寫入快取
+        if (networkResponse.type === 'basic' || networkResponse.type === 'cors') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            // 核心修改處：去除 hash，建立乾淨的快取鍵值
+            // 組合 origin (網域) + pathname (路徑) + search (查詢參數)
+            const cleanUrl = url.origin + url.pathname + url.search;
+            cache.put(cleanUrl, responseToCache);
           });
         }
 
