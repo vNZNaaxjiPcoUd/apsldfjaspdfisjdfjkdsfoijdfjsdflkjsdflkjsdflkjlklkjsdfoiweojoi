@@ -13,15 +13,13 @@ body {
 </head>
 <body onload="upPage0()">
   <h2><label id="ipI">IP address</label></h2>
-  <p><a href="https://app.jwint.net/myip/ipDetail">detail</a></p>
+  <p><a href="https://app.jwint.net/myip/ipDetail"  target="_blank">detail</a></p>
 
-<script>
-    const iurl = "https://api.ipify.org/";
-
+<script defer>
     async function Iip() {     
       let txtIP = "";
       try {
-        const response = await fetch(iurl,{cache:"no-cache"});
+        const response = await fetch("https://api.ipify.org/",{cache:"no-cache"});
         if (!response.ok) {
           let labelElement = document.getElementById("ipI");
           labelElement.innerHTML = "0.0.0.0";
@@ -43,7 +41,7 @@ body {
         let ipNow = await Iip();
         console.log(ipNow);
     }
-    
+
 </script>
 </body>
 </html>
