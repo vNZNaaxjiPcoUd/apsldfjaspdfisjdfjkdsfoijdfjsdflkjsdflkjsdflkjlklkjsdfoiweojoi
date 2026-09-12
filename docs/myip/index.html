@@ -12,34 +12,28 @@ body {
   <title>myip</title>
 </head>
 <body onload="upPage0()">
-  <h2><label id="ipI">IP address</label></h2>
+  <h2><label id="ipI">0.0.0.0</label></h2>
   <p><a href="https://app.jwint.net/myip/ipDetail"  target="_blank">detail</a></p>
 
 <script defer>
-    async function Iip() {     
+    async function ipAddr() {     
       let txtIP = "";
       try {
         const response = await fetch("https://api.ipify.org/",{cache:"no-cache"});
         if (!response.ok) {
-          let labelElement = document.getElementById("ipI");
-          labelElement.innerHTML = "0.0.0.0";
           throw new Error(`Response status: ${response.status}`);
         }
         txtIP = await response.text();
-        let labelElement = document.getElementById("ipI");
-        labelElement.innerHTML = txtIP;
-
       } catch (error) {
-          let labelElement = document.getElementById("ipI");
-          labelElement.innerHTML = "999.999.999.999";
           txtIP = "999.999.999.999";
       }
       return txtIP ;
     }   
 
     async function upPage0(){
-        let ipNow = await Iip();
-        console.log(ipNow);
+        let ipNow = await ipAddr();
+        let labelElement = document.getElementById("ipI");
+        labelElement.innerHTML = ipNow;
     }
 
 </script>
