@@ -2,15 +2,8 @@
 <html lang=""en-US"">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-html,
-body,
-a {
-		color: rgb(120, 120, 120);
-		background-color: rgb(1, 1, 1);
-}
-</style>
-  <title>myip</title>
+    <style> * { color: #787878; background: #010101; } </style>
+    <title>myip</title>
 </head>
 <body onload="upPage0()">
   <h2><label id="ipI">IP address</label></h2>
@@ -34,7 +27,7 @@ a {
     <li><a href="https://dnschecker.org/online-traceroute.php" target="_blank">Traceroute</a></li>
     <li><a href="https://ip-api.com/" target="_blank">ip-api</a></li>
 </ul>
-<script>
+<script defer>
     const iurl = "https://api.ipify.org/";
     const detailUrl = "http://ip-api.com/json/"
     var detailInfo ;  
