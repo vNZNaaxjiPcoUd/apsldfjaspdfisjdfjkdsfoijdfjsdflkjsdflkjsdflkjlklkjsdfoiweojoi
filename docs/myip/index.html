@@ -33,15 +33,17 @@ body {
 
       } catch (error) {
           let labelElement = document.getElementById("ipI");
-          labelElement.innerHTML = "9.9.9.9";
-		  return "9.9.9.9";
+          labelElement.innerHTML = "999.999.999.999";
+          txtIP = "999.999.999.999";
       }
       return txtIP ;
     }   
 
     async function upPage0(){
         let ipNow = await Iip();
+        console.log(ipNow);
     }
+    
 </script>
 </body>
 </html>
