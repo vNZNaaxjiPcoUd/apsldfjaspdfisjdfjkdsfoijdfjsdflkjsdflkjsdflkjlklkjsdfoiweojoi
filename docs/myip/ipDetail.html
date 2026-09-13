@@ -30,8 +30,7 @@
 <script defer>
     const iurl = "https://api.ipify.org/";
     const detailUrl = "https://ip-api.com/json/"
-    var detailInfo ;  
-	var nowIP = "OK";
+	var nowIP = "";
 	
     async function Iip() {     
       let txtIP = "";
@@ -55,49 +54,7 @@
       return txtIP ;
     }   
 
-	
-    async function UpdateDetail(ip){
-      //var url=detailUrl.concat(ip);
-      var url = detailUrl.concat("?fields=status,message,continent,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,currency,isp,org,as,asname,reverse,mobile,proxy,hosting,query");
-      //console.log(url);
-      var detailInfo;
-      try {
-        const response = await fetch(url,{cache:"no-store"});
-        if (!response.ok) {
-          throw new Error(`Response status: ${response.status}`);
-        }
-        detailInfo = await response.json();
-      } catch (error) {
-        let labelElement = document.getElementById("moreD");
-        labelElement.innerHTML = "<- check your GeoIP";
-        detailInfo = error.message ;
-        return;
-      }
-      //console.log(detailInfo["lat"]);
-      let html = "";
-      for (const key in detailInfo){        
-          //console.log(`${key} : ${detailInfo[key]}`)
-          html = html + `${key} : ${detailInfo[key]}<br>`
-      }
-      let labelElement = document.getElementById("moreD");
-      labelElement.innerHTML = html;
-      return;
-    }
-
-	/*
-	function getIpJson(ip, callback) {
-		const script = document.createElement('script');
-		script.src = `http://ip-api.com/json/${ip}?callback=${callback}`;
-		document.head.appendChild(script);
-	}
-	*/
 async function NewUpdateDetail(ip){
-		/*
-		getIpJson( ip , function(data) {
-			document.getElementById('moreD').innerHTML = 
-				`<pre>${JSON.stringify(data, null, 2)}</pre>`;
-		});
-		*/
 		getIpJson(ip);
 	}
 
@@ -134,17 +91,8 @@ async function getIpJson(ip) {
       return data;
     }
 
-	function forceHttpJump(e) {
-	    e.preventDefault();
-	    const url = "http://ip-api.com/line/" + nowIP + "?fields=status,message,continent,continentCode,country,countryCode,region,regionName,city,district,zip,lat,lon,timezone,offset,currency,isp,org,as,asname,reverse,mobile,proxy,hosting,query";
-	    // 強制跳轉
-	    window.location.href = url;
-	}
-
     async function upPage0(){
         var ipNow = await Iip();
-        //console.log(ipNow);
-        //UpdateDetail(ipNow);
 		NewUpdateDetail(ipNow);
     }
 </script>
