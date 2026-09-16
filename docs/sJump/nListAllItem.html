@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <!-- 確保 iPhone 上不會因為點擊輸入框而放大，且適應鍵盤彈出 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+    <title>List</title>
+    <script src="https://h.jwint.net/static/crypto-js.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4CAF50; /* 主色調：綠色 */
+            --primary-light: #E8F5E9; /* 淡綠色背景 */
+            --text-color: #333333;
+            --bg-color: #F1F8E9; /* 整體極淡綠背景 */
+            --box-bg: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box; /* 確保 padding 不會撐破寬度 */
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%; /* 全螢幕高度 */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden; /* 防止整個頁面滾動，將滾動交給特定區塊 */
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* 佔滿視口高度 */
+            max-width: 800px; /* 在大螢幕上限制最大寬度 */
+            margin: 0 auto;
+            background-color: var(--box-bg);
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+        }
+
+        .header {
+            padding: 15px 20px 5px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin: 0 0 15px 0;
+            font-size: 24px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* 統一間距 */
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-field label {
+            margin-bottom: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px; /* 避免 iOS 自動放大 */
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-field input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px 20px;
+            background-color: var(--box-bg);
+        }
+
+        .button-group button {
+            flex: 1 1 calc(33.333% - 10px); /* 在手機上自動分配寬度 */
+            min-width: 80px;
+            padding: 12px 10px;
+            font-size: 15px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            touch-action: manipulation; /* 確保觸控設備點擊靈敏 */
+        }
+
+        .button-group button:active {
+            background-color: #388E3C;
+            transform: scale(0.97);
+        }
+
+        /* 顏色區分按鈕功能 */
+        #delBtn { background-color: #E57373; }
+        #delBtn:active { background-color: #D32F2F; }
+        #clearBtn { background-color: #9E9E9E; }
+        #clearBtn:active { background-color: #757575; }
+
+        .tip-container {
+            flex: 1; /* 自動填滿剩餘的垂直空間 */
+            padding: 0 20px 20px 20px;
+            overflow-y: auto; /* 允許此區塊獨立滾動 */
+            background-color: var(--box-bg);
+        }
+
+        .tip {
+            min-height: 100%;
+            padding: 15px;
+            background-color: var(--primary-light);
+            border: 1px solid #C8E6C9;
+            border-radius: 8px;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #2E7D32;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+    </style>       
+</head> 
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1>List</h1>
+            <div class="input-group">
+                <div class="input-field">
+                    <label for="keyInput">Key:</label>
+                    <input type="password" id="keyInput" placeholder="key">
+                </div>
+                <div class="input-field">
+                    <label for="nameInput">Book Name:</label>
+                    <input type="text" id="nameInput" placeholder="Enter book name">
+                </div>
+                <div class="input-field">
+                    <label for="msgInput">Message:</label>
+                    <input type="text" id="msgInput" placeholder="Enter message">
+                </div>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button id="getBtn">Get</button>
+            <button id="nameBtn">Save</button>
+            <button id="listBtn">Get List</button>
+            <button id="delBtn">Delete</button>
+            <button id="clearBtn">Clear</button>
+        </div>
+        
+        <div class="tip-container">
+            <div class="tip" id="tipDisplay">Hello!</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/js-sha512@0.9.0/build/sha512.min.js"></script>
+    <script src="nListAllItem.js"></script>
+</body>
+</html>
