@@ -2,104 +2,95 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <!-- 確保在手機上正確縮放，並防止使用者雙擊放大影響體驗 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Notification</title>
     <style>
-        /* 全域設定，讓寬度計算包含 padding */
         * {
             box-sizing: border-box;
         }
 
         body {
-            /* 使用稍微活潑的字體，並設定極淡的綠色背景 */
             font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
             background-color: #f2fcf6;
             margin: 0;
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
+            /* 修改重點 1：改為 flex-start 讓對話框靠上對齊 */
+            align-items: flex-start;
+            /* 修改重點 2：改用 min-height 與 dvh 以適應手機動態高度 */
+            min-height: 100dvh;
+            /* 修改重點 3：增加頂部間距，避免對話框緊貼螢幕邊緣 */
+            padding-top: 5vh;
             color: #4a7c59; 
         }
 
-        /* 聊天室主容器 */
         .chat-container {
             background-color: #ffffff;
             border: 2px solid #b8e0d2;
-            border-radius: 24px; /* 可愛的大圓角 */
+            border-radius: 24px; 
             padding: 24px;
             width: 90%;
             max-width: 450px;
-            box-shadow: 0 10px 20px rgba(168, 230, 207, 0.3); /* 柔和的綠色陰影 */
+            box-shadow: 0 10px 20px rgba(168, 230, 207, 0.3); 
         }
 
-        /* 輸入區塊的彈性排版 - 改為垂直排列 */
         .input-group {
             display: flex;
-            flex-direction: column; /* 垂直排列的關鍵 */
-            gap: 15px; /* 輸入框與按鈕之間的間距 */
-            align-items: stretch; /* 讓內部元素寬度自動填滿 */
+            flex-direction: column; 
+            gap: 15px; 
+            align-items: stretch; 
         }
 
-        /* 單行與多行文字輸入框共用美化 */
         input, textarea {
             width: 100%;
             padding: 14px 18px;
             font-size: 16px;
-            font-family: inherit; /* 繼承 body 的字體 */
+            font-family: inherit; 
             border: 2px solid #d1eadd;
-            border-radius: 16px; /* 適合方塊造型 */
+            border-radius: 16px; 
             outline: none;
             transition: border-color 0.3s, box-shadow 0.3s;
         }
 
-        /* 輸入框點擊時的效果 */
         input:focus, textarea:focus {
             border-color: #80c4a3;
             box-shadow: 0 0 8px rgba(128, 196, 163, 0.4);
         }
 
-        /* 針對多行輸入框的特殊設定 */
         textarea {
-            resize: vertical; /* 允許垂直拉伸高度，禁止水平拉伸 */
-            min-height: 80px; /* 預設高度 */
-            max-height: 200px; /* 最大高度限制 */
+            resize: vertical; 
+            min-height: 80px; 
+            max-height: 200px; 
         }
 
-        /* 傳送按鈕美化 */
         button {
-            width: 100%; /* 讓按鈕寬度填滿 */
-            background-color: #a8e6cf; /* 淡綠色 */
-            color: #2c543e; /* 深綠色文字增加對比度 */
+            width: 100%; 
+            background-color: #a8e6cf; 
+            color: #2c543e; 
             border: none;
             padding: 14px 22px;
             font-size: 16px;
             font-weight: bold;
-            border-radius: 30px; /* 膠囊形狀的圓角 */
+            border-radius: 30px; 
             cursor: pointer;
             white-space: nowrap;
             transition: background-color 0.2s, transform 0.1s;
-            height: 50px; /* 固定按鈕高度 */
+            height: 50px; 
         }
 
-        /* 滑鼠懸浮時稍微變深 */
         button:hover {
             background-color: #8cd8be;
         }
 
-        /* 點擊時會有可愛的微縮放回饋感 */
         button:active {
             transform: scale(0.92);
         }
     </style>
-
 </head>
 <body>
 
     <div class="chat-container">
         <div class="input-group">
-            <!-- 修正 input 標籤不需要閉合 -->
             <input id="name" placeholder="Name">
             <textarea id="msgInput" placeholder="Message"></textarea>
             <button id="sendBtn">Go!</button>
@@ -112,38 +103,30 @@
         const sendBtnElement = document.getElementById('sendBtn');
         const uName = document.getElementById('name');
 
-        // 將「發送邏輯」獨立寫成一個函式，方便重複呼叫
         async function handleSend() {
             const textValue = msgInputElement.value.trim();
             let name = uName.value.trim();
             name = name ? name : "nono";
 
             if (textValue !== "") {
-                // 這裡微調了變數，將 uName(DOM元素) 改為 name(字串值)
                 const ret = await sendMsg(name, textValue);
                 if ( ret === false ) console.log("notify fail");
                 
-                // 清空輸入框
                 msgInputElement.value = "";
-                // 發送後讓輸入框重新獲得焦點
                 msgInputElement.focus();
             }
         }
 
-        // 1. 監聽鍵盤事件 (支援 Shift+Enter 換行)
         msgInputElement.addEventListener('keydown', function(event) {
-            // 判斷是否按下 Enter 且「沒有」按住 Shift 鍵
             if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault(); // 阻止預設的換行行為
+                event.preventDefault(); 
                 handleSend();
             }
         });
 
-        // 2. 監聽點擊「傳送」按鈕發送
         sendBtnElement.addEventListener('click', function() {
             handleSend();
         });
     </script>
-
 </body>
 </html>
