@@ -252,7 +252,6 @@
 <script >
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // 這裡就是註明 sw.js 檔名與路徑的地方
     navigator.serviceWorker.register('./sw.js')
       .then(registration => {
         console.log('Service Worker 註冊成功，範圍為:', registration.scope);

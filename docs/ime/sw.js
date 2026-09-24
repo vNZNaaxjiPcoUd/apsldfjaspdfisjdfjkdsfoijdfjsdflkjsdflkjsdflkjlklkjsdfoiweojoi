@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cjime.v.1.1'; // 每次更新檔案請更改此版本號
+const CACHE_NAME = 'cjime.v.1.2'; // 每次更新檔案請更改此版本號
 
 const urlsToCache = [
   './',
@@ -7,7 +7,7 @@ const urlsToCache = [
   './icon-192.png',
   './icon-512.png',
   './crypto-js.min.js',
-  './cangjie_dict.js',
+  './cangjie_dict.obf.js',
   './sw.js',
   './cj.obf.js'
 ];
