@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>倉頡輸入</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <link rel="manifest" href="manifest.json">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap');
 
@@ -250,7 +251,20 @@
 
 <script src="cangjie_dict.js"></script>
 <script src="cj.obf.js"></script>
+<script >
 
-
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // 這裡就是註明 sw.js 檔名與路徑的地方
+    navigator.serviceWorker.register('./sw.js')
+      .then(registration => {
+        console.log('Service Worker 註冊成功，範圍為:', registration.scope);
+      })
+      .catch(error => {
+        console.error('Service Worker 註冊失敗:', error);
+      });
+  });
+}
+</script>
 </body>
 </html>
