@@ -234,23 +234,22 @@
             <button id="save-btn" class="btn-common" title="加密並儲存內容至瀏覽器">存</button>
             <button id="load-btn" class="btn-common" title="從瀏覽器讀取並解密內容">讀</button>
             <button id="copy-btn" class="btn-common" title="複製內容">複製</button>
-            <button id="mode-toggle" class="btn-common" title="ctrl + L">倉頡</button>
+            <button id="mode-toggle" class="btn-common" title="切換輸入法 ctl+E">倉頡</button>
             <a href="pinyin.html"  target="_blank">拼音↗</a><a href="https://docs.google.com/document/d/16GejgGgWT5I_b0OosT9QHgybN7_m4w5eKiSb5NPEpXM/edit?usp=sharing"  target="_blank">gIME↗</a>
         </div>
     </div>
     <div id="candidates"></div>    
     <textarea id="input-box" 
-              placeholder="點擊此處開始輸入..." 
+              placeholder="開始輸入..." 
               autocapitalize="none" 
               autocorrect="off" 
               autocomplete="off" 
               spellcheck="false"></textarea>
 </div>
 
-<script src="cangjie_dict.js"></script>
-<script src="cj.obf.js"></script>
+<script src="cangjie_dict.obf.js"></script>
+<script defer src="cj.obf.js"></script>
 <script >
-
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     // 這裡就是註明 sw.js 檔名與路徑的地方

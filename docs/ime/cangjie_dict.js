@@ -94400,3 +94400,7 @@ const cangjieDict = {
     "䢟"
   ]
 };
+
+window['cangjieDict'] = cangjieDict;
+
+
