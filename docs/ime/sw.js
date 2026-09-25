@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cjime.v.1.2'; // 每次更新檔案請更改此版本號
+const CACHE_NAME = 'cjime.v.1.21'; // 每次更新檔案請更改此版本號
 
 const urlsToCache = [
   './',
