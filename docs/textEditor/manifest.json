@@ -1,6 +1,6 @@
 {
-  "name": "Markdown 編輯器",
-  "short_name": "MD 編輯",
+  "name": "Text Editor",
+  "short_name": "Text Editor",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f5f5f7",

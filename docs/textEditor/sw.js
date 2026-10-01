@@ -1,4 +1,4 @@
-const CACHE_NAME = 'markdown-pwa-v2.1';
+const CACHE_NAME = 'markdown-pwa-v2.11';
 const urlsToCache = [
   './index.html',
   './manifest.json',
