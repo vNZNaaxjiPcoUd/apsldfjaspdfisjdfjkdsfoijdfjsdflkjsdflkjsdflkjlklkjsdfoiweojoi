@@ -1,20 +1,20 @@
 {
   "name": "Text Editor",
   "short_name": "Text Editor",
-  "start_url": "./index.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#f5f5f7",
   "theme_color": "#ffffff",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "icon-192.webp",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/webp"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon-512.webp",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/webp"
     }
   ]
 }
