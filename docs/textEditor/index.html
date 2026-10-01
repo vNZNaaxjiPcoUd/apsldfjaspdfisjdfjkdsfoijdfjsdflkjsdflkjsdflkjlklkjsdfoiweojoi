@@ -150,15 +150,312 @@ header {
             background-color: var(--bg-color);
             line-height: 1.5;
         }
-        #preview {
-            display: none;
-            background-color: #ffffff;
-        }
-        /*#preview h1, #preview h2 { border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; margin-bottom: 10px; }*/
-        #preview p { margin-bottom: 15px; }
-        #preview code { background-color: rgba(0,0,0,0.05); padding: 2px 5px; border-radius: 4px; font-family: monospace; }
-        #preview pre { background-color: #282c34; color: #abb2bf; padding: 15px; overflow-x: auto; border-radius: 6px; margin-bottom: 15px; }
-        #preview blockquote { border-left: 4px solid var(--border-color); padding-left: 15px; color: #666; }
+#preview {
+  display: none; /* 保留原有的隱藏邏輯 */
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+
+  font-family: "Inter", "PingFang TC", "Apple LiGothic Medium", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  letter-spacing: 0.03em;
+  color: #cccccc;
+  background-color: #000000;
+  max-width: 6000px;
+  margin: 0 auto;
+  font-weight: 250;
+}
+
+#preview * {
+  line-height: 1.5;
+  letter-spacing: 0.05em;
+}
+
+/* 連結樣式 */
+#preview a,
+#preview a:visited {
+  display: inline-block; /* 必須是 block 或 inline-block 才能觸發 transform 與 ::first-letter */
+  text-decoration: none;
+  color: lightgoldenrodyellow;
+  transition: 0.3s;
+  font-weight: 300;
+}
+
+#preview a::first-letter {
+  font-size: 1em;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  color: #0eda03;
+}
+
+#preview a:hover {
+  color: #60ff66;
+  transform: scale(0.98);
+}
+
+#preview a:hover::first-letter {
+  color: #60ff66;
+}
+
+/* 標題樣式 */
+#preview h1 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2ecc71;
+  letter-spacing: 0.05em;
+  margin: 1.8em 0 0.2em;
+  border-bottom: 1px solid #4a90e2;
+  padding-bottom: 0.1em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+#preview h1:hover {
+  color: #2ecc71;
+  transform: scale(0.995);
+}
+
+#preview h2 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.6rem;
+  font-weight: 500;
+  color: #59d68d;
+  letter-spacing: 0.03em;
+  margin: 1.5em 0 0.2em;
+  padding-bottom: 0.1em;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+#preview h2:hover {
+  color: #59d68d;
+  transform: scale(0.995);
+}
+
+#preview h3 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: #74da9f;
+  letter-spacing: 0.02em;
+  margin: 1.2em 0 0.2em;
+  padding-bottom: 0.1em;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+#preview h3:hover {
+  color: #74da9f;
+  transform: scale(0.995);
+}
+
+#preview h4 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: #7cda74;
+  letter-spacing: 0.01em;
+  margin: 1em 0 0.2em;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+#preview h4:hover {
+  color: #7cda74;
+  transform: scale(0.995);
+}
+
+#preview h5 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: #a4da74;
+  letter-spacing: 0.01em;
+  margin: 1em 0 0.2em;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+#preview h5:hover {
+  color: #a4da74;
+  transform: scale(0.995);
+}
+
+#preview h6 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: #c1e790;
+  letter-spacing: 0.01em;
+  margin: 1em 0 0.2em;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+#preview h6:hover {
+  color: #c1e790;
+  transform: scale(0.995);
+}
+
+/* 強調文字樣式 */
+#preview b,
+#preview strong {
+  font-weight: 500;
+  color: #87ed87;
+  transition: color 0.3s ease;
+  display: inline-block;
+}
+
+#preview i,
+#preview em {
+  font-style: italic;
+  color: #87ed87;
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+#preview b i,
+#preview strong em,
+#preview i b,
+#preview em strong {
+  font-style: italic;
+  font-weight: 500;
+  color: #87ed87;
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+#preview b:hover,
+#preview strong:hover,
+#preview i:hover,
+#preview em:hover,
+#preview b i:hover,
+#preview strong em:hover,
+#preview i b:hover,
+#preview em strong:hover {
+  transform: scale(1.05);
+  color: #8bfe7b;
+}
+
+/* 內文與區塊樣式 */
+#preview p {
+  margin: 0.3em 0;
+}
+
+#preview blockquote { 
+  border-left: 4px solid #4a90e2; 
+  padding-left: 15px; 
+  color: #999999; 
+  margin: 1.5em 0;
+  background-color: rgba(255, 255, 255, 0.03);
+  padding: 10px 15px;
+  border-radius: 0 4px 4px 0;
+}
+
+/* 圖片樣式 */
+#preview img {
+  max-width: min(96%, 2400px);
+  width: auto;
+  height: auto;
+  display: block;
+  margin: 1.8em auto;
+  border: 1px solid #333333;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#preview img:hover {
+  transform: scale(0.99);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+/* 表格樣式 */
+#preview table {
+  width: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1em 0;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+#preview th,
+#preview td {
+  border: 1px solid #333333;
+  padding: 14px;
+  text-align: left;
+  transition: background-color 0.3s ease;
+}
+
+#preview th {
+  background-color: #4a90e2;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+#preview tr:nth-child(even) {
+  background-color: #1a1a1a;
+}
+
+#preview tr:hover {
+  background-color: #2a2a2a;
+}
+
+/* 列表樣式 */
+#preview ul,
+#preview ol {
+  margin: 0.6em 0;
+  padding-left: 2.5em;
+}
+
+#preview ul li {
+  list-style-type: square;
+  color: #cccccc;
+}
+
+#preview ol li {
+  list-style-type: decimal;
+  color: #cccccc;
+}
+
+#preview li {
+  margin-bottom: 0.5em;
+  transition: color 0.3s ease;
+}
+
+/* 程式碼樣式 */
+#preview pre,
+#preview code {
+  font-family: "Courier New", monospace;
+  background-color: #1a1a1a;
+  color: #cccccc;
+  white-space: pre;
+  overflow-x: auto;
+  overflow-y: auto;
+  display: block;
+  font-size: 0.7rem;
+  padding: 15px; /* 保留原預覽較好的間距 */
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+#preview p code, #preview li code {
+  display: inline;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin-bottom: 0;
+}
+
+/* 頁腳樣式 */
+#preview footer {
+  margin-top: 3em;
+  padding-top: 1em;
+  border-top: 1px solid #333333;
+  font-size: 0.9rem;
+  color: #cccccc;
+  text-align: center;
+}
     </style>
 </head>
 <body>
