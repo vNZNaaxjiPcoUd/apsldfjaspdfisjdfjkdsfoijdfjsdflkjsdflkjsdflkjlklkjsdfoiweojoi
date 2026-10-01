@@ -1,10 +1,11 @@
-const CACHE_NAME = 'markdown-pwa-v2.11';
+const CACHE_NAME = 'markdown-pwa-v2.111';
 const urlsToCache = [
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './marked.min.js'
+  './marked.min.js',
+  './'
 ];
 
 self.addEventListener('install', event => {
