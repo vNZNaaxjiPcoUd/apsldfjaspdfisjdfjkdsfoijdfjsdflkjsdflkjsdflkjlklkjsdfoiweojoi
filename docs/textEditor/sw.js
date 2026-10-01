@@ -8,7 +8,8 @@ const urlsToCache = [
   './marked.min.js',
   './favicon.ico',
   '/favicon.ico',
-  './'
+  './',
+  '/'
 ];
 
 
