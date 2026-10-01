@@ -1,4 +1,4 @@
-const CACHE_NAME = 'markdown-pwa-v2.212';
+const CACHE_NAME = 'textEditor-v1.0.0';
 const urlsToCache = [
   './index.html',
   './manifest.json',
