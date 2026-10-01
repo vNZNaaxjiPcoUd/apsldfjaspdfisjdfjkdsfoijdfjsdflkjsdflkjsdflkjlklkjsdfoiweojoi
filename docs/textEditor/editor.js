@@ -1,4 +1,3 @@
-
 const menuBtn = document.getElementById('menuBtn');
 const menuDropdown = document.getElementById('menuDropdown');
 const editor = document.getElementById('editor');
@@ -13,6 +12,7 @@ const newWin = document.getElementById('newWin');
 
 let currentFontSize = 16;
 let isPreviewMode = false;
+let currentFileHandle = null; // 新增：用於記錄當前開啟檔案的控制代碼
 
 function generateDefaultFilename() {
     const now = new Date();
@@ -38,11 +38,104 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// 新增：透過 File System Access API 開啟檔案，取得寫回權限
+async function openDoc() {
+    if ('showOpenFilePicker' in window) {
+        try {
+            const [handle] = await window.showOpenFilePicker({
+                types: [{
+                    description: 'Markdown 檔案',
+                    accept: { 'text/markdown': ['.md', '.txt'] }
+                }]
+            });
+            currentFileHandle = handle;
+            const file = await handle.getFile();
+            filenameInput.value = file.name;
+            const text = await file.text();
+            editor.value = text;
+            menuDropdown.classList.remove('show');
+            if(isPreviewMode) renderMarkdown();
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                console.error('開啟檔案失敗:', err);
+            }
+        }
+    } else {
+        // 不支援時降級，觸發隱藏的檔案上傳按鈕
+        fileInput.click();
+    }
+}
+
+// 新增：抽出檔案讀取邏輯以供重複使用
+async function processFile(file) {
+    filenameInput.value = file.name;
+    const text = await file.text();
+    editor.value = text;
+    if (isPreviewMode) renderMarkdown();
+}
+
+// 變更：優化原本的 loadDoc 以共用 processFile
 function loadDoc(e){
     const file = e.target.files[0];
     if (!file) return;
     
-    // 取得檔案名稱，並將其賦值給頂部的檔名輸入框
+    currentFileHandle = null; 
+    processFile(file).then(() => {
+        menuDropdown.classList.remove('show');
+    });
+    fileInput.value = '';
+}
+
+// 新增：拖曳相關事件監聽
+document.addEventListener('dragover', (e) => {
+    // 必須阻止預設行為才能允許檔案被放置在網頁上
+    e.preventDefault(); 
+});
+
+document.addEventListener('drop', async (e) => {
+    // 阻止瀏覽器預設直接開啟檔案而離開網頁的行為
+    e.preventDefault(); 
+    menuDropdown.classList.remove('show');
+
+    const items = e.dataTransfer.items;
+    if (items && items.length > 0) {
+        // 只處理拖曳進來的第一個檔案
+        const item = items[0];
+        if (item.kind === 'file') {
+            try {
+                // 嘗試獲取檔案系統控制代碼，確保拖曳載入後依然可以按儲存直接覆寫
+                if (item.getAsFileSystemHandle) {
+                    const handle = await item.getAsFileSystemHandle();
+                    if (handle && handle.kind === 'file') {
+                        currentFileHandle = handle;
+                        const file = await handle.getFile();
+                        await processFile(file);
+                        return;
+                    }
+                }
+                // 降級處理：無法取得控制代碼時，以一般檔案形式讀取
+                const file = item.getAsFile();
+                if (file) {
+                    currentFileHandle = null; 
+                    await processFile(file);
+                }
+            } catch (err) {
+                console.error('讀取拖曳檔案失敗:', err);
+            }
+        }
+    } else if (e.dataTransfer.files.length > 0) {
+        // 舊版瀏覽器相容寫法
+        const file = e.dataTransfer.files[0];
+        currentFileHandle = null;
+        await processFile(file);
+    }
+});
+
+function old_loadDoc(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    currentFileHandle = null; // 透過傳統方式開啟無法直接覆寫，清空控制代碼
     filenameInput.value = file.name;
     
     const reader = new FileReader();
@@ -52,30 +145,53 @@ function loadDoc(e){
         if(isPreviewMode) renderMarkdown();
     };
     reader.readAsText(file);
-    
-    // 清空 input 值，確保下次選取同一個檔案時依然能觸發 change 事件
     fileInput.value = '';
 }
-
-// 修正：移除括號與未定義變數 e
 fileInput.addEventListener('change', loadDoc);
 
-function saveDoc(){
+// 變更：整合 File System Access API 儲存邏輯
+async function saveDoc() {
     const text = editor.value;
-    const blob = new Blob([text], { type: 'text/markdown' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    
-    let currentFilename = filenameInput.value.trim();
-    if (!currentFilename) {
-        currentFilename = generateDefaultFilename();
-    }
+    let currentFilename = filenameInput.value.trim() || generateDefaultFilename();
     if (!currentFilename.toLowerCase().endsWith('.md') && !currentFilename.toLowerCase().endsWith('.txt')) {
         currentFilename += '.md';
     }
-    
     filenameInput.value = currentFilename;
-    a.download = currentFilename;
+
+    if ('showSaveFilePicker' in window) {
+        try {
+            if (!currentFileHandle) {
+                currentFileHandle = await window.showSaveFilePicker({
+                    suggestedName: currentFilename,
+                    types: [{
+                        description: 'Markdown 檔案',
+                        accept: { 'text/markdown': ['.md'] },
+                    }]
+                });
+            }
+            const writable = await currentFileHandle.createWritable();
+            await writable.write(text);
+            await writable.close();
+            menuDropdown.classList.remove('show');
+            return;
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                console.error('寫入檔案失敗，轉為傳統下載:', err);
+                fallbackSave(text, currentFilename);
+            }
+            return;
+        }
+    }
+    
+    fallbackSave(text, currentFilename);
+}
+
+// 新增：抽出原本的下載儲存邏輯作為 Fallback
+function fallbackSave(text, filename) {
+    const blob = new Blob([text], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
     
     document.body.appendChild(a);
     a.click();
@@ -84,7 +200,6 @@ function saveDoc(){
     menuDropdown.classList.remove('show');
 }
 
-// 修正：移除括號
 saveBtn.addEventListener('click', saveDoc);
 
 newWin.addEventListener('click', () => {
@@ -117,7 +232,6 @@ function renderMarkdown() {
     }
 }
 
-
 function markdownPreview(){
     isPreviewMode = !isPreviewMode;
     if (isPreviewMode) {
@@ -133,51 +247,20 @@ function markdownPreview(){
     menuDropdown.classList.remove('show');
 }
 
-// 修正：移除括號
 previewBtn.addEventListener('click', markdownPreview);
 
 document.addEventListener('keydown', function (e) {
     if ((e.ctrlKey && e.code === 'KeyM') || (e.metaKey && e.code === 'KeyM') || (e.ctrlKey && e.code === 'KeyE') || (e.metaKey && e.code === 'KeyE')) {
         e.preventDefault();
         markdownPreview();
-        
     } else if ((e.ctrlKey && e.code === 'KeyS') || (e.metaKey && e.code === 'KeyS')) {
         e.preventDefault();
         saveDoc();
-    }else if ((e.ctrlKey && e.code === 'KeyO') || (e.metaKey && e.code === 'KeyO')) {
+    } else if ((e.ctrlKey && e.code === 'KeyO') || (e.metaKey && e.code === 'KeyO')) {
         e.preventDefault();
-        // 觸發隱藏的檔案上傳按鈕
-        fileInput.click();
+        openDoc(); // 替換成直接呼叫新 API 開啟檔案
     }
 });
-// Service Worker 保留原邏輯，但需注意 PWA 實務上的作用域限制
-/*if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        const swCode = `
-            const CACHE_NAME = 'markdown-pwa-v1';
-            const urlsToCache = [
-                location.href,
-                'https://cdn.jsdelivr.net/npm/marked/marked.min.js'
-            ];
-            self.addEventListener('install', event => {
-                event.waitUntil(
-                    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
-                );
-            });
-            self.addEventListener('fetch', event => {
-                event.respondWith(
-                    caches.match(event.request).then(response => {
-                        return response || fetch(event.request);
-                    })
-                );
-            });
-        `;
-        const blob = new Blob([swCode], { type: 'application/javascript' });
-        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => {
-            console.log('Service Worker blob 註冊失敗:', err);
-        });
-    });
-}*/
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
