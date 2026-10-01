@@ -1,4 +1,4 @@
-const CACHE_NAME = 'markdown-pwa-v2.2';
+const CACHE_NAME = 'markdown-pwa-v2.21';
 const urlsToCache = [
   './index.html',
   './manifest.json',
@@ -6,6 +6,7 @@ const urlsToCache = [
   './icon-512.png',
   './marked.min.js',
   'favicon.ico',
+  'https://app.jwint.net/favicon.ico',
   './'
 ];
 
