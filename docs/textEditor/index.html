@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>PWA Markdown 編輯器</title>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <meta name="theme-color" content="#ffffff">
+    <link rel="manifest" href="./manifest.json">
+    <title>Editor</title>
+    <script src="./marked.min.js"></script>
     <style>
         :root {
             --bg-color: #f5f5f7;
@@ -130,6 +132,7 @@
             <label for="file-input">📂 讀取檔案</label>
             <input type="file" id="file-input" accept=".txt,.md">
             <button id="saveBtn">💾 儲存檔案</button>
+            <button id="newWin">🪟 新視窗</button>
             <button id="fontUpBtn">A+ 放大字體</button>
             <button id="fontDownBtn">A- 縮小字體</button>
             <button id="previewBtn">👁️ 預覽 Markdown</button>
@@ -151,6 +154,7 @@ const fontUpBtn = document.getElementById('fontUpBtn');
 const fontDownBtn = document.getElementById('fontDownBtn');
 const previewBtn = document.getElementById('previewBtn');
 const filenameInput = document.getElementById('filenameInput');
+const newWin = document.getElementById('newWin');
 
 let currentFontSize = 16;
 let isPreviewMode = false;
@@ -228,6 +232,10 @@ function saveDoc(){
 // 修正：移除括號
 saveBtn.addEventListener('click', saveDoc);
 
+newWin.addEventListener('click', () => {
+    window.open('./index.html', '_blank', 'noopener,noreferrer');
+});
+
 fontUpBtn.addEventListener('click', () => {
     currentFontSize += 2;
     updateFontSize();
@@ -288,7 +296,7 @@ document.addEventListener('keydown', function (e) {
     }
 });
 // Service Worker 保留原邏輯，但需注意 PWA 實務上的作用域限制
-if ('serviceWorker' in navigator) {
+/*if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         const swCode = `
             const CACHE_NAME = 'markdown-pwa-v1';
@@ -313,6 +321,18 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => {
             console.log('Service Worker blob 註冊失敗:', err);
         });
+    });
+}*/
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(registration => {
+                console.log('ServiceWorker 註冊成功，範圍為: ', registration.scope);
+            })
+            .catch(err => {
+                console.log('ServiceWorker 註冊失敗: ', err);
+            });
     });
 }
     </script>
