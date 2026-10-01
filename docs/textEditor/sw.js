@@ -6,7 +6,7 @@ const urlsToCache = [
   './icon-192.png',
   './icon-512.png',
   './marked.min.js',
-  'favicon.ico',
+  './favicon.ico',
   '/favicon.ico',
   './'
 ];
