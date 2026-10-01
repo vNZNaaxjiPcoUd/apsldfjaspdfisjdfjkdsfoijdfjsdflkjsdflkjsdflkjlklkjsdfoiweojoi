@@ -1,4 +1,5 @@
-const CACHE_NAME = 'textEditor-v1.0.0';
+const APP_PREFIX = 'textEditor';
+const CACHE_NAME = `${APP_PREFIX}-v1.0.1`;
 const urlsToCache = [
   './index.html',
   './manifest.json',
@@ -90,23 +91,20 @@ self.addEventListener('fetch', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     (async () => {
-
       const cacheNames = await caches.keys();
       
-
       const deletePromises = cacheNames
-        .filter(cacheName => cacheName !== CACHE_NAME)
+        .filter(cacheName => {
+          // 條件：名稱開頭為 textEditor，且不等於當前的 CACHE_NAME
+          return cacheName.startsWith(APP_PREFIX) && cacheName !== CACHE_NAME;
+        })
         .map(async cacheName => {
           console.log('刪除舊快取:', cacheName);
           return await caches.delete(cacheName);
         });
 
-
       await Promise.all(deletePromises);
-
-
       await self.clients.claim();
     })()
   );
 });
-
