@@ -259,6 +259,9 @@ document.addEventListener('keydown', function (e) {
     } else if ((e.ctrlKey && e.code === 'KeyO') || (e.metaKey && e.code === 'KeyO')) {
         e.preventDefault();
         openDoc(); // 替換成直接呼叫新 API 開啟檔案
+    } else if ((e.ctrlKey && e.code === 'KeyN') || (e.metaKey && e.code === 'KeyN')){
+        e.preventDefault();
+        window.open('./index.html', '_blank', 'noopener,noreferrer');
     }
 });
 
