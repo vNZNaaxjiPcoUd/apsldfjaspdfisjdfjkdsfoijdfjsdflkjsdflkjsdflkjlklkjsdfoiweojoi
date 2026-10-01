@@ -1,8 +1,9 @@
 const APP_PREFIX = 'textEditor';
-const CACHE_NAME = `${APP_PREFIX}-v1.0.176`;
+const CACHE_NAME = `${APP_PREFIX}-v1.0.1766`;
 const urlsToCache = [
   './index.html',
   './editor.js',
+  './editor.css',
   './manifest.json',
   './icon-192.webp',
   './icon-512.webp',
