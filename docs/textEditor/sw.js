@@ -1,5 +1,5 @@
 const APP_PREFIX = 'textEditor';
-const CACHE_NAME = `${APP_PREFIX}-v1.0.17`;
+const CACHE_NAME = `${APP_PREFIX}-v1.0.176`;
 const urlsToCache = [
   './index.html',
   './editor.js',
