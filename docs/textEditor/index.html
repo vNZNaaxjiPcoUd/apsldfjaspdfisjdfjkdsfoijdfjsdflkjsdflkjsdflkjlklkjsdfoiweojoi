@@ -182,6 +182,10 @@ document.addEventListener('click', (e) => {
 function loadDoc(e){
     const file = e.target.files[0];
     if (!file) return;
+    
+    // 取得檔案名稱，並將其賦值給頂部的檔名輸入框
+    filenameInput.value = file.name;
+    
     const reader = new FileReader();
     reader.onload = (event) => {
         editor.value = event.target.result;
@@ -189,6 +193,8 @@ function loadDoc(e){
         if(isPreviewMode) renderMarkdown();
     };
     reader.readAsText(file);
+    
+    // 清空 input 值，確保下次選取同一個檔案時依然能觸發 change 事件
     fileInput.value = '';
 }
 
