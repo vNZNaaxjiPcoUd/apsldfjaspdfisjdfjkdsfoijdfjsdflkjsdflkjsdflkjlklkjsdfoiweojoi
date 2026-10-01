@@ -7,7 +7,7 @@ const urlsToCache = [
   './icon-512.png',
   './marked.min.js',
   'favicon.ico',
-  'https://app.jwint.net/favicon.ico',
+  '/favicon.ico',
   './'
 ];
 
