@@ -1,0 +1,47 @@
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        label {
+            width: 40px;
+            font-weight: bold;
+        }
+        input {
+            flex: 1;
+            padding: 8px;
+            font-size: 16px;
+            font-family: monospace;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        /* 特別針對 D 欄位與複製按鈕的排版 */
+        .input-group {
+            display: flex;
+            flex: 1;
+        }
+        .input-group input {
+            border-radius: 4px 0 0 4px; /* 左側圓角 */
+            border-right: none;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .input-group button {
+            padding: 8px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: 1px solid #007bff;
+            border-radius: 0 4px 4px 0; /* 右側圓角 */
+            transition: background-color 0.3s;
+        }
+        .input-group button:hover {
+            background-color: #0056b3;
+        }
