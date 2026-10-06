@@ -3,14 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>逐行文字字母排序工具</title>
+    <title>多功能逐行文字排序工具 (2026年10月6日 修訂版)</title>
     <style>
-        /* 重置預設邊距與盒模型 */
-        * { 
-            box-sizing: border-box; 
-        }
+        * { box-sizing: border-box; }
         
-        /* 畫面最大化與淡綠色背景 */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -22,24 +18,9 @@
             color: #2e5a2c;
         }
         
-        /* 柔化標題設計 */
-        h2 {
-            margin: 10px 0;
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: #4a7c47;
-            padding-left: 10px;
-        }
+        h2 { margin: 10px 0; font-size: 1.1rem; font-weight: 500; color: #4a7c47; padding-left: 10px; }
+        .container { display: flex; flex-direction: column; flex: 1; gap: 10px; }
         
-        /* 彈性佈局容器 */
-        .container {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            gap: 15px;
-        }
-        
-        /* 柔化文字區塊並使其最大化填滿空間 */
         textarea {
             flex: 1;
             width: 100%;
@@ -56,21 +37,20 @@
             transition: box-shadow 0.3s ease, border-color 0.3s ease;
         }
         
-        /* 文字區塊獲得焦點時的柔和高光 */
-        textarea:focus {
-            box-shadow: 0 6px 20px rgba(100, 150, 100, 0.15);
-            border-color: #a5d6a7;
-        }
+        textarea:focus { box-shadow: 0 6px 20px rgba(100, 150, 100, 0.15); border-color: #a5d6a7; }
         
-        /* 按鈕置中與設計 */
-        .button-wrapper {
-            text-align: center;
+        .button-group {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 5px 0;
         }
         
         button {
-            padding: 12px 35px;
-            font-size: 16px;
-            letter-spacing: 1px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: bold;
             color: #ffffff;
             background-color: #81c784;
             border: none;
@@ -80,22 +60,22 @@
             transition: background-color 0.3s, transform 0.1s;
         }
         
-        button:hover {
-            background-color: #66bb6a;
-        }
-        
-        button:active {
-            transform: scale(0.97);
-        }
+        button:hover { background-color: #66bb6a; }
+        button:active { transform: scale(0.97); }
+        .btn-reverse { background-color: #e57373; box-shadow: 0 4px 12px rgba(229, 115, 115, 0.4); }
+        .btn-reverse:hover { background-color: #ef5350; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>請貼上文字</h2>
-        <textarea id="inputText" placeholder="請將需要排序的文字貼在這裡..."></textarea>
+        <textarea id="inputText" placeholder="例如：&#10;(1) 蘋果&#10;[A] Apple&#10;「2」 Banana"></textarea>
         
-        <div class="button-wrapper">
-            <button onclick="sortLines()">執行逐行排序</button>
+        <div class="button-group">
+            <button onclick="executeSort('standard', false)">一般字典排序 (A→Z)</button>
+            <button class="btn-reverse" onclick="executeSort('standard', true)">一般字典倒序 (Z→A)</button>
+            <button onclick="executeSort('category', false)">嚴格分類 (數字>英文>中文)</button>
+            <button class="btn-reverse" onclick="executeSort('category', true)">嚴格分類倒序 (中文>英文>數字)</button>
         </div>
         
         <h2>排序結果</h2>
@@ -103,12 +83,51 @@
     </div>
 
     <script>
-        function sortLines() {
+        // 強化版分類判斷邏輯
+        function getCategory(str) {
+            // 使用正規表達式搜尋字串中「第一個」出現的 數字、英文或中文字元 (涵蓋全半形)
+            const match = str.match(/[0-9０-９a-zA-Zａ-ｚＡ-Ｚ\u4e00-\u9fa5]/);
+            
+            // 若整行皆無上述字元（如純標點符號或空行），則回傳類別 4 墊底
+            if (!match) return 4;
+            
+            const firstChar = match[0];
+            
+            // 判斷該字元的所屬權重
+            if (/[0-9０-９]/.test(firstChar)) return 1;
+            if (/[a-zA-Zａ-ｚＡ-Ｚ]/.test(firstChar)) return 2;
+            if (/[\u4e00-\u9fa5]/.test(firstChar)) return 3;
+            
+            return 4;
+        }
+
+        function executeSort(type, isReverse) {
             const input = document.getElementById('inputText').value;
             let lines = input.split('\n');
-            lines.sort((a, b) => a.localeCompare(b));
+            
+            if (type === 'standard') {
+                lines.sort((a, b) => a.localeCompare(b, 'zh-TW', { numeric: true }));
+            } else if (type === 'category') {
+                lines.sort((a, b) => {
+                    let catA = getCategory(a);
+                    let catB = getCategory(b);
+                    
+                    if (catA !== catB) {
+                        return catA - catB; // 依 數字(1) -> 英文(2) -> 中文(3) -> 其他(4) 排序
+                    }
+                    
+                    // 類別相同時，加入 numeric: true 讓自然數字正確排序 (如 2 在 10 之前)
+                    return a.localeCompare(b, 'zh-TW', { numeric: true });
+                });
+            }
+            
+            if (isReverse) {
+                lines.reverse();
+            }
+            
             document.getElementById('outputText').value = lines.join('\n');
         }
     </script>
+    
 </body>
 </html>
