@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>逐行文字字母排序工具</title>
+    <style>
+        /* 重置預設邊距與盒模型 */
+        * { 
+            box-sizing: border-box; 
+        }
+        
+        /* 畫面最大化與淡綠色背景 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #f1f8f1;
+            color: #2e5a2c;
+        }
+        
+        /* 柔化標題設計 */
+        h2 {
+            margin: 10px 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #4a7c47;
+            padding-left: 10px;
+        }
+        
+        /* 彈性佈局容器 */
+        .container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 15px;
+        }
+        
+        /* 柔化文字區塊並使其最大化填滿空間 */
+        textarea {
+            flex: 1;
+            width: 100%;
+            padding: 20px;
+            font-size: 16px;
+            border: 1px solid #c8e6c9;
+            border-radius: 20px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 15px rgba(100, 150, 100, 0.08);
+            resize: none;
+            outline: none;
+            color: #333;
+            line-height: 1.5;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        
+        /* 文字區塊獲得焦點時的柔和高光 */
+        textarea:focus {
+            box-shadow: 0 6px 20px rgba(100, 150, 100, 0.15);
+            border-color: #a5d6a7;
+        }
+        
+        /* 按鈕置中與設計 */
+        .button-wrapper {
+            text-align: center;
+        }
+        
+        button {
+            padding: 12px 35px;
+            font-size: 16px;
+            letter-spacing: 1px;
+            color: #ffffff;
+            background-color: #81c784;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(129, 199, 132, 0.4);
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        
+        button:hover {
+            background-color: #66bb6a;
+        }
+        
+        button:active {
+            transform: scale(0.97);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>請貼上文字</h2>
+        <textarea id="inputText" placeholder="請將需要排序的文字貼在這裡..."></textarea>
+        
+        <div class="button-wrapper">
+            <button onclick="sortLines()">執行逐行排序</button>
+        </div>
+        
+        <h2>排序結果</h2>
+        <textarea id="outputText" readonly placeholder="排序後的結果會顯示在這裡..."></textarea>
+    </div>
+
+    <script>
+        function sortLines() {
+            const input = document.getElementById('inputText').value;
+            let lines = input.split('\n');
+            lines.sort((a, b) => a.localeCompare(b));
+            document.getElementById('outputText').value = lines.join('\n');
+        }
+    </script>
+</body>
+</html>
