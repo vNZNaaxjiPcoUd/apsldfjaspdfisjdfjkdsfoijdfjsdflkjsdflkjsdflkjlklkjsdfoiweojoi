@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Notification</title>
+    <title>邀請</title>
+    
     <style>
         * {
             box-sizing: border-box;
@@ -15,12 +16,9 @@
             margin: 0;
             display: flex;
             justify-content: center;
-            /* 修改重點 1：改為 flex-start 讓對話框靠上對齊 */
-            align-items: flex-start;
-            /* 修改重點 2：改用 min-height 與 dvh 以適應手機動態高度 */
+            align-items: stretch; /* 讓內容容器在垂直方向延展 */
             min-height: 100dvh;
-            /* 修改重點 3：增加頂部間距，避免對話框緊貼螢幕邊緣 */
-            padding-top: 5vh;
+            padding: 5vh 0; /* 調整 padding，上下皆保留 5vh 空間 */
             color: #4a7c59; 
         }
 
@@ -30,15 +28,21 @@
             border-radius: 24px; 
             padding: 24px;
             width: 90%;
-            max-width: 450px;
+            max-width: 800px;
             box-shadow: 0 10px 20px rgba(168, 230, 207, 0.3); 
+            display: flex; /* 將容器設為 flex */
+            flex-direction: column; /* 垂直排列 */
+        }
+        
+        h1 {
+            margin-top: 0; /* 移除預設邊距，使頂部對齊更精確 */
         }
 
         .input-group {
             display: flex;
             flex-direction: column; 
             gap: 15px; 
-            align-items: stretch; 
+            flex-grow: 1; /* 讓 input-group 填滿 chat-container 剩餘高度 */
         }
 
         input, textarea {
@@ -58,9 +62,10 @@
         }
 
         textarea {
-            resize: vertical; 
+            resize: none; /* 關閉手動縮放，交由系統自動撐滿 */
             min-height: 80px; 
-            max-height: 200px; 
+            flex-grow: 1; /* 讓 textarea 填滿 input-group 的剩餘高度 */
+            /* 移除了 max-height: 200px */
         }
 
         button {
@@ -75,7 +80,8 @@
             cursor: pointer;
             white-space: nowrap;
             transition: background-color 0.2s, transform 0.1s;
-            height: 50px; 
+            height: 50px;
+            flex-shrink: 0; /* 防止按鈕被壓縮 */
         }
 
         button:hover {
@@ -90,6 +96,7 @@
 <body>
 
     <div class="chat-container">
+        <h1>邀請函</h1>
         <div class="input-group">
             <input id="name" placeholder="Name">
             <textarea id="msgInput" placeholder="Message"></textarea>
@@ -98,35 +105,5 @@
     </div>
 
     <script src="notify.js"></script>
-    <script>
-        const msgInputElement = document.getElementById('msgInput');
-        const sendBtnElement = document.getElementById('sendBtn');
-        const uName = document.getElementById('name');
-
-        async function handleSend() {
-            const textValue = msgInputElement.value.trim();
-            let name = uName.value.trim();
-            name = name ? name : "nono";
-
-            if (textValue !== "") {
-                const ret = await sendMsg(name, textValue);
-                if ( ret === false ) console.log("notify fail");
-                
-                msgInputElement.value = "";
-                msgInputElement.focus();
-            }
-        }
-
-        msgInputElement.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault(); 
-                handleSend();
-            }
-        });
-
-        sendBtnElement.addEventListener('click', function() {
-            handleSend();
-        });
-    </script>
 </body>
 </html>
