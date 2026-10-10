@@ -1,6 +1,6 @@
 // 定義快取版本號與名稱 (每次更新 chat.html 時，請修改這個版本號)
-const CACHE_VERSION = 'v1.0.666666'; 
-const CACHE_NAME = `lite-chat-pwa-${CACHE_VERSION}`;
+const CACHE_VERSION = 'v1.0.6666666'; 
+const CACHE_NAME = `chat-${CACHE_VERSION}`;
 
 // 定義需要快取的靜態資源 (確保離線或網路不穩時，仍能載入應用程式外殼)
 const urlsToCache = [
