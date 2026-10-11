@@ -10,7 +10,7 @@
 body {
     font-family: 'Inter', sans-serif;
     font-size: 16px; 
-    color: #ffd700; 
+    color: #98fb98; /* 改為淡綠色 */
     background-color: #000000; 
     overscroll-behavior-y: none; 
     font-weight: 360;
@@ -39,7 +39,7 @@ a, a.visited {
 
 #inpTitle {
     margin-top: 0; 
-    color: #ffd700; 
+    color: #98fb98; /* 改為淡綠色 */
     font-size: 20px; 
     font-weight: bold; 
     margin-bottom: 5px;
@@ -48,7 +48,7 @@ a, a.visited {
 #inputT {
     background: transparent; 
     border: none; 
-    border-bottom: 2px solid #ffd700; 
+    border-bottom: 2px solid #98fb98; /* 改為淡綠色 */
     color: #ffffff; 
     padding: 8px 12px; 
     outline: none; 
@@ -58,16 +58,19 @@ a, a.visited {
 }
 
 .btn-cmd {
-    background-color: #ffd700; 
-    color: #333333; 
+    background-color: #98fb98; /* 改為淡綠色 */
+    color: #113311; /* 文字改為深綠色以提高辨識度 */
     border: none; 
     border-radius: 10px; 
     padding: 10px 50px; 
     font-weight: bold; 
     cursor: pointer; 
     margin: 10px 1px; 
-    box-shadow: 0 2px 0 #ccaa00;
+    box-shadow: 0 2px 0 #73c973; /* 陰影改為稍微深一點的綠色 */
     font-size: 18px; 
+}
+#cancelCmd {
+    display: none;
 }
 </style>
 </head>
@@ -80,13 +83,13 @@ a, a.visited {
 <dialog id="inputDialog">
     <h2 id="inpTitle">請輸入標題</h2>
     <input type="text" id="inputT" placeholder="輸入內容"><br><br>
-    <button id="okCmd" class="btn-cmd">確定</button>
     <button id="pasteCmd" class="btn-cmd">貼上</button>    
+    <button id="okCmd" class="btn-cmd">確定</button>
     <button id="cancelCmd" class="btn-cmd">取消</button>    
 </dialog>
 
 
-<script  src="vUrlList.js"></script>
+<script src="vUrlList.js"></script>
 <script defer src="vUrl.js"></script>
 
 </body>
