@@ -321,6 +321,13 @@
             font-weight: 700;
         }
         button:active { background: var(--primary-dark); }
+
+        .msg-text {
+            /* 保留原始字串中的換行與空格，且超出容器寬度時會自動折行 */
+            white-space: pre-wrap; 
+            /* 避免超長字串（如無空格的網址或單詞）破壞版面 */
+            word-break: break-word; 
+        }
         
         #setup-screen { justify-content: center; padding: 20px; text-align: center; }
         #setup-screen h2 { color: var(--primary-dark); margin-bottom: 5px; font-size: 1.8em; }
