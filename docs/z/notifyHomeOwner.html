@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Demo</title>
+</head>
+<body>
+
+<div style="font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif; background-color: #ffffff; margin: 0; display: flex; justify-content: center; align-items: stretch; height: 80dvh; padding: 0; color: #4a7c59; box-sizing: border-box;">
+    <div class="chat-container" style="background-color: #ffffff; border: 2px solid #b8e0d2; border-radius: 16px; padding: 24px; width: 100%; max-width: 800px; box-shadow: 0 10px 20px rgba(168, 230, 207, 0.3); display: flex; flex-direction: column; box-sizing: border-box; height: 100%;">
+        <h1 id="ntTitle" style="margin-top: 0; box-sizing: border-box;">Notify Home Owner</h1>
+        <div class="input-group" style="display: flex; flex-direction: column; gap: 15px; flex-grow: 1; box-sizing: border-box;">
+            <input id="ntName" placeholder="your email" style="width: 100%; padding: 14px 18px; font-size: 16px; font-family: inherit; border: 2px solid #d1eadd; border-radius: 16px; outline: none; transition: border-color 0.3s, box-shadow 0.3s; box-sizing: border-box;">
+            <textarea id="ntMsgInput" placeholder="leave your message!" style="width: 100%; padding: 14px 18px; font-size: 16px; font-family: inherit; border: 2px solid #d1eadd; border-radius: 16px; outline: none; transition: border-color 0.3s, box-shadow 0.3s; resize: none; min-height: 80px; flex-grow: 1; box-sizing: border-box;"></textarea>
+            <button id="ntSendBtn" style="width: 100%; background-color: #a8e6cf; color: #2c543e; border: none; padding: 14px 22px; font-size: 16px; font-weight: bold; border-radius: 30px; cursor: pointer; white-space: nowrap; transition: background-color 0.2s, transform 0.1s; height: 50px; flex-shrink: 0; box-sizing: border-box;">Go!</button>
+        </div>
+    </div>
+</div>
+
+<script src="notify.js"></script>
+
+</body></html>
