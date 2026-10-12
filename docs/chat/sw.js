@@ -1,12 +1,10 @@
 // 定義快取版本號與名稱 (每次更新 chat.html 時，請修改這個版本號)
-const CACHE_VERSION = 'v1.0.666666666'; 
+const CACHE_VERSION = 'v1.0.3'; 
 const CACHE_NAME = `chat-${CACHE_VERSION}`;
 
 // 定義需要快取的靜態資源 (確保離線或網路不穩時，仍能載入應用程式外殼)
 const urlsToCache = [
-  './',
-  './index.html',
-  './icon-192.png'
+
 ];
 
 // 1. 安裝階段 (Install)：下載並快取指定版本的靜態資源
