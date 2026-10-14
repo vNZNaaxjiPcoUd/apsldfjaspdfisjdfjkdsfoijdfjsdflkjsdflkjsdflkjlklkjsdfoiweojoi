@@ -89,47 +89,12 @@
         <!--h2>🎵 播放清單啟動</h2-->
         <div class="input-group">
             <input type="text" id="playlistIdInput" placeholder="貼" autocomplete="off">
-            <button onclick="openPlaylist()">開啟清單</button>
+            <button id="open" >開啟清單</button>
         </div>
         <!--div class="hint">支援直接貼上完整網址<br>(例如: https://www.youtube.com/playlist?list=PL...)</div-->
     </div>
 
-    <script>
-        function openPlaylist() {
-            // 取得輸入框的值，並用 trim() 去除前後多餘的空白
-            var inputVal = document.getElementById('playlistIdInput').value.trim();
-
-            if (inputVal) {
-                var playlistId = inputVal;
-
-                // 【新增核心邏輯】使用正規表達式抓取網址中的 list ID
-                // 尋找 "?list=" 或 "&list=" 後面的字串，直到遇到下一個 "&" 或 "#" 結束
-                var match = inputVal.match(/[?&]list=([^&#]+)/);
-                
-                if (match && match[1]) {
-                    // 如果有找到配對，就將 ID 替換為抓取出來的字串
-                    playlistId = match[1];
-                }
-
-                // 組合網址，並使用 encodeURIComponent 確保特殊字元不會破壞網址結構
-                var targetUrl = 'https://h.jwint.net/ytListPly?' + encodeURIComponent(playlistId);
-                const input= document.getElementById('playlistIdInput');
-                input.value = ''; 
-                
-                // 使用 window.open 在新分頁開啟網址
-                window.open(targetUrl, '_blank');
-            } else {
-                alert('貼上正常ID！');
-            }
-        }
-
-        // 監聽 Enter 鍵，讓使用者輸入完直接按 Enter 就能送出
-        document.getElementById('playlistIdInput').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // 避免觸發預設表單提交行為
-                openPlaylist();
-            }
-        });
+    <script src="./ytListInput.org.js">
     </script>
 
 </body>
