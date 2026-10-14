@@ -6,40 +6,7 @@
     <title data-i18n="page_title">聊天 🌿</title>
     <!--link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet"-->
     <link rel="manifest" href="manifest.json">
-    <script>
-        // PWA Manifest
-        (function() {
-            let currentUrl = window.location.href;
-            let dbId = "";
-            if (currentUrl.includes('id=')) dbId = currentUrl.split('id=')[1].split('&')[0];
-            else if (currentUrl.includes('?')) dbId = currentUrl.split('?')[1].split('&')[0];
-
-            const manifestName = dbId ? dbId : "Sky聊天";
-            const startUrl = new URL(`./index.html${dbId ? '?' + dbId : ''}`, currentUrl).href;
-            const icon192Url = new URL('./favicon192.png', currentUrl).href;
-            const icon512Url = new URL('./favicon512.png', currentUrl).href;
-
-            const manifest = {
-                "name": `Items - ${manifestName}`,
-                "short_name": manifestName,
-                "description": `(${manifestName})`,
-                "start_url": startUrl,
-                "display": "standalone",
-                "background_color": "#f1f8f1",
-                "theme_color": "#66bb6a",
-                "icons": [
-                    { "src": icon192Url, "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-                    { "src": icon512Url, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-                ]
-            };
-            const stringManifest = JSON.stringify(manifest);
-            const blob = new Blob([stringManifest], { type: 'application/json' });
-            const manifestURL = URL.createObjectURL(blob);
-            const link = document.createElement('link');
-            link.rel = 'manifest';
-            link.href = manifestURL;
-            document.head.appendChild(link);
-        })();
+    <script src="mani.js">
 
     </script>
 
