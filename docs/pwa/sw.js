@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yn-v1792075399549'; 
+const CACHE_NAME = 'yn-v1792075642038'; 
 
 const urlsToCache = [
   './index.html',
@@ -6,7 +6,6 @@ const urlsToCache = [
   './icon-512.png',
   './favicon.ico',
   './manifest.json',
-  './manifest.js',
   './index',
   './'
 ];
