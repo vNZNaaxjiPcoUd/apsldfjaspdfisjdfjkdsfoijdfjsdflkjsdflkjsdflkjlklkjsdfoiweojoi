@@ -2,7 +2,7 @@ const CACHE_NAME_HEAD = '聊天🌿';
 
 
 // 此部份聊天🌿不用修改，為swJsVersionUpdate.js自動更新，於 updateCode.sh 呼叫發動。
-const CACHE_NAME = '聊天🌿-v.261015115433'; 
+const CACHE_NAME = '聊天🌿-v.261015140719'; 
 
 // 更新相應暫存檔案
 const urlsToCache = [
@@ -17,28 +17,45 @@ const urlsToCache = [
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
-      console.log('開始快取檔案...');
-      console.log("版本", CACHE_NAME);
+    (async () => {
+      console.log("快取版本：", CACHE_NAME);
+      const cache = await caches.open(CACHE_NAME);
+
+      // 1. 使用 Promise.allSettled 進行並行下載與容錯處理
+      await Promise.allSettled(
+        urlsToCache.map(async (url) => {
+          try {
+            await cache.add(url);
+          } catch (err) {
+            console.error(`快取失敗的檔案: ${url}`, err);
+          }
+        })
+      );
+
+      // 2. 確保快取流程處理完畢後，再跳過等待期接管頁面
+      await self.skipWaiting();
+    })()
+  );
+});
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // 逐一抓取並快取，避免單一 404 造成全盤失敗
       for (const url of urlsToCache) {
-        try { 
+        try {
           await cache.add(url);
-          console.log(`成功快取: ${url}`);
         } catch (err) {
-          console.error(`快取失敗的檔案: ${url}`, err);
+          console.warn(`[SW] 快取檔案失敗（可能檔案不存在）: ${url}`, err);
         }
       }
     })
   );
-  // 強制讓新 Service Worker 立即跳過等待期
-  self.skipWaiting();
 });
+
 
 self.addEventListener('fetch', event => {
   if (event.request.url.includes('script.google.com')) {
-    return;
-  }
-  if (event.request.url.includes('jwint.net')) {
     return;
   }
 
