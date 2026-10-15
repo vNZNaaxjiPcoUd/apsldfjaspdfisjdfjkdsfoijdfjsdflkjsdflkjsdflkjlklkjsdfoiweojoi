@@ -1,5 +1,11 @@
 const CACHE_NAME_HEAD = 'PWAXXXXXXXX';
-const CACHE_NAME = 'PWAXXXXXXXX-v.1792077426913'; 
+// 將變數匯出，使用物件的方式可以方便未來擴充匯出其他變數
+module.exports = {
+  CACHE_NAME_HEAD
+};
+
+// 此為 swJsVersionUpdate.js 自動修改，於 updateCode.sh 呼叫
+const CACHE_NAME = 'PWAXXXXXXXX-v.1792077707373'; 
 
 const urlsToCache = [
   './index.html',
