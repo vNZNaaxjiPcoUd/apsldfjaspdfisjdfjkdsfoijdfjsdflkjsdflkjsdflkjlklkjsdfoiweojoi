@@ -28,7 +28,7 @@ font-size: 10rem;"
 <script>
 
     if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
         .then((registration) => {
         // 頁面載入時主動檢查是否有新版本
         registration.update();
