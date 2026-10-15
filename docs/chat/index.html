@@ -6,7 +6,7 @@
     <title data-i18n="page_title">聊天 🌿</title>
     <!--link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet"-->
     <link rel="manifest" href="manifest.json">
-    <script src="mani.js">
+    <script src="manifest.js">
 
     </script>
 
@@ -369,5 +369,30 @@
         
         document.getElementById("setup-name").focus();
     </script>
+
+<script>
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+        .then((registration) => {
+        // 頁面載入時主動檢查是否有新版本
+        registration.update();
+        });
+
+    // 避免重複觸發刷新的旗標
+    let refreshing = false;
+
+    // 當 Service Worker 成功接管時（skipWaiting + claim 後觸發）
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+        refreshing = true;
+        window.location.reload(); // 自動刷新頁面套用新版靜態資源
+        }
+    });
+}
+
+
+</script>
+
 </body>
 </html>

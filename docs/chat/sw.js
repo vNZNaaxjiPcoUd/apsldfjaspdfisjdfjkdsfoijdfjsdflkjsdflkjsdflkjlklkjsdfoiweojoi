@@ -1,67 +1,90 @@
-// 定義快取版本號與名稱 (每次更新 chat.html 時，請修改這個版本號)
-const CACHE_VERSION = 'v1.0.366'; 
-const CACHE_NAME = `chat-${CACHE_VERSION}`;
+const CACHE_NAME_HEAD = '聊天🌿';
 
-// 定義需要快取的靜態資源 (確保離線或網路不穩時，仍能載入應用程式外殼)
+
+// 此部份聊天🌿不用修改，為swJsVersionUpdate.js自動更新，於 updateCode.sh 呼叫發動。
+const CACHE_NAME = 'PWAXXXXXXXX-v.261015114846'; 
+
+// 更新相應暫存檔案
 const urlsToCache = [
-
+  './index.html',
+  './icon-192.png',
+  './icon-512.png',
+  './favicon.ico',
+  './manifest.json',
+  './index',
+  './'
 ];
 
-// 1. 安裝階段 (Install)：下載並快取指定版本的靜態資源
 self.addEventListener('install', event => {
-  console.log(`[Service Worker] Install Event processing for ${CACHE_NAME}`);
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('[Service Worker] Caching app shell');
-        return cache.addAll(urlsToCache);
-      })
-      // skipWaiting() 會強制等待中的 Service Worker 立即接管，不用等舊網頁關閉
-      .then(() => self.skipWaiting()) 
-  );
-});
-
-// 2. 啟動階段 (Activate)：比對版本號，清除舊版本的快取，釋放使用者空間
-self.addEventListener('activate', event => {
-  console.log(`[Service Worker] Activate Event processing for ${CACHE_NAME}`);
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          // 如果找到快取名稱開頭是 lite-chat-pwa-，但版本號不符的，就刪除它
-          if (cacheName.startsWith('lite-chat-pwa-') && cacheName !== CACHE_NAME) {
-            console.log(`[Service Worker] Deleting old cache: ${cacheName}`);
-            return caches.delete(cacheName);
-          }
-        })
-      );
+    caches.open(CACHE_NAME).then(async cache => {
+      console.log('開始快取檔案...');
+      console.log("版本", CACHE_NAME);
+      for (const url of urlsToCache) {
+        try { 
+          await cache.add(url);
+          console.log(`成功快取: ${url}`);
+        } catch (err) {
+          console.error(`快取失敗的檔案: ${url}`, err);
+        }
+      }
     })
-    // clients.claim() 讓新的 Service Worker 立即控制所有開啟中的客戶端 (網頁)
-    .then(() => self.clients.claim()) 
   );
+  // 強制讓新 Service Worker 立即跳過等待期
+  self.skipWaiting();
 });
 
-// 3. 攔截請求階段 (Fetch)：決定要從快取拿資料，還是向網路發出請求
 self.addEventListener('fetch', event => {
-  const requestUrl = new URL(event.request.url);
-
-  // 【重要防護】如果是打向 GAS API 的請求，絕對不快取，直接走網路
-  if (requestUrl.hostname.includes('script.google.com')) {
-    return; // 放行，不介入
+  if (event.request.url.includes('script.google.com')) {
+    return;
+  }
+  if (event.request.url.includes('jwint.net')) {
+    return;
   }
 
-  // 針對我們的靜態網頁資源，採用 Cache-First (快取優先) 策略
   event.respondWith(
-    caches.match(event.request)
-      .then(cachedResponse => {
-        // 如果快取裡有這個檔案，直接秒回快取檔案 (提升 PWA 載入速度)
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        // 如果快取沒有，才去網路抓
-        return fetch(event.request).catch(() => {
-          console.error('[Service Worker] Fetch failed, and no cache found.');
+    (async () => {
+      const cachedResponse = await caches.match(event.request, { ignoreSearch: true });
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      const url = new URL(event.request.url);
+      if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+        const indexResponse = await caches.match('./index.html', { ignoreSearch: true }) || 
+                              await caches.match('./', { ignoreSearch: true });
+        if (indexResponse) return indexResponse;
+      }
+
+      try {
+        return await fetch(event.request);
+      } catch (error) {
+        console.error('離線且無快取：', error, event.request.url);
+        return new Response('<h1>離線中且尚無快取資料</h1>', {
+          status: 533,
+          headers: { 'Content-Type': 'text/html; charset=utf-8' }
         });
-      })
+      }
+    })()
+  );
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    (async () => {
+      const cacheNames = await caches.keys();
+      
+      const deletePromises = cacheNames
+        .filter(cacheName => cacheName.startsWith(CACHE_NAME_HEAD) && cacheName !== CACHE_NAME)
+        .map(async cacheName => {
+          console.log('刪除舊快取:', cacheName);
+          return await caches.delete(cacheName);
+        });
+
+      await Promise.all(deletePromises);
+
+      // 讓所有已開的即有的TAB，都立即更新，讓新的 Service Worker 立即開始控制現有的全部分頁
+      await self.clients.claim();
+    })()
   );
 });
