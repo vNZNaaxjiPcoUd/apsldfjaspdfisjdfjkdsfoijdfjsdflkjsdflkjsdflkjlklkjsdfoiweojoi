@@ -1,4 +1,4 @@
-const CACHE_NAME = 'PWAXXXXXXXX-v.1792076184992'; 
+const CACHE_NAME = 'PWAXXXXXXXX-v.1792076675964'; 
 const CACHE_NAME_HEAD = 'PWAXXXXXXXX';
 
 const urlsToCache = [
@@ -68,7 +68,7 @@ self.addEventListener('activate', event => {
       const cacheNames = await caches.keys();
       
       const deletePromises = cacheNames
-        .filter(cacheName => cacheName !== CACHE_NAME)
+        .filter(cacheName => cacheName.startsWith(CACHE_NAME_HEAD) && cacheName !== CACHE_NAME)
         .map(async cacheName => {
           console.log('刪除舊快取:', cacheName);
           return await caches.delete(cacheName);
