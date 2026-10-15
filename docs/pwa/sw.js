@@ -1,10 +1,12 @@
-const CACHE_NAME = 'PWAXXXXXXXX.1'; 
+const CACHE_NAME = 'yn-v1792074723194'; 
 
 const urlsToCache = [
   './index.html',
   './icon-192.png',
   './icon-512.png',
   './favicon.ico',
+  './manifest.json',
+  './manifest.js',
   './index',
   './'
 ];
