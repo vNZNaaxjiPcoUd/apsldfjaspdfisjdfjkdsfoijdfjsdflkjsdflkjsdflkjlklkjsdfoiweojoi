@@ -9,7 +9,12 @@
     <meta name="theme-color" content="#000000">
 
     <title>PWAXXXXXXXX</title>
-    <link rel="manifest" href="./manifest.json">
+    
+    <!-- 靜態 Manifest：供 Parser 與爬蟲讀取 -->
+    <link rel="manifest" href="./manifest.json" id="app-manifest">
+
+    <!-- 動態 Manifest 腳本：真實瀏覽器會執行此腳本覆蓋上方連結 -->
+    <script src="./manifest.js"></script>
 
 
 </head>
