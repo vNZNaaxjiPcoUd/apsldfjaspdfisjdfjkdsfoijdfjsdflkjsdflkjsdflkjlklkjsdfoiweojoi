@@ -1,7 +1,7 @@
 const CACHE_NAME_HEAD = 'PWAXXXXXXXX';
 
 // 此為 swJsVersionUpdate.js 自動修改，於 updateCode.sh 呼叫
-const CACHE_NAME = 'PWAXXXXXXXX-v.1792077830575'; 
+const CACHE_NAME = 'PWAXXXXXXXX-v.261015112526'; 
 
 const urlsToCache = [
   './index.html',
