@@ -1,5 +1,5 @@
 const CACHE_NAME_HEAD = 'PWAXXXXXXXX';
-const CACHE_NAME = 'PWAXXXXXXXX-v.1792076728558'; 
+const CACHE_NAME = 'PWAXXXXXXXX-v.1792077293414'; 
 
 const urlsToCache = [
   './index.html',
@@ -76,7 +76,7 @@ self.addEventListener('activate', event => {
 
       await Promise.all(deletePromises);
 
-      // 讓新的 Service Worker 立即開始控制現有的全部分頁
+      // 讓所有已開的即有的TAB，都立即更新，讓新的 Service Worker 立即開始控制現有的全部分頁
       await self.clients.claim();
     })()
   );
