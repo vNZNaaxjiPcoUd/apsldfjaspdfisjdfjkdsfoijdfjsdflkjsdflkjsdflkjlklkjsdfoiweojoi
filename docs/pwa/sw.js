@@ -1,4 +1,5 @@
-const CACHE_NAME = 'yn-v1792075642038'; 
+const CACHE_NAME = 'PWAXXXXXXXX-v.1792076184992'; 
+const CACHE_NAME_HEAD = 'PWAXXXXXXXX';
 
 const urlsToCache = [
   './index.html',
