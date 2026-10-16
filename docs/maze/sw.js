@@ -1,4 +1,4 @@
-const CACHE_NAME = 'maze-game-v5.2'; 
+const CACHE_NAME = 'maze-game-v5.1'; 
 
 // 確保這裡的檔名與實際檔案完全一致
 const urlsToCache = [
