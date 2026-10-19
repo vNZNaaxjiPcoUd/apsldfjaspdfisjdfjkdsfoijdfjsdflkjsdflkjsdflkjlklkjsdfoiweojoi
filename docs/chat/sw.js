@@ -11,7 +11,6 @@ const urlsToCache = [
   './icon-512.png',
   './favicon.ico',
   './manifest.json',
-  './index',
   './'
 ];
 
