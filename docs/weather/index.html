@@ -255,7 +255,7 @@
 
                         for (let i = 0; i < data.daily.time.length; i++) {
                             const dateObj = new Date(data.daily.time[i]);
-                            const dayName = (i === 0) ? '今天' : daysOfWeek[dateObj.getDay()];
+                            const dayName = (i === 1) ? '今天' : daysOfWeek[dateObj.getDay()];
                             const dateStr = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
                             
                             const weatherInfo = getWeatherDescription(data.daily.weather_code[i]);
