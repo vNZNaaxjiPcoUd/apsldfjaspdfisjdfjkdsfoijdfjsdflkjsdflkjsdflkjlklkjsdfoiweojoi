@@ -266,8 +266,12 @@
 
             // 若網址沒有提供經緯度，或者格式錯誤，設定預設值為美國佛州坦帕 (Tampa, FL)
             if (isNaN(initLat) || isNaN(initLng)) {
-                initLat = 27.9506;
-                initLng = -82.4572;
+                //?lat=27.9506&lng=-82.4572
+                //initLat = 27.9506;
+                //initLng = -82.4572;
+                //?lat=25.033&lng=121.565
+                initLat = 25.033;
+                initLng = 121.565;
                 hasParams = false;
             }
 
