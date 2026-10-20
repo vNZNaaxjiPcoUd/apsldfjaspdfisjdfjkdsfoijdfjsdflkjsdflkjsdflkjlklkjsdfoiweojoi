@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#3b82f6">
+    <title>ECMWF HRES 全球氣象預測</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+    <style>
+        /* 基礎重置 */
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
+        
+        /* 地圖容器強制全螢幕，避免高度塌陷 */
+        #map { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            z-index: 10; 
+            background-color: #e5e7eb; /* 載入前的底色 */
+        }
+        
+        /* 覆蓋 Tailwind 的 img 預設樣式，這是地圖破圖/不顯示的關鍵 
+        .leaflet-container img {
+            max-width: none !important;
+            max-height: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }*/
+        
+        /* 覆蓋 Tailwind 的 img 預設樣式，避免地圖破圖 */
+        /* 注意：不要加 margin: 0 !important，否則會破壞 Leaflet 圖釘的尖端定位 */
+        .leaflet-container img {
+            max-width: none !important;
+            max-height: none !important;
+        }
+
+        .leaflet-control-container { z-index: 20 !important; position: relative; }
+        #ui-panel { z-index: 50; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 載入動畫 */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900">
+
+    <div id="map"></div>
+
+    <div class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[50] bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 pointer-events-none transition-opacity duration-300" id="header-tip">
+        <h1 class="text-sm md:text-base font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <span>🌍</span> ECMWF 氣象地圖
+        </h1>
+        <p class="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">請點擊地圖任意位置</p>
+    </div>
+
+    <div id="ui-panel" class="fixed bottom-0 left-0 right-0 md:top-0 md:bottom-0 md:left-auto md:right-0 md:w-96 bg-white dark:bg-gray-900 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-[-10px_0_40px_rgba(0,0,0,0.1)] rounded-t-3xl md:rounded-none md:rounded-l-3xl transform translate-y-full md:translate-y-0 md:translate-x-full transition-transform duration-300 ease-in-out flex flex-col max-h-[85vh] md:max-h-full">
+        
+        <div class="md:hidden flex justify-center pt-3 pb-1 cursor-pointer" id="close-handle">
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto no-scrollbar p-6 pt-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white">位置資訊</h2>
+                <button id="close-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div id="loading-state" class="hidden flex-col items-center justify-center py-10">
+                <div class="loader mb-4"></div>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">正在向 API 擷取資料...</p>
+            </div>
+
+            <div id="data-state" class="hidden flex-col space-y-6">
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/50">
+                    <p class="text-xs text-blue-500 dark:text-blue-400 mb-1 font-semibold uppercase tracking-wider">經緯度座標</p>
+                    <p id="coord-text" class="text-gray-800 dark:text-gray-200 font-mono text-sm">--</p>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-5xl font-light text-gray-900 dark:text-white flex items-start">
+                            <span id="temp-text">--</span><span class="text-2xl mt-1">°C</span>
+                        </p>
+                        <p id="condition-text" class="text-lg text-gray-600 dark:text-gray-300 mt-2 font-medium">--</p>
+                    </div>
+                    <div id="weather-icon" class="text-6xl drop-shadow-md">🌤️</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/50 flex flex-col">
+                        <span class="text-2xl mb-2">💨</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 mb-1">風速 (10m)</span>
+                        <span id="wind-text" class="text-gray-800 dark:text-gray-200 font-semibold">-- km/h</span>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/50 flex flex-col">
+                        <span class="text-2xl mb-2">💧</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 mb-1">相對濕度</span>
+                        <span id="humidity-text" class="text-gray-800 dark:text-gray-200 font-semibold">-- %</span>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-500 text-center">
+                    資料來源：Open-Meteo<br>預報模型：ECMWF IFS (HRES)
+                </div>
+            </div>
+
+            <div id="error-state" class="hidden flex-col items-center justify-center py-10 text-center">
+                <span class="text-4xl mb-3">⚠️</span>
+                <p class="text-gray-800 dark:text-gray-200 font-medium">無法獲取天氣資料</p>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">無法連線至氣象伺服器。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getWeatherDescription(code) {
+            const mapData = {
+                0: { text: "晴朗無雲", icon: "☀️" },
+                1: { text: "大致晴朗", icon: "🌤️" },
+                2: { text: "部分多雲", icon: "⛅" },
+                3: { text: "陰天", icon: "☁️" },
+                45: { text: "有霧", icon: "🌫️" },
+                48: { text: "結霜霧", icon: "🌫️" },
+                51: { text: "輕微毛毛雨", icon: "🌦️" },
+                53: { text: "中等毛毛雨", icon: "🌧️" },
+                55: { text: "密集毛毛雨", icon: "🌧️" },
+                61: { text: "微雨", icon: "🌦️" },
+                63: { text: "中雨", icon: "🌧️" },
+                65: { text: "大雨", icon: "🌧️" },
+                71: { text: "小雪", icon: "🌨️" },
+                73: { text: "中雪", icon: "❄️" },
+                75: { text: "大雪", icon: "❄️" },
+                80: { text: "短暫陣雨", icon: "🌦️" },
+                81: { text: "中等陣雨", icon: "🌧️" },
+                82: { text: "猛烈陣雨", icon: "⛈️" },
+                95: { text: "雷雨", icon: "⛈️" }
+            };
+            return mapData[code] || { text: "未知天氣", icon: "❓" };
+        }
+
+        const uiPanel = document.getElementById('ui-panel');
+        const headerTip = document.getElementById('header-tip');
+        const stateLoading = document.getElementById('loading-state');
+        const stateData = document.getElementById('data-state');
+        const stateError = document.getElementById('error-state');
+
+        function showPanel() {
+            uiPanel.classList.remove('translate-y-full', 'md:translate-x-full');
+            if(headerTip) headerTip.classList.add('opacity-30');
+        }
+
+        function hidePanel() {
+            uiPanel.classList.add('translate-y-full', 'md:translate-x-full');
+            if(headerTip) headerTip.classList.remove('opacity-30');
+        }
+
+        document.getElementById('close-btn').addEventListener('click', hidePanel);
+        document.getElementById('close-handle').addEventListener('click', hidePanel);
+
+        // 確保 DOM 完全載入後才初始化地圖
+        function oldFunction (){
+            document.addEventListener('DOMContentLoaded', () => {
+            const map = L.map('map', { zoomControl: false }).setView([23.5, 121], 6);
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+            // [重要] 改用最穩定且無跨域限制的官方 OpenStreetMap 圖塊
+            /*
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);*/
+
+            // 改用 Esri 圖塊，避免本地 file:/// 來源存取被 OpenStreetMap 阻擋
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN',
+                maxZoom: 19
+            }).addTo(map);
+
+            let currentMarker = null;
+
+            // --- 點擊地圖獲取天氣 ---
+            map.on('click', async function(e) {
+                // 1. 保留原始點擊位置，讓圖釘能標示在使用者實際點擊的螢幕位置
+                const clickLatLng = e.latlng;
+                
+                // 2. 呼叫 .wrap() 將經度強制換算回 -180 到 180 的標準範圍內
+                const wrappedLatLng = clickLatLng.wrap();
+                const lat = wrappedLatLng.lat;
+                const lng = wrappedLatLng.lng;
+
+                if (currentMarker) {
+                    currentMarker.setLatLng(clickLatLng);
+                } else {
+                    currentMarker = L.marker(clickLatLng).addTo(map);
+                }
+                
+                //map.panTo(clickLatLng); 取消置中
+
+                // 顯示換算後的標準座標
+                document.getElementById('coord-text').innerText = `${Math.abs(lat).toFixed(4)}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lng).toFixed(4)}° ${lng >= 0 ? 'E' : 'W'}`;
+                
+                stateLoading.classList.remove('hidden'); stateLoading.classList.add('flex');
+                stateData.classList.add('hidden'); stateError.classList.add('hidden');
+                showPanel();
+
+                try {
+                    // API 現在只會接收到標準範圍內的 lat 與 lng
+                    const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&models=ecmwf_ifs&timezone=auto`;
+                    
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) throw new Error('API 請求失敗');
+                    const data = await response.json();
+
+                    if (data.current) {
+                        const current = data.current;
+                        const weatherInfo = getWeatherDescription(current.weather_code);
+
+                        document.getElementById('temp-text').innerText = current.temperature_2m;
+                        document.getElementById('condition-text').innerText = weatherInfo.text;
+                        document.getElementById('weather-icon').innerText = weatherInfo.icon;
+                        document.getElementById('wind-text').innerText = `${current.wind_speed_10m} km/h`;
+                        document.getElementById('humidity-text').innerText = `${current.relative_humidity_2m} %`;
+
+                        stateLoading.classList.remove('flex'); stateLoading.classList.add('hidden');
+                        stateData.classList.remove('hidden'); stateData.classList.add('flex');
+                    } else {
+                        throw new Error('無天氣資料');
+                    }
+                } catch (error) {
+                    console.error("錯誤:", error);
+                    stateLoading.classList.remove('flex'); stateLoading.classList.add('hidden');
+                    stateError.classList.remove('hidden'); stateError.classList.add('flex');
+                }
+            });
+        });
+        }
+        // 確保 DOM 完全載入後才初始化地圖
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. 讀取網址的 ?lat=xxx&lng=yyy 參數
+            const urlParams = new URLSearchParams(window.location.search);
+            let initLat = parseFloat(urlParams.get('lat'));
+            let initLng = parseFloat(urlParams.get('lng'));
+            let hasParams = true;
+
+            // 若網址沒有提供經緯度，或者格式錯誤，設定預設值為美國佛州坦帕 (Tampa, FL)
+            if (isNaN(initLat) || isNaN(initLng)) {
+                initLat = 27.9506;
+                initLng = -82.4572;
+                hasParams = false;
+            }
+
+            // 確保即使網址輸入了超過範圍的經度（如 400），也能自動換算回 -180 ~ 180 之間
+            const initLocation = L.latLng(initLat, initLng).wrap();
+
+            // 2. 使用參數指定的經緯度來初始化地圖並置中顯示
+            const map = L.map('map', { zoomControl: false }).setView([initLocation.lat, initLocation.lng], 6);
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+            // 使用 Esri 圖塊以避免本地端測試被阻擋
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri',
+                maxZoom: 19
+            }).addTo(map);
+
+            let currentMarker = null;
+
+            map.on('click', async function(e) {
+                const clickLatLng = e.latlng;
+                
+                // 將經度強制換算回 -180 到 180 的標準範圍內
+                const wrappedLatLng = clickLatLng.wrap();
+                const lat = wrappedLatLng.lat;
+                const lng = wrappedLatLng.lng;
+
+                if (currentMarker) {
+                    currentMarker.setLatLng(clickLatLng);
+                } else {
+                    currentMarker = L.marker(clickLatLng).addTo(map);
+                }
+                
+                // 顯示換算後的標準座標
+                document.getElementById('coord-text').innerText = `${Math.abs(lat).toFixed(4)}° ${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lng).toFixed(4)}° ${lng >= 0 ? 'E' : 'W'}`;
+                
+                stateLoading.classList.remove('hidden'); stateLoading.classList.add('flex');
+                stateData.classList.add('hidden'); stateError.classList.add('hidden');
+                showPanel();
+
+                try {
+                    const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&models=ecmwf_ifs&timezone=auto`;
+                    
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) throw new Error('API 請求失敗');
+                    const data = await response.json();
+
+                    if (data.current) {
+                        const current = data.current;
+                        const weatherInfo = getWeatherDescription(current.weather_code);
+
+                        document.getElementById('temp-text').innerText = current.temperature_2m;
+                        document.getElementById('condition-text').innerText = weatherInfo.text;
+                        document.getElementById('weather-icon').innerText = weatherInfo.icon;
+                        document.getElementById('wind-text').innerText = `${current.wind_speed_10m} km/h`;
+                        document.getElementById('humidity-text').innerText = `${current.relative_humidity_2m} %`;
+
+                        stateLoading.classList.remove('flex'); stateLoading.classList.add('hidden');
+                        stateData.classList.remove('hidden'); stateData.classList.add('flex');
+                    } else {
+                        throw new Error('無天氣資料');
+                    }
+                } catch (error) {
+                    console.error("錯誤:", error);
+                    stateLoading.classList.remove('flex'); stateLoading.classList.add('hidden');
+                    stateError.classList.remove('hidden'); stateError.classList.add('flex');
+                }
+            });
+
+            // 3. 如果網址帶有參數，自動觸發一次點擊事件來顯示圖釘與讀取天氣資料
+            if (hasParams) {
+                // 利用 Leaflet 內建的 fire 方法模擬使用者點擊
+                map.fire('click', { latlng: initLocation });
+            }
+        });
+    </script>
+</body>
+</html>
