@@ -17,9 +17,25 @@
             width: 100%; 
             height: 100vh; 
         }
+        #coord-text {
+            position: fixed;       /* 固定於視窗相對位置 */
+            bottom: 0;            /* 貼緊視窗正下方 */
+            left: 50%;            /* 定位點移至視窗水平 50% 處 */
+            transform: translateX(-50%); /* 向左推回元素自身寬度的一半，達成置中 */
+            padding: 1rem 5rem;
+            
+            font-size: 1.2rem;       /* 字型大小 1rem */
+            color: #f2ff00;        /* 文字顏色 白色 */
+            
+            /* 可選項目：確保文字可讀性或覆蓋層級 */
+            z-index: 9999;         /* 避免被其他元素遮擋 */
+            white-space: nowrap;   /* 防止座標文字自動換行 */
+            margin-bottom: 10px;   /* 若不想完全貼緊最底部，可調整此邊距 */
+        }
     </style>
 </head>
 <body>
     <div id="map"></div>
+    <div id="coord-text"></div>
 </body>
 </html>
