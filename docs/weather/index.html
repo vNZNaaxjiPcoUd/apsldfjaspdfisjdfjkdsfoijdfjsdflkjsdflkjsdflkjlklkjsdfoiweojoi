@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#3b82f6">
-    <title>全球氣象預測</title>
+    <title>氣象預報</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,13 +12,9 @@
     <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script> 
-    
-    <!--  
-    <link rel="stylesheet" href="leaflet.css" />
-    <script src="leaflet.js"></script>-->
 
     <style>
-        /* 基礎重置 */
+
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
         
         #map { 
@@ -26,7 +22,6 @@
             background-color: #e5e7eb;
         }
         
-        /* 避免 Tailwind 破壞地圖與圖釘 (注意：不要加 margin:0，以免圖釘偏移) */
         .leaflet-container img {
             max-width: none !important;
             max-height: none !important;
@@ -57,10 +52,8 @@
     <h1 class="text-sm md:text-base font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
         <span>🌍</span> 氣象地圖
     </h1>
-    <!--p class="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">點擊切換衛星圖 / 街道圖</p-->
 </div>
 
-    <!-- 資訊面板，寬度調整至 w-96 以容納更多資訊 -->
     <div id="ui-panel" class="fixed bottom-0 left-0 right-0 md:top-0 md:bottom-0 md:left-auto md:right-0 md:w-96 bg-white dark:bg-gray-900 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-[-10px_0_40px_rgba(0,0,0,0.1)] rounded-t-3xl md:rounded-none md:rounded-l-3xl transform translate-y-full md:translate-y-0 md:translate-x-full transition-transform duration-300 ease-in-out flex flex-col max-h-[85vh] md:max-h-full">
         
         <div class="md:hidden flex justify-center pt-3 pb-1 cursor-pointer" id="close-handle">
@@ -110,13 +103,13 @@
                     </div>
                 </div>
 
-                <!-- 新增：一週預報區塊 -->
+                <!-- 一週預報區塊 -->
                 <div class="mt-4 pt-2">
                     <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 border-b border-gray-200 dark:border-gray-700 pb-2 flex items-center gap-2">
                         📅 一週天氣與雨量預報
                     </h3>
                     <div id="forecast-list" class="flex flex-col gap-2">
-                        <!-- 預報項目將由 JS 動態產生於此 -->
+                        
                     </div>
                 </div>
 
