@@ -12,11 +12,14 @@
     <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script> 
-
+    <script src="weather.js" defer></script>
     <style>
 
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
         
+        a {
+            text-decoration: none;
+        }
         #map { 
             position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 10; 
             background-color: #e5e7eb;
@@ -114,7 +117,7 @@
                 </div>
 
                 <div class="mt-2 pt-4 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-500 text-center">
-                    資料來源：Open-Meteo<br>預報模型：ECMWF IFS (HRES)
+                    資料來源：Open-Meteo<br>預報模型：ECMWF IFS (HRES)<br><a href="https://n.jwint.net/r#map" target="_blank">地圖來源</a>
                 </div>
             </div>
 
@@ -125,7 +128,5 @@
             </div>
         </div>
     </div>
-
-    <script src="weather.js"></script>
 </body>
 </html>
