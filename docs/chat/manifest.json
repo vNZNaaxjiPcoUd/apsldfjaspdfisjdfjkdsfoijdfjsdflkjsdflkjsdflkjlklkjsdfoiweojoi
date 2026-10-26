@@ -1,7 +1,6 @@
 {
   "name": "聊天🌿",
   "short_name": "聊天🌿",
-  "start_url": "./",
   "display": "standalone",
   "background_color": "#f5f5f7",
   "theme_color": "#ffffff",
