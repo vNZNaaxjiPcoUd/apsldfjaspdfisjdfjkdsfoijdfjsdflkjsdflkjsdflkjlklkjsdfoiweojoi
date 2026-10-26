@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Message</title>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            background-color: #f2fcf6;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: stretch; /* 讓內容容器在垂直方向延展 */
+            min-height: 100dvh;
+            padding: 5vh 0; /* 調整 padding，上下皆保留 5vh 空間 */
+            color: #4a7c59; 
+        }
+
+        .chat-container {
+            background-color: #ffffff;
+            border: 2px solid #b8e0d2;
+            border-radius: 24px; 
+            padding: 24px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 10px 20px rgba(168, 230, 207, 0.3); 
+            display: flex; /* 將容器設為 flex */
+            flex-direction: column; /* 垂直排列 */
+        }
+        
+        h1 {
+            margin-top: 0; /* 移除預設邊距，使頂部對齊更精確 */
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column; 
+            gap: 15px; 
+            flex-grow: 1; /* 讓 input-group 填滿 chat-container 剩餘高度 */
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 16px;
+            font-family: inherit; 
+            border: 2px solid #d1eadd;
+            border-radius: 16px; 
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            border-color: #80c4a3;
+            box-shadow: 0 0 8px rgba(128, 196, 163, 0.4);
+        }
+
+        textarea {
+            resize: none; /* 關閉手動縮放，交由系統自動撐滿 */
+            min-height: 80px; 
+            flex-grow: 1; /* 讓 textarea 填滿 input-group 的剩餘高度 */
+            /* 移除了 max-height: 200px */
+        }
+
+        button {
+            width: 100%; 
+            background-color: #a8e6cf; 
+            color: #2c543e; 
+            border: none;
+            padding: 14px 22px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 30px; 
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background-color 0.2s, transform 0.1s;
+            height: 50px;
+            flex-shrink: 0; /* 防止按鈕被壓縮 */
+        }
+
+        button:hover {
+            background-color: #8cd8be;
+        }
+
+        button:active {
+            transform: scale(0.92);
+        }
+        #ntName{
+            display:none
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <h1 id="ntTitle">To 9826</h1>
+        <div class="input-group">
+            <input id="ntName" placeholder="Name">
+            <textarea id="ntMsgInput" placeholder="Message"></textarea>
+            <button id="ntSendBtn">Go!</button>
+        </div>
+    </div>
+
+    <script src="notify.js"></script>
+</body>
+</html>
