@@ -9,21 +9,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
    
     <style id="user-custom-style">
-        #preview {
-            padding: 20px;
-            background-color: white;
-            min-height: 100%;
-            line-height: 1.6;
-        }
-        /* 防止 PDF 分頁時切斷元素 */
+        #preview { padding: 20px; min-height: 100%; line-height: 1.6; }
         #preview p, #preview h1, #preview h2, #preview h3, #preview img, #preview li {
-            page-break-inside: avoid;
-            break-inside: avoid;
+            page-break-inside: avoid; break-inside: avoid;
         }
-        #preview img {
-            max-width: 100%;
-            height: auto;
-        }
+        #preview img { max-width: 100%; height: auto; }
     </style>
     <style>
         body { font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
@@ -54,7 +44,7 @@
         #preview-container {
             flex: 1;
             overflow: auto;
-            background: #f9f9f9;
+            background: #808080;
         }
        
         .hidden { display: none !important; }
@@ -65,7 +55,11 @@
         select { padding: 8px; border-radius: 4px; }
         /* PDF 匯出時的特殊處理類別 */
         .printing { overflow: visible !important; height: auto !important; }
+
+
+
     </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
@@ -88,7 +82,7 @@
     </div>
 </header>
 <div style="padding: 10px; background: #eee; border-bottom: 1px solid #ddd;">
-    <span style="font-size: 14px; margin-right: 10px;">自訂 CSS:</span>
+    <span style="font-size: 14px; margin-right: 10px; color: black;">自訂 CSS:</span>
     <textarea id="css-input" placeholder="例如: img { border-radius: 10px; }" style="height: 40px; width: 100%; margin-top: 5px;"></textarea>
 </div>
 <main>
@@ -128,6 +122,16 @@
         }
     });
 
+    const baseStyle = `
+        html, body{ padding: 20px; min-height: 100%; line-height: 1.6; background: #808080;}
+        p, h1, #preview h2, #preview h3, #preview img, #preview li {
+            page-break-inside: avoid; break-inside: avoid;
+        }
+        img { max-width: 100%; height: auto; }`;
+    cssInput.value = baseStyle;
+    userStyle.innerHTML = cssInput.value;
+
+
     document.getElementById('upload-md').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -144,13 +148,8 @@
         userStyle.innerHTML = cssInput.value;
     });
 
-    const baseStyle = `
-        #preview { padding: 20px; background: white; min-height: 100%; line-height: 1.6; }
-        #preview p, #preview h1, #preview h2, #preview h3, #preview img, #preview li {
-            page-break-inside: avoid; break-inside: avoid;
-        }
-        #preview img { max-width: 100%; height: auto; }`;
-    cssInput.value = baseStyle;
+
+
     // 新增：顯示 HTML 原始碼
     function showHTMLSource() {
         const fullHTML = `<!DOCTYPE html>
