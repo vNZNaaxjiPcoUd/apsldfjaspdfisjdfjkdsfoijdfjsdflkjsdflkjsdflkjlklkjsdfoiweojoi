@@ -136,8 +136,8 @@
         .piece.p2 { background-color: var(--p2-color); border: 2px solid #000; }
 
         .piece.king { transform: translateY(-4px); }
-        .piece.king.p1 { box-shadow: 0 4px 0 0 #ccc, 0 8px 6px rgba(0,0,0,0.4); }
-        .piece.king.p2 { box-shadow: 0 4px 0 0 #000, 0 8px 6px rgba(0,0,0,0.4); }
+        .piece.king.p1 { box-shadow: 0 4px 0 0 #f2ff01, 0 8px 6px rgba(0,0,0,0.4); }
+        .piece.king.p2 { box-shadow: 0 4px 0 0 #f2ff01, 0 8px 6px rgba(0,0,0,0.4); }
 
         .piece.selected {
             outline: 4px solid #f1c40f;
@@ -159,7 +159,7 @@
 
     <header>
         <div id="status">白方回合</div>
-        <button id="new-btn" onclick="window.location.reload()">新</button>
+        <button id="new-btn" onclick="window.location.reload()">New</button>
         <button id="undo-btn" onclick="undo()" disabled>↩</button>
     </header>
 
