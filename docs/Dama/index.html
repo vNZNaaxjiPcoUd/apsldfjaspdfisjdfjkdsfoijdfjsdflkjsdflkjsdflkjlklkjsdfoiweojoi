@@ -1,17 +1,16 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- 加入 viewport-fit=cover 適應 iPhone 瀏海屏 -->
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dama 土耳其跳棋</title>
-    <!-- PWA Manifest -->
+    <title>Dama</title>
     <link rel="manifest" id="manifest-link">
     <style>
         :root {
-            /* 修正1: 使用 min() 確保棋盤既不會超出寬度，也不會超出高度，並預留上下空間 */
-            --board-size: min(95vw, 65vh); /* 舊版 iOS 備用 */
-            --board-size: min(95vw, 65dvh); /* 新版 iOS 動態高度 */
+
+            --board-size: min(95vw, 65vh); 
+            --board-size: min(95vw, 65dvh); 
             --cell-size: calc(var(--board-size) / 8);
             --piece-size: calc(var(--cell-size) * 0.8);
             --p1-color: #f0f0f0;
@@ -26,17 +25,17 @@
             align-items: center;
             justify-content: center;
             
-            /* 修正2: 解決 iPhone 上下滾動與白邊的問題 */
+            
             height: 100vh;
-            height: 100dvh; /* 動態視窗高度，避開 Safari 網址列 */
-            overflow: hidden; /* 強制鎖死畫面，不允許上下滾動 */
-            touch-action: none; /* 關閉 iOS 預設的雙擊放大與橡皮筋滾動回彈效果 */
+            height: 100dvh; 
+            overflow: hidden; 
+            touch-action: none; 
 
             background-color: #2c3e50;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
             user-select: none;
-            -webkit-user-select: none; /* iOS 專用防文字選取 */
+            -webkit-user-select: none; 
         }
 
         header {
@@ -85,7 +84,7 @@
         #board {
             width: var(--board-size);
             height: var(--board-size);
-            box-sizing: border-box; /* 修正3: 讓 border 包含在棋盤長寬內，避免被額外撐大 8px */
+            box-sizing: border-box;
             display: grid;
             grid-template-columns: repeat(8, 1fr);
             grid-template-rows: repeat(8, 1fr);
@@ -153,22 +152,25 @@
             color: #bdc3c7;
             text-decoration: none;
         }
+        .status-info {
+            color: #e1f904;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <div id="status">白方回合</div>
+        <div id="status"></div>
         <button id="new-btn" onclick="window.location.reload()">New</button>
         <button id="undo-btn" onclick="undo()" disabled>↩</button>
     </header>
 
     <div id="board"></div>
-
-    <div class="footer-link"><a href="https://n.jwint.net/r?book=Dama" target="_blank">說明</a></div>
+    <div id="status-info" class="status-info"></div>
 
 <script>
-// ---------- 這裡的 JS 邏輯完全保留原本的程式碼 ----------
+
 const EMPTY = 0, P1 = 1, P2 = 2, P1_KING = 3, P2_KING = 4;
 let board = [];
 let currentPlayer = P1;
@@ -178,6 +180,11 @@ let midJumpPiece = null;
 let globalMaxCaptures = 0;
 let validMovesMap = {}; 
 let selectedPiece = null;
+
+function showInfo(...msg) {
+    const show = msg.join(' ');
+    document.getElementById("status-info").innerHTML = show;
+}
 
 function initBoard() {
     board = Array(8).fill(null).map(() => Array(8).fill(EMPTY));
@@ -412,11 +419,10 @@ function handleCellClick(r, c) {
             render();
 
             if (Object.keys(validMovesMap).length === 0) {
-                setTimeout(() => {
-                    let winner = currentPlayer === 1 ? '黑方 (Black)' : '白方 (White)';
-                    alert('遊戲結束！沒有可移動的棋子。\n獲勝者是：' + winner);
-                    initBoard();
-                }, 100);
+
+                let winner = currentPlayer === 1 ? 'Black' : 'White';
+                showInfo('Game over! No pieces can be moved. \nThe winner is:' + winner);
+
             }
         }
     }
@@ -432,6 +438,9 @@ function render() {
     statusDiv.style.backgroundColor = currentPlayer === 1 ? '#eeeeee' : '#222222';
     if (globalMaxCaptures > 0) {
         statusDiv.innerHTML += ' <span class="alert-eat">Capture</span>';
+        showInfo("must capture!");
+    }else{
+        showInfo("-");
     }
 
     let highlights = [];
@@ -487,7 +496,7 @@ if ('serviceWorker' in navigator) {
 }
 
 const manifestJSON = {
-    "name": "Dama 土耳其跳棋",
+    "name": "Dama",
     "short_name": "Dama",
     "display": "standalone",
     "background_color": "#2c3e50",
@@ -504,6 +513,8 @@ const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'applicatio
 document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
 
 initBoard();
+showInfo("Welcome!");
+
 </script>
 
 </body>
