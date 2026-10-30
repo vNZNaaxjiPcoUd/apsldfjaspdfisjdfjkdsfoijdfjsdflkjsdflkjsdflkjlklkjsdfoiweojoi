@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字幕段落與文字轉換工具</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            font-size: 18px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 15px 0;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>輸入文字（含標題與時間軸）</h2>
+    <textarea id="inputText" placeholder="請在此貼上內容..."></textarea>
+
+    <button onclick="convertText()">轉換</button>
+
+    <h2>輸出文字</h2>
+    <textarea id="outputText" placeholder="轉換結果將顯示於此..." readonly></textarea>
+
+    <script>
+        function convertText() {
+            const input = document.getElementById('inputText').value;
+            const lines = input.split('\n');
+            let result = '';
+            
+            // 匹配時間格式，支援 mm:ss 或 hh:mm:ss
+            const timePattern = /^(?:\d{1,2}:)?\d{1,2}:\d{2}$/;
+            
+            // 預設第一行文字前面「沒有」時間格式
+            let prevWasTime = false; 
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                // 略過空白行
+                if (line === '') continue;
+
+                if (timePattern.test(line)) {
+                    // 若這行是時間，標記為 true
+                    prevWasTime = true;
+                } else {
+                    // 若這行是文字
+                    if (!prevWasTime) {
+                        // 前面沒有時間格式：當作新標題，加上換行換行與 ### 
+                        result += '\n\n### ' + line;
+                    } else {
+                        // 前面有時間格式：當作延續內文
+                        if (result === '') {
+                            result += line; // 防止特例（第一行有時間但沒前置標題）
+                        } else {
+                            result += '，' + line;
+                        }
+                    }
+                    // 文字處理完畢，重置時間狀態
+                    prevWasTime = false;
+                }
+            }
+
+            // 將結果輸出至下方文字框（使用 trimStart 去除最頂部多餘的空換行）
+            document.getElementById('outputText').value = result.trimStart();
+        }
+    </script>
+</body>
+</html>
