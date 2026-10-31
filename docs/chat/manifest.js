@@ -1,6 +1,6 @@
 window.updateWebManifest = function(inP) {
 
-    const appName = "PWAXXXXXXX";
+    const appName = "Chat";
     const param = inP ? inP: appName;
     // 修正：更新網頁標題應使用 document.title
     const customName = param.split("=")[0]?param.split("=")[0]:param;
