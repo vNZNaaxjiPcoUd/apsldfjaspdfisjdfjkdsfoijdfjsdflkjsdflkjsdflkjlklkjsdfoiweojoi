@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE 廣播測試</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        #messages { background: #f4f4f4; padding: 10px; border-radius: 5px; height: 300px; overflow-y: auto; margin-top: 10px; }
+        .msg-item { padding: 5px; border-bottom: 1px solid #ddd; }
+        button { padding: 8px 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>SSE 廣播接收測試</h2>
+    
+    <button onclick="sendUpdate()">發送測試廣播</button>
+    
+    <div id="messages">
+        <!-- 接收到的訊息會顯示在這裡 -->
+    </div>
+
+    <script src="sse_chatAPI.org.js"></script>
+    <script>
+
+
+        // ==========================================
+        // 實際應用與測試
+        // ==========================================
+
+        // 1. 定義要傳入的 Callback 函式
+        async function handleMessage(msg) {
+            const msgDiv = document.getElementById('messages');
+            const newItem = document.createElement('div');
+            const timeString = new Date().toLocaleTimeString();
+            
+            newItem.className = 'msg-item';
+            newItem.textContent = `[${timeString}] 收到訊息: ${msg}`;
+            msgDiv.appendChild(newItem);
+            
+            // 讓捲動條保持在最下方
+            msgDiv.scrollTop = msgDiv.scrollHeight;
+
+            // 模擬一個非同步處理過程 (例如耗時的運算或呼叫其他 API)
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve(`處理完成: ${msg}`);
+                }, 500);
+            });
+        }
+
+        // 2. 啟動 SSE 連線
+        const connection = SSE(handleMessage);
+
+        // 3. 測試用函式：觸發 Worker 的 update API
+        async function sendUpdate() {
+            const URL="https://chatsse.puprwp.workers.dev";
+            //const msgIn = prompt("update:");
+            const msgIn = Date.now().toString() + " test<<";
+            if (!msgIn) return;
+
+            try {
+                const res = await fetch(`${URL}/?action=update&message=${encodeURIComponent(msgIn)}`);
+                if (res.ok) {
+                    console.log('更新請求發送成功');
+                } else {
+                    console.error('更新請求失敗', await res.text());
+                }
+            } catch (err) {
+                console.error('API 呼叫錯誤', err);
+            }
+        }
+    </script>
+</body>
+</html>
