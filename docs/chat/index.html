@@ -311,7 +311,7 @@
 <body>
 
     <div id="setup-screen">
-        <button class="v-btn" onclick="window.location.href='topChat'">大字</button><button class="v-btn2" onclick="window.location.href='gasChat'">GAS</button><button class="lang-btn" onclick="toggleLanguage()">中／EN</button>
+        <button class="v-btn" onclick="window.location.href='topChat'">大字</button><button class="v-btn2" onclick="window.location.href='chat_gas'">GAS</button><button id="btn-lang" class="lang-btn" >中／EN</button>
         <h2 data-i18n="setup_title">🌱 歡迎聊天室</h2>
         
         <div class="input-row">
@@ -319,14 +319,14 @@
                 <input type="text" id="setup-room" data-i18n-placeholder="setup_room_ph" placeholder="房間名稱" autocomplete="off" value="Sky天空">
             </div>
             <div class="input-col">
-                <input type="text" id="setup-name" data-i18n-placeholder="setup_name_ph" placeholder="暱稱 例如: ฅ^•ﻌ•^ฅ" autocomplete="off" onkeydown="if(event.key === 'Enter') joinChat()">
+                <input type="text" id="setup-name" data-i18n-placeholder="setup_name_ph" placeholder="暱稱 例如: ฅ^•ﻌ•^ฅ" autocomplete="off" >
             </div>
         </div>
-        <button class="main-btn" onclick="joinChat()" data-i18n="setup_btn">開始聊天 🚀</button>
+        <button id="btn-join" class="main-btn" data-i18n="setup_btn">開始聊天 🚀</button>
     </div>
 
     <div id="chat-screen">
-        <button class="lang-btn" onclick="toggleLanguage()" >中／EN</button>
+        <button class="lang-btn" id="btn-lang-main">中／EN</button>
         <div class="header">
             <span id="room-title">Room</span>
             <!-- 修改：加上 heartbeat 圖示 -->
@@ -337,12 +337,12 @@
         
         <div id="input-area">
             <input type="text" id="msg-input" data-i18n-placeholder="chat_input_ph" placeholder="輸入訊息..." autocomplete="off">
-            <button onclick="sendMsg()" id="send-btn" data-i18n="chat_send_btn">發送</button>
+            <button id="send-btn" data-i18n="chat_send_btn">發送</button>
         </div>
     </div>
 
     <script src="sse_chatAPI.js"></script>
-    <script src="cfChatSSE.js"></script>
+    <script src="cfChatSSE.org.js"></script>
 
     <script>
         if (window.visualViewport) {
