@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title data-i18n="page_title">聊天 🌿</title>
-    <!--link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet"-->
-    <!--link rel="manifest" href="manifest.json"-->
     <script>
         // PWA Manifest
         (function() {
@@ -380,7 +378,7 @@
 <body>
 
     <div id="setup-screen">
-        <button class="v-btn" onclick="window.location.href='./'">正常</button><button class="lang-btn" onclick="toggleLanguage()">中／EN</button>
+        <button class="v-btn" onclick="window.location.href='./'">正常</button><button class="lang-btn" id="btn-lang" >中／EN</button>
         <h2 data-i18n="setup_title">🌱 歡迎聊天室</h2>
         
         <div class="input-row">
@@ -391,14 +389,14 @@
                 <input type="text" id="setup-name" data-i18n-placeholder="setup_name_ph" placeholder="你的名字！" autocomplete="off" onkeydown="if(event.key === 'Enter') joinChat()">
             </div>
         </div>
-        <button class="main-btn" onclick="joinChat()" data-i18n="setup_btn">開始聊天 🚀</button>
+        <button class="main-btn" id="btn-join" data-i18n="setup_btn">開始聊天 🚀</button>
     </div>
 
     <div id="chat-screen">
         <!-- 1. 文字輸入欄改放最上面 -->
         <div id="input-area">
             <input type="text" id="msg-input" data-i18n-placeholder="chat_input_ph" placeholder="輸入訊息..." autocomplete="off">
-            <button onclick="sendMsg()" id="send-btn" data-i18n="chat_send_btn">發送</button>
+            <button id="send-btn" data-i18n="chat_send_btn">發送</button>
         </div>
         
         <!-- 2. 對話區塊：新到舊由上往下排 -->
@@ -409,7 +407,7 @@
             <span id="room-title">Room</span>
             <span class="online-status"><span id="polling-heartbeat" class="polling-icon">🟢</span> <span data-i18n="online_label">在線:</span> <span id="online-count">?</span> </span>
         </div>
-        <button class="lang-btn" onclick="toggleLanguage()" >中／EN</button>
+        <button class="lang-btn" id="btn-lang-main">中／EN</button>
     </div>
 
     <script src="sse_chatAPI.js"></script>
