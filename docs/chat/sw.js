@@ -2,7 +2,7 @@ const CACHE_NAME_HEAD = '聊天🌿';
 
 
 // 此部份聊天🌿不用修改，為swJsVersionUpdate.js自動更新，於 updateCode.sh 呼叫發動。
-const CACHE_NAME = '聊天🌿-v.261031112111'; 
+const CACHE_NAME = '聊天🌿-v.261031112231'; 
 
 // 更新相應暫存檔案
 const urlsToCache = [
