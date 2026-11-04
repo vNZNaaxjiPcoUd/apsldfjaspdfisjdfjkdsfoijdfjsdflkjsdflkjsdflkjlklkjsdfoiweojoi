@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <!-- 加入 maximum-scale=1.0 確保在 iOS 上不會被意外雙擊放大 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Markdown Viewer</title>
+    
+    <!-- 引入 CryptoJS 用於前端計算 MD5 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    
+    <style>
+        /* 基礎版面設定：移除邊距，鎖定全螢幕 */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            width: 100vw;
+            height: 100dvh; /* 動態視區高度，完美貼合行動版 Safari */
+            overflow: hidden; /* 防止 body 產生多餘捲軸 */
+            box-sizing: border-box;
+        }
+
+        /* 針對 Textarea 最大化與防跑版設定 */
+        #content {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            padding: 20px; /* 保留閱讀邊距 */
+            background-color: #000; /* 必須為 textarea 明確指定背景與文字顏色 */
+            color: #fff;
+            font-size: 16px; /* iOS Safari 必須 >= 16px 才能防止點擊時自動縮放 */
+            line-height: 1.6;
+            border: none;
+            outline: none;
+            resize: none; /* 禁止右下角拖曳縮放 */
+            
+            /* 確保文字過長時自動換行，並且只有垂直捲動 */
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: hidden;
+            overflow-y: auto;
+            
+            /* 移除 iOS Safari 預設的內部陰影與圓角 */
+            -webkit-appearance: none;
+            border-radius: 0;
+            display: block;
+            margin: 0;
+        }              
+
+        /* 以下為您原先保留的 Markdown 樣式（若後續會透過 JS 將 textarea 切換成 div 渲染，則這些樣式會派上用場） */
+        a { color: #4DA8DA; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        pre, code {
+            background-color: #222;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        pre {
+            padding: 15px;
+            overflow-x: auto; 
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        blockquote {
+            border-left: 4px solid #555;
+            margin-left: 0;
+            padding-left: 15px;
+            color: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <textarea id="content" placeholder="載入中..."></textarea>
+
+    <script src="text.js"></script>
+</body>
+</html>
