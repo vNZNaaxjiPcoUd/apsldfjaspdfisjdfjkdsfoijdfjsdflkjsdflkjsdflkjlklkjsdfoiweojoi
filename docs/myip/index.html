@@ -13,7 +13,8 @@
     async function ipAddr() {     
       let txtIP = "";
       try {
-        const response = await fetch("https://api.ipify.org/",{cache:"no-cache"});
+        //const response = await fetch("https://api.ipify.org/",{cache:"no-cache"});
+        const response = await fetch("https://myip.puprwp.workers.dev/",{cache:"no-cache"});
         if (!response.ok) {
           throw new Error(`Response status: ${response.status}`);
         }
