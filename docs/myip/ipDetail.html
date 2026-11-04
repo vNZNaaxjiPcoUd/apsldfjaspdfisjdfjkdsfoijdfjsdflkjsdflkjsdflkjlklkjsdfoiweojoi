@@ -68,7 +68,8 @@ async function getIpJson(ip) {
     // 使用免費 CORS 代理：https://api.allorigins.win
     const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
-    const response = await fetch(proxyUrl);
+    //const response = await fetch(proxyUrl,{cache:"no-cache"});
+    const response = await fetch(targetUrl,{cache:"no-cache"});
     if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
