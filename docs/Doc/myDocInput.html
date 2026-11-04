@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <!-- 確保手機裝置上的自適應縮放與防爆版 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>文章保存</title>
+    <!-- 引入 CryptoJS 來處理 MD5 雜湊計算 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        /* 基礎重置與全螢幕設定 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #f5f5f5;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        
+        /* 採用 Flexbox 容器讓元件自適應填滿畫面 */
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 12px;
+            box-sizing: border-box;
+            gap: 12px;
+        }
+        
+        /* 上方 K 值與按鈕的橫向排版 */
+        .header-row {
+            display: flex;
+            gap: 10px;
+            height: 48px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        input[type="password"] {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            padding: 0 24px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            white-space: nowrap; /* 防止按鈕文字換行 */
+            transition: background-color 0.2s;
+        }
+        
+        button:active {
+            background-color: #0056b3;
+        }
+        
+        button:disabled {
+            background-color: #999;
+            cursor: not-allowed;
+        }
+        
+        /* 下方 V 值文字區塊，flex: 1 會吃掉所有剩餘高度 (約80%) */
+        textarea {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            line-height: 1.5;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            resize: none; /* 鎖住手動縮放以維持版面完整 */
+            box-sizing: border-box;
+        }
+        
+        .status {
+            font-size: 14px;
+            color: #666;
+            text-align: right;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 名稱 (K) 與按鈕 -->
+        <div class="header-row">
+            <input type="text" id="keyInput" placeholder="請輸入名稱">
+            <input type="password" id="pwdInput" placeholder="">
+            <button id="submitBtn">確定</button>
+        </div>
+        
+        <!-- 文章內容 (V) -->
+        <textarea id="valueInput" placeholder="請輸入文章內容"></textarea>
+        
+        <!-- 狀態提示 -->
+        <div id="statusText" class="status">準備就緒</div>
+    </div>
+
+    <script src="myDocInput.js"></script>
+</body>
+</html>
