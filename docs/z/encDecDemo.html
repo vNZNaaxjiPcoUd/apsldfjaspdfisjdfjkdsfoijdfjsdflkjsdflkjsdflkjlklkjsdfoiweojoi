@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>零知識（Zero-Knowledge）端對端加密互動示範</title>
+  <!-- 載入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 載入 Google Fonts (Inter 與 Noto Sans TC) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            slate: {
+              850: '#151e2e',
+              950: '#0a0f1c',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* 自訂捲軸與細微發光效果 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(51, 65, 85, 0.7);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-200 font-sans min-h-screen flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
+
+  <!-- 頂部通知 Toast 容器（取代 alert） -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- 頁首區塊 -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+            零知識（Zero-Knowledge）端對端加密互動實驗室
+            <span class="hidden md:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              Web Crypto API · AES-GCM 256-bit
+            </span>
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+            全程於瀏覽器本地運算，體驗「金鑰留存在 URL <code class="text-amber-400 font-mono">#</code> 後方、伺服器僅見盲化密文」的架構原理
+          </p>
+        </div>
+      </div>
+
+      <button onclick="resetDemo()" class="self-end sm:self-auto px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        重置示範狀態
+      </button>
+    </div>
+  </header>
+
+  <!-- 主要內容區 -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- 架構流程與可見範圍提示圖 -->
+    <section class="glass-panel rounded-2xl p-4 sm:p-5 shadow-xl">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          零知識資料流向與節點可見範圍架構圖
+        </h2>
+        <span class="text-xs text-slate-500 hidden sm:inline">RFC 3986：瀏覽器發送 HTTP 請求時會自動截斷 # Fragment</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+        <!-- 節點 1：傳送端 -->
+        <div class="rounded-xl bg-slate-900/90 border border-slate-800 p-3.5 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-sky-400 flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              1. 傳送端瀏覽器（本地）
+            </span>
+            <span class="text-[11px] px-2 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20">全權可見</span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            本地生成 <span class="text-amber-300 font-mono">256-bit Key</span> 與 <span class="text-purple-300 font-mono">12B IV</span>，加密產出密文後，僅上傳密文至伺服器，並將金鑰拼接於網址 <code class="text-amber-300">#</code> 後方。
+          </p>
+        </div>
+
+        <!-- 節點 2：伺服器 -->
+        <div class="rounded-xl bg-slate-900/90 border border-rose-500/25 p-3.5 flex flex-col justify-between relative overflow-hidden">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-rose-400 flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+              2. 雲端伺服器（盲化儲存）
+            </span>
+            <span class="text-[11px] px-2 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30">無金鑰 · 無法解密</span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            僅儲存 <span class="text-purple-300 font-mono">[IV + Ciphertext + AuthTag]</span>。HTTPS 請求不包含 <code class="text-amber-300">#</code> 後方內容，伺服器日誌與資料庫皆無明文與金鑰。
+          </p>
+        </div>
+
+        <!-- 節點 3：接收端 -->
+        <div class="rounded-xl bg-slate-900/90 border border-slate-800 p-3.5 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-emerald-400 flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              3. 接收端瀏覽器（本地）
+            </span>
+            <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">本地還原</span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            向伺服器取得密文封包，切出前 <span class="text-purple-300 font-mono">12 bytes IV</span>，並從本地 <code class="text-amber-300">location.hash</code> 提取金鑰執行 AES-GCM 驗證與解密。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 雙向操作主工作區：左欄（加密端） / 右欄（解密端） -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+
+      <!-- ==================== 左欄：加密端（傳送者模擬） ==================== -->
+      <section class="glass-panel rounded-2xl p-5 sm:p-6 shadow-2xl border-t-4 border-t-sky-500 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-sky-400">Sender Simulation</span>
+            <h2 class="text-lg sm:text-xl font-bold text-white mt-0.5 flex items-center gap-2">
+              加密端（傳送者模擬）
+            </h2>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-300 text-xs font-mono">
+            Encrypt &amp; Split
+          </span>
+        </div>
+
+        <!-- 步驟 1：輸入明文 -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label for="plaintext-input" class="block text-sm font-medium text-slate-300">
+              1. 輸入欲加密的機密明文（Plaintext）
+            </label>
+            <button type="button" onclick="fillSampleSecret()" class="text-xs text-sky-400 hover:text-sky-300 underline underline-offset-2">
+              填入範例機密訊息
+            </button>
+          </div>
+          <textarea
+            id="plaintext-input"
+            rows="3"
+            placeholder="請輸入密碼、API 金鑰或私人備忘錄..."
+            class="w-full rounded-xl bg-slate-900 border border-slate-700 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 text-slate-100 placeholder-slate-500 p-3 text-sm transition outline-none"
+          >生產環境資料庫連線字串：postgres://admin:S3cr3tP@ssw0rd!@db.internal:5432/prod_core</textarea>
+        </div>
+
+        <!-- 執行加密按鈕 -->
+        <button
+          id="encrypt-btn"
+          type="button"
+          onclick="handleEncrypt()"
+          class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-semibold text-sm shadow-lg shadow-sky-500/20 active:scale-[0.99] transition flex items-center justify-center gap-2"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          </svg>
+          生成 256-bit 金鑰與隨機 IV 並執行加密
+        </button>
+
+        <!-- 加密結果拆解視覺化區塊（初始隱藏，加密後顯示） -->
+        <div id="encrypt-results" class="hidden space-y-4 pt-2 border-t border-slate-800/80">
+
+          <!-- 視覺化結構條：IV + Ciphertext + Auth Tag -->
+          <div class="rounded-xl bg-slate-900/90 border border-slate-800 p-3.5 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-medium text-slate-300">二進位封包結構拆解（Byte Layout）</span>
+              <span id="total-bytes-badge" class="font-mono text-slate-400">0 Bytes</span>
+            </div>
+            <div class="flex w-full h-7 rounded-lg overflow-hidden font-mono text-[11px] font-semibold border border-slate-700">
+              <div class="w-1/4 bg-purple-600/30 border-r border-purple-500/40 text-purple-200 flex items-center justify-center px-1 truncate" title="12 Bytes 隨機初始向量">
+                IV (12B)
+              </div>
+              <div class="w-2/4 bg-rose-600/25 border-r border-rose-500/40 text-rose-200 flex items-center justify-center px-1 truncate" title="AES-GCM 加密後的密文主體">
+                Ciphertext (<span id="cipher-only-bytes">0</span>B)
+              </div>
+              <div class="w-1/4 bg-amber-600/25 text-amber-200 flex items-center justify-center px-1 truncate" title="16 Bytes GCM 完整性驗證標籤">
+                Tag (16B)
+              </div>
+            </div>
+          </div>
+
+          <!-- 區域 1：伺服器端儲存的資料（Payload） -->
+          <div class="rounded-xl bg-rose-950/20 border border-rose-500/30 p-4 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 class="text-sm font-bold text-rose-300 flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+                ① 伺服器端儲存的資料（Payload）
+              </h3>
+              <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-rose-500/20 text-rose-200 border border-rose-500/30">
+                伺服器只看得到這部分
+              </span>
+            </div>
+
+            <!-- 完整 Combined Base64 -->
+            <div>
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                <span>完整上傳封包（<code class="text-purple-300">IV</code> + <code class="text-rose-300">Ciphertext</code> + <code class="text-amber-300">AuthTag</code> Base64）</span>
+                <button type="button" onclick="copyText('out-combined-b64', '已複製完整密文 Payload')" class="text-rose-300 hover:text-rose-200 font-medium">複製</button>
+              </div>
+              <div id="out-combined-b64" class="font-mono text-xs bg-slate-950/90 border border-slate-800 rounded-lg p-2.5 text-slate-200 break-all select-all"></div>
+            </div>
+
+            <!-- 拆解出的 IV 與純密文 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              <div class="bg-slate-950/70 border border-slate-800/90 rounded-lg p-2.5">
+                <div class="text-[11px] text-purple-300 font-medium mb-1">前 12-byte 隨機 IV（Hex）</div>
+                <div id="out-iv-hex" class="font-mono text-xs text-purple-200 break-all"></div>
+                <div class="text-[11px] text-slate-500 mt-1">Base64: <span id="out-iv-b64" class="font-mono text-slate-400"></span></div>
+              </div>
+              <div class="bg-slate-950/70 border border-slate-800/90 rounded-lg p-2.5">
+                <div class="text-[11px] text-rose-300 font-medium mb-1">剩餘密文 + 16B Auth Tag（Base64）</div>
+                <div id="out-cipher-only-b64" class="font-mono text-xs text-slate-300 break-all line-clamp-2"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 區域 2：URL Fragment 金鑰（# 後方） -->
+          <div class="rounded-xl bg-amber-950/20 border border-amber-500/30 p-4 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 class="text-sm font-bold text-amber-300 flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                ② URL Fragment 金鑰（# 後方）
+              </h3>
+              <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/20 text-amber-200 border border-amber-500/30">
+                僅存於本地與網址 # 後方，不傳送給伺服器
+              </span>
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-400">
+              <span>256-bit AES-GCM 原始金鑰（Base64URL 編碼）</span>
+              <button type="button" onclick="copyText('out-key-b64url', '已複製 Base64URL 金鑰')" class="text-amber-300 hover:text-amber-200 font-medium">複製金鑰</button>
+            </div>
+            <div id="out-key-b64url" class="font-mono text-xs bg-slate-950/90 border border-slate-800 rounded-lg p-2.5 text-amber-300 break-all select-all"></div>
+          </div>
+
+          <!-- 區域 3：完整零知識分享網址模擬 -->
+          <div class="rounded-xl bg-emerald-950/20 border border-emerald-500/30 p-4 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 class="text-sm font-bold text-emerald-300 flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                ③ 完整零知識分享網址模擬
+              </h3>
+              <span class="text-[11px] text-emerald-400/80 font-mono">HTTPS GET 僅請求 /s/demo-id</span>
+            </div>
+
+            <div class="font-mono text-xs bg-slate-950/90 border border-slate-800 rounded-lg p-2.5 break-all select-all">
+              <span class="text-slate-400">https://example.com/s/demo-id</span><span class="text-amber-400 font-semibold">#<span id="out-url-hash"></span></span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              <button
+                type="button"
+                onclick="copyFullShareUrl()"
+                class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition flex items-center justify-center gap-1.5"
+              >
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                一鍵複製完整分享網址
+              </button>
+
+              <button
+                type="button"
+                onclick="sendToDecryptSimulator()"
+                class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-1.5"
+              >
+                傳送到右側解密端模擬
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================== 右欄：解密端（接收者模擬） ==================== -->
+      <section class="glass-panel rounded-2xl p-5 sm:p-6 shadow-2xl border-t-4 border-t-emerald-500 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Receiver Simulation</span>
+            <h2 class="text-lg sm:text-xl font-bold text-white mt-0.5 flex items-center gap-2">
+              解密端（接收者模擬）
+            </h2>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-mono">
+            Verify &amp; Decrypt
+          </span>
+        </div>
+
+        <!-- 輸入 A：完整分享網址 或 金鑰 -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label for="decrypt-url-or-key" class="block text-sm font-medium text-slate-300">
+              1. 貼上包含 <code class="text-amber-400">#金鑰</code> 的分享網址（或直接貼上金鑰）
+            </label>
+            <span id="parsed-key-status" class="text-[11px] font-mono text-slate-500">等待輸入</span>
+          </div>
+          <input
+            id="decrypt-url-or-key"
+            type="text"
+            oninput="handleUrlOrKeyInput()"
+            placeholder="例如：https://example.com/s/demo-id#Base64URL金鑰 或直接貼上金鑰"
+            class="w-full rounded-xl bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-amber-300 placeholder-slate-500 p-3 font-mono text-xs transition outline-none"
+          />
+          <!-- 自動解析出的 Fragment 金鑰提示框 -->
+          <div id="extracted-key-preview" class="hidden rounded-lg bg-slate-900/90 border border-amber-500/30 px-3 py-2 text-xs flex items-center justify-between gap-2">
+            <span class="text-slate-400 shrink-0">自動解析 <code class="text-amber-400">URL.hash</code> 金鑰：</span>
+            <span id="extracted-key-value" class="font-mono text-amber-300 truncate"></span>
+          </div>
+        </div>
+
+        <!-- 輸入 B：伺服器回傳的密文 -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label for="decrypt-payload-input" class="block text-sm font-medium text-slate-300">
+              2. 伺服器回傳的密文封包（<code class="text-purple-300">IV</code> + <code class="text-rose-300">Ciphertext</code> + <code class="text-amber-300">Tag</code> Base64）
+            </label>
+            <!-- 防竄改測試按鈕 -->
+            <button
+              type="button"
+              onclick="tamperCiphertext()"
+              class="px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-medium transition flex items-center gap-1"
+              title="修改密文中的 1 個字元，測試 AES-GCM 完整性驗證標籤是否能偵測竄改"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              模擬駭客竄改密文 1 個字元
+            </button>
+          </div>
+          <textarea
+            id="decrypt-payload-input"
+            rows="3"
+            placeholder="請貼上從伺服器取得的 Base64 密文封包..."
+            class="w-full rounded-xl bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-slate-200 placeholder-slate-500 p-3 font-mono text-xs transition outline-none"
+          ></textarea>
+        </div>
+
+        <!-- 本地端解密按鈕 -->
+        <button
+          id="decrypt-btn"
+          type="button"
+          onclick="handleDecrypt()"
+          class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold text-sm shadow-lg shadow-emerald-500/20 active:scale-[0.99] transition flex items-center justify-center gap-2"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+          </svg>
+          切出前 12 Bytes IV 並執行本地端解密
+        </button>
+
+        <!-- 解密成功顯示區 -->
+        <div id="decrypt-success-box" class="hidden rounded-xl bg-emerald-950/30 border border-emerald-500/40 p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-emerald-300 flex items-center gap-1.5">
+              <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              本地端解密成功（Auth Tag 完整性驗證通過）
+            </span>
+            <button type="button" onclick="copyText('decrypted-plaintext-output', '已複製還原的明文')" class="text-xs text-emerald-300 hover:text-emerald-200 font-medium">
+              複製明文
+            </button>
+          </div>
+
+          <div class="text-xs text-slate-400 flex flex-wrap gap-x-4 gap-y-1 font-mono bg-slate-950/60 px-3 py-2 rounded-lg border border-slate-800">
+            <span>切出 IV (12B)：<span id="dec-extracted-iv" class="text-purple-300"></span></span>
+            <span>密文主體：<span id="dec-cipher-len" class="text-rose-300"></span> Bytes</span>
+          </div>
+
+          <div>
+            <div class="text-xs text-slate-400 mb-1">還原的機密明文（Plaintext）：</div>
+            <div id="decrypted-plaintext-output" class="rounded-lg bg-slate-950 border border-emerald-500/30 p-3 text-sm text-white whitespace-pre-wrap break-words font-medium"></div>
+          </div>
+        </div>
+
+        <!-- 解密失敗 / 竄改警報顯示區 -->
+        <div id="decrypt-error-box" class="hidden rounded-xl bg-rose-950/40 border border-rose-500/50 p-4 space-y-2">
+          <div class="flex items-center gap-2 text-rose-300 font-bold text-sm">
+            <svg class="w-5 h-5 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span id="decrypt-error-title">解密失敗：完整性驗證未通過（OperationError）</span>
+          </div>
+          <p id="decrypt-error-desc" class="text-xs text-rose-200/90 leading-relaxed">
+            AES-GCM 的 16-byte 驗證標籤（Auth Tag）比對失敗！這代表密文、IV 在傳輸或儲存過程中曾遭到竄改，或者您輸入的金鑰不正確。瀏覽器已拒絕輸出任何未經授權的資料。
+          </p>
+        </div>
+
+      </section>
+    </div>
+
+  </main>
+
+  <!-- 頁尾 -->
+  <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500">
+    本頁面完全使用瀏覽器原生 <code class="text-slate-400">window.crypto.subtle</code>（AES-GCM）與 <code class="text-slate-400">crypto.getRandomValues</code> 運算，無任何資料傳送至外部伺服器。
+  </footer>
+
+  <!-- 核心 Web Crypto API 與互動邏輯 -->
+  <script>
+    // 儲存最近一次加密產生的結果，方便一鍵傳送至解密端模擬
+    let latestEncryptedState = {
+      combinedBase64: '',
+      keyBase64Url: '',
+      fullShareUrl: ''
+    };
+
+    /**
+     * 顯示非阻塞式通知訊息（取代 alert）
+     */
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+
+      const styles = {
+        success: 'bg-emerald-950/95 border-emerald-500/50 text-emerald-200',
+        error: 'bg-rose-950/95 border-rose-500/50 text-rose-200',
+        warning: 'bg-amber-950/95 border-amber-500/50 text-amber-200',
+        info: 'bg-slate-900/95 border-sky-500/50 text-sky-200'
+      };
+
+      toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border shadow-xl text-xs font-medium flex items-center gap-2 transition-all duration-300 transform translate-y-0 opacity-100 ${styles[type] || styles.info}`;
+      toast.textContent = message;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 2800);
+    }
+
+    /**
+     * 安全複製文字至剪貼簿（相容 iFrame 環境）
+     */
+    function copyTextToClipboard(text, successMsg) {
+      if (!text) return;
+      const tempTextarea = document.createElement('textarea');
+      tempTextarea.value = text;
+      tempTextarea.style.position = 'fixed';
+      tempTextarea.style.left = '-9999px';
+      document.body.appendChild(tempTextarea);
+      tempTextarea.select();
+      try {
+        document.execCommand('copy');
+        showToast(successMsg || '已複製到剪貼簿', 'success');
+      } catch (err) {
+        showToast('複製失敗，請手動選取複製', 'error');
+      } finally {
+        document.body.removeChild(tempTextarea);
+      }
+    }
+
+    function copyText(elementId, successMsg) {
+      const el = document.getElementById(elementId);
+      if (el) copyTextToClipboard(el.textContent.trim(), successMsg);
+    }
+
+    function copyFullShareUrl() {
+      if (latestEncryptedState.fullShareUrl) {
+        copyTextToClipboard(latestEncryptedState.fullShareUrl, '已複製完整零知識分享網址（含 # 金鑰）');
+      }
+    }
+
+    /**
+     * 編碼/解碼輔助工具：Uint8Array <-> Base64 / Base64URL / Hex
+     */
+    function uint8ArrayToBase64(bytes) {
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+
+    function base64ToUint8Array(base64) {
+      const cleanBase64 = base64.trim();
+      const binary = window.atob(cleanBase64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    function uint8ArrayToBase64Url(bytes) {
+      return uint8ArrayToBase64(bytes)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    function base64UrlToUint8Array(base64Url) {
+      let base64 = base64Url.trim().replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4 !== 0) {
+        base64 += '=';
+      }
+      return base64ToUint8Array(base64);
+    }
+
+    function uint8ArrayToHex(bytes) {
+      return Array.from(bytes)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    }
+
+    /**
+     * 填入隨機範例機密訊息
+     */
+    function fillSampleSecret() {
+      const samples = [
+        '生產環境資料庫連線字串：postgres://admin:S3cr3tP@ssw0rd!@db.internal:5432/prod_core',
+        '【機密】AWS Root 備用恢復碼：8492-1049-5820-9912（閱後請立即銷毀）',
+        '冷錢包助記詞備份（僅限本地解密）：abandon ability able about above absent absorb abstract absurd abuse access accident'
+      ];
+      const input = document.getElementById('plaintext-input');
+      const current = input.value.trim();
+      const next = samples.find(s => s !== current) || samples[0];
+      input.value = next;
+      showToast('已填入範例機密訊息', 'info');
+    }
+
+    /**
+     * 1. 加密端核心邏輯（Web Crypto API AES-GCM 256-bit）
+     */
+    async function handleEncrypt() {
+      const plainText = document.getElementById('plaintext-input').value;
+      if (!plainText.trim()) {
+        showToast('請先輸入欲加密的明文訊息！', 'warning');
+        return;
+      }
+
+      try {
+        // 步驟 A：使用瀏覽器原生 Web Crypto API 生成 256-bit AES-GCM 對稱金鑰
+        const cryptoKey = await window.crypto.subtle.generateKey(
+          {
+            name: 'AES-GCM',
+            length: 256
+          },
+          true, // 允許匯出金鑰以放入 URL Fragment (#)
+          ['encrypt', 'decrypt']
+        );
+
+        // 步驟 B：生成 12 bytes (96 bits) 密碼學安全隨機 IV
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+        // 步驟 C：將明文編碼為 UTF-8 位元組並執行 AES-GCM 加密
+        const encoder = new TextEncoder();
+        const encodedPlaintext = encoder.encode(plainText);
+
+        const cipherBuffer = await window.crypto.subtle.encrypt(
+          {
+            name: 'AES-GCM',
+            iv: iv
+          },
+          cryptoKey,
+          encodedPlaintext
+        );
+
+        // cipherBuffer 內含：[加密後的密文主體] + [16 bytes Auth Tag]
+        const cipherWithTagArray = new Uint8Array(cipherBuffer);
+
+        // 步驟 D：將 [12B IV] 與 [Ciphertext + 16B Auth Tag] 合併成單一封包
+        const combinedPayload = new Uint8Array(iv.length + cipherWithTagArray.length);
+        combinedPayload.set(iv, 0);
+        combinedPayload.set(cipherWithTagArray, iv.length);
+
+        // 步驟 E：匯出原始 32-byte (256-bit) 金鑰並轉為 URL 安全的 Base64URL 格式
+        const rawKeyBuffer = await window.crypto.subtle.exportKey('raw', cryptoKey);
+        const rawKeyBytes = new Uint8Array(rawKeyBuffer);
+        const keyBase64Url = uint8ArrayToBase64Url(rawKeyBytes);
+
+        // 轉碼顯示資訊
+        const combinedBase64 = uint8ArrayToBase64(combinedPayload);
+        const ivHex = uint8ArrayToHex(iv);
+        const ivBase64 = uint8ArrayToBase64(iv);
+        const cipherOnlyBase64 = uint8ArrayToBase64(cipherWithTagArray);
+        const fullShareUrl = `https://example.com/s/demo-id#${keyBase64Url}`;
+
+        // 儲存狀態
+        latestEncryptedState = {
+          combinedBase64,
+          keyBase64Url,
+          fullShareUrl
+        };
+
+        // 更新 UI 拆解視覺化欄位
+        const cipherBodyLen = Math.max(0, cipherWithTagArray.length - 16);
+        document.getElementById('total-bytes-badge').textContent = `總計 ${combinedPayload.length} Bytes`;
+        document.getElementById('cipher-only-bytes').textContent = cipherBodyLen;
+
+        document.getElementById('out-combined-b64').textContent = combinedBase64;
+        document.getElementById('out-iv-hex').textContent = ivHex;
+        document.getElementById('out-iv-b64').textContent = ivBase64;
+        document.getElementById('out-cipher-only-b64').textContent = cipherOnlyBase64;
+
+        document.getElementById('out-key-b64url').textContent = keyBase64Url;
+        document.getElementById('out-url-hash').textContent = keyBase64Url;
+
+        document.getElementById('encrypt-results').classList.remove('hidden');
+        showToast('本地端加密完成！已生成隨機 IV 與 256-bit 金鑰', 'success');
+      } catch (error) {
+        console.error('加密失敗:', error);
+        showToast(`加密過程發生錯誤：${error.message}`, 'error');
+      }
+    }
+
+    /**
+     * 將左側加密結果一鍵傳送到右側解密端模擬
+     */
+    function sendToDecryptSimulator() {
+      if (!latestEncryptedState.combinedBase64 || !latestEncryptedState.fullShareUrl) {
+        showToast('請先在左側執行加密！', 'warning');
+        return;
+      }
+
+      // 模擬瀏覽器在本地網址列寫入 #Fragment（不發送給伺服器）
+      try {
+        window.history.replaceState(null, '', `#${latestEncryptedState.keyBase64Url}`);
+      } catch (e) {
+        // 忽略受限 iFrame 環境可能的 history 限制
+      }
+
+      // 填入右側解密表單
+      document.getElementById('decrypt-url-or-key').value = latestEncryptedState.fullShareUrl;
+      document.getElementById('decrypt-payload-input').value = latestEncryptedState.combinedBase64;
+
+      // 觸發網址解析預覽並清除舊的解密結果框
+      handleUrlOrKeyInput();
+      document.getElementById('decrypt-success-box').classList.add('hidden');
+      document.getElementById('decrypt-error-box').classList.add('hidden');
+
+      showToast('已模擬傳送至接收端！可點擊「本地端解密」或測試竄改密文', 'info');
+    }
+
+    /**
+     * 解析輸入框中的完整分享網址（提取 # 後方金鑰）或直接識別純金鑰
+     */
+    function extractKeyFromInput(rawInput) {
+      const trimmed = rawInput.trim();
+      if (!trimmed) return '';
+
+      // 若包含 # 符號，模擬瀏覽器讀取 URL.hash 的行為
+      const hashIndex = trimmed.indexOf('#');
+      if (hashIndex !== -1) {
+        return trimmed.slice(hashIndex + 1).trim();
+      }
+      return trimmed;
+    }
+
+    function handleUrlOrKeyInput() {
+      const rawInput = document.getElementById('decrypt-url-or-key').value;
+      const previewBox = document.getElementById('extracted-key-preview');
+      const previewVal = document.getElementById('extracted-key-value');
+      const statusBadge = document.getElementById('parsed-key-status');
+
+      if (!rawInput.trim()) {
+        previewBox.classList.add('hidden');
+        statusBadge.textContent = '等待輸入';
+        statusBadge.className = 'text-[11px] font-mono text-slate-500';
+        return;
+      }
+
+      const extractedKey = extractKeyFromInput(rawInput);
+      if (rawInput.includes('#')) {
+        previewBox.classList.remove('hidden');
+        previewVal.textContent = extractedKey || '(空值)';
+        statusBadge.textContent = '已從 URL # Fragment 提取金鑰';
+        statusBadge.className = 'text-[11px] font-mono text-amber-400';
+      } else {
+        previewBox.classList.add('hidden');
+        statusBadge.textContent = '已識別為直接輸入金鑰';
+        statusBadge.className = 'text-[11px] font-mono text-emerald-400';
+      }
+    }
+
+    /**
+     * 防竄改測試：模擬駭客修改伺服器密文中的 1 個字元
+     */
+    function tamperCiphertext() {
+      const payloadInput = document.getElementById('decrypt-payload-input');
+      const currentVal = payloadInput.value.trim();
+
+      if (!currentVal || currentVal.length < 20) {
+        showToast('請先產生或貼上有效的密文封包，再進行竄改測試！', 'warning');
+        return;
+      }
+
+      // 挑選密文中後段（屬於 Ciphertext 或 Auth Tag 的區域）修改 1 個 Base64 字元
+      const targetIndex = Math.floor(currentVal.length * 0.75);
+      const originalChar = currentVal[targetIndex];
+      const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+      let replacementChar = 'X';
+      for (const ch of base64Chars) {
+        if (ch !== originalChar) {
+          replacementChar = ch;
+          break;
+        }
+      }
+
+      const tampered =
+        currentVal.slice(0, targetIndex) +
+        replacementChar +
+        currentVal.slice(targetIndex + 1);
+
+      payloadInput.value = tampered;
+      showToast(`已模擬駭客將第 ${targetIndex + 1} 個字元從 '${originalChar}' 竄改為 '${replacementChar}'！請點擊「本地端解密」驗證`, 'warning');
+    }
+
+    /**
+     * 2. 解密端核心邏輯（切出前 12B IV + AES-GCM 解密與完整性驗證）
+     */
+    async function handleDecrypt() {
+      const successBox = document.getElementById('decrypt-success-box');
+      const errorBox = document.getElementById('decrypt-error-box');
+      successBox.classList.add('hidden');
+      errorBox.classList.add('hidden');
+
+      const rawUrlOrKey = document.getElementById('decrypt-url-or-key').value;
+      const combinedBase64 = document.getElementById('decrypt-payload-input').value.trim();
+
+      const keyBase64Url = extractKeyFromInput(rawUrlOrKey);
+
+      if (!keyBase64Url) {
+        showToast('請輸入包含 #金鑰 的分享網址或直接輸入金鑰！', 'warning');
+        return;
+      }
+      if (!combinedBase64) {
+        showToast('請貼上伺服器回傳的密文封包！', 'warning');
+        return;
+      }
+
+      try {
+        // 步驟 A：將 Base64URL 金鑰還原為 32 bytes 二進位陣列並匯入 Web Crypto API
+        const rawKeyBytes = base64UrlToUint8Array(keyBase64Url);
+        if (rawKeyBytes.length !== 32) {
+          throw new Error(`金鑰長度不符（預期 32 bytes / 256-bit，實際為 ${rawKeyBytes.length} bytes）`);
+        }
+
+        const cryptoKey = await window.crypto.subtle.importKey(
+          'raw',
+          rawKeyBytes,
+          { name: 'AES-GCM' },
+          false,
+          ['decrypt']
+        );
+
+        // 步驟 B：將完整密文封包從 Base64 還原為 Uint8Array
+        const combinedBytes = base64ToUint8Array(combinedBase64);
+        // 12 bytes IV + 至少 16 bytes Auth Tag = 28 bytes
+        if (combinedBytes.length < 28) {
+          throw new Error('密文封包長度不足，無法包含完整的 12-byte IV 與 16-byte 驗證標籤');
+        }
+
+        // 步驟 C：固定切出前 12 bytes 還原 IV，剩餘部分為 [Ciphertext + 16B Auth Tag]
+        const iv = combinedBytes.slice(0, 12);
+        const cipherWithTag = combinedBytes.slice(12);
+
+        // 步驟 D：執行 AES-GCM 本地解密（若密文、IV 或 Tag 遭改動，此處會直接拋出 OperationError）
+        const decryptedBuffer = await window.crypto.subtle.decrypt(
+          {
+            name: 'AES-GCM',
+            iv: iv
+          },
+          cryptoKey,
+          cipherWithTag
+        );
+
+        // 步驟 E：將還原的 UTF-8 位元組解碼回明文字串
+        const decoder = new TextDecoder();
+        const plainText = decoder.decode(decryptedBuffer);
+
+        // 顯示解密成功資訊
+        document.getElementById('dec-extracted-iv').textContent = uint8ArrayToHex(iv);
+        document.getElementById('dec-cipher-len').textContent = Math.max(0, cipherWithTag.length - 16);
+        document.getElementById('decrypted-plaintext-output').textContent = plainText;
+
+        successBox.classList.remove('hidden');
+        showToast('本地端解密成功！Auth Tag 完整性驗證通過', 'success');
+      } catch (err) {
+        console.error('解密失敗:', err);
+        const errTitle = document.getElementById('decrypt-error-title');
+        const errDesc = document.getElementById('decrypt-error-desc');
+
+        if (err.name === 'OperationError') {
+          errTitle.textContent = '解密遭到拒絕：AES-GCM 完整性驗證失敗（OperationError）';
+          errDesc.textContent =
+            '密文、IV 與 16-byte 驗證標籤（Auth Tag）的加密雜湊比對不符！這代表資料在傳輸或伺服器儲存期間遭到竄改，或您使用的解密金鑰錯誤。零知識驗證機制已成功攔截遭污染的資料。';
+        } else {
+          errTitle.textContent = '解密格式解析錯誤';
+          errDesc.textContent = `無法解析輸入的金鑰或密文格式：${err.message}`;
+        }
+
+        errorBox.classList.remove('hidden');
+        showToast('解密失敗！驗證標籤不符或格式錯誤', 'error');
+      }
+    }
+
+    /**
+     * 重置所有示範狀態
+     */
+    function resetDemo() {
+      latestEncryptedState = { combinedBase64: '', keyBase64Url: '', fullShareUrl: '' };
+      document.getElementById('encrypt-results').classList.add('hidden');
+      document.getElementById('decrypt-url-or-key').value = '';
+      document.getElementById('decrypt-payload-input').value = '';
+      document.getElementById('extracted-key-preview').classList.add('hidden');
+      document.getElementById('decrypt-success-box').classList.add('hidden');
+      document.getElementById('decrypt-error-box').classList.add('hidden');
+      handleUrlOrKeyInput();
+
+      try {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      } catch (e) {}
+
+      showToast('已重置所有加解密示範狀態', 'info');
+    }
+
+    // 頁面載入時，若真實網址列本身帶有 #hash，自動協助填入解密端模擬
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.location.hash && window.location.hash.length > 1) {
+        const hashKey = window.location.hash.slice(1);
+        document.getElementById('decrypt-url-or-key').value = `https://example.com/s/demo-id#${hashKey}`;
+        handleUrlOrKeyInput();
+      }
+    });
+  </script>
+</body>
+</html>
