@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>網址編碼還原器（URL Decoder）</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>網址雙向編碼與還原器（URL Decoder & Encoder）</title>
   <!-- Google Fonts: Inter & Noto Sans TC -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -18,274 +18,397 @@
             sans: ['"Inter"', '"Noto Sans TC"', 'system-ui', '-apple-system', 'sans-serif'],
             mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
           },
-        },
-      },
+          colors: {
+            mint: {
+              50: '#f1f9f4',
+              100: '#e6f4ec',
+              200: '#c8e6d4',
+              300: '#9fd4b5',
+              400: '#6bb98d',
+              500: '#3f9d6b',
+              600: '#238656',
+              700: '#1b6e46',
+              800: '#174d33',
+              900: '#163024',
+            }
+          }
+        }
+      }
     };
   </script>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/60 text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900">
+<body class="min-h-screen bg-gradient-to-br from-[#f1f9f4] via-[#ecf7f0] to-[#e6f4ec] text-[#163024] font-sans antialiased selection:bg-[#c8e6d4] selection:text-[#163024]">
 
-  <!-- 頂部通知氣泡 (取代 alert) -->
+  <!-- 浮動 Toast 訊息提示（取代原生 alert） -->
   <div id="toast" role="status" aria-live="polite"
-    class="fixed top-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 -translate-y-3 transition-all duration-300 ease-out">
-    <div id="toastContent" class="flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg bg-slate-900 text-white text-sm font-medium">
-      <span id="toastIcon"></span>
-      <span id="toastText"></span>
-    </div>
+    class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 translate-y-3 transition-all duration-200 flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-[#163024] text-white text-sm font-medium shadow-xl shadow-[#163024]/20 border border-[#238656]/40">
+    <span id="toastIcon" class="text-base leading-none">✅</span>
+    <span id="toastText">操作完成</span>
   </div>
 
   <!-- 主容器 -->
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-    
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-7 sm:py-11">
+
     <!-- 頁首標題區 -->
-    <header class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-200 mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <header class="text-center mb-7 sm:mb-8">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#238656] text-white shadow-lg shadow-[#238656]/25 mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
         </svg>
       </div>
-      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-        網址編碼還原器
+      <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-[#163024]">
+        網址雙向編碼與還原器
       </h1>
-      <p class="mt-2 text-sm sm:text-base text-slate-500 max-w-xl mx-auto">
-        將包含百分比編碼（UTF-8）的亂碼網址即時轉換為清晰可讀的中文連結，支援保留空白編碼以防止通訊軟體斷行。
+      <p class="mt-2 text-sm sm:text-base text-[#174d33]/80 max-w-xl mx-auto leading-relaxed">
+        清爽直覺的網址工具：即時將百分比編碼轉為可讀中文連線網址，亦支援反向智慧編碼與一鍵上下互換。
       </p>
     </header>
 
-    <!-- 主卡片 -->
-    <main class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl shadow-slate-200/70 border border-slate-200/80 overflow-hidden">
-      
-      <!-- 區塊一：輸入區 -->
-      <section class="p-5 sm:p-7 border-b border-slate-100">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <label for="inputUrl" class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-            原始編碼網址
-          </label>
-          <div class="flex items-center gap-2">
-            <button type="button" id="sampleBtn"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200/80 active:scale-95 transition">
-              填入範例
-            </button>
+    <!-- 主功能卡片 -->
+    <main class="bg-white rounded-3xl shadow-xl shadow-[#238656]/10 border border-[#c8e6d4] overflow-hidden">
+
+      <!-- 頂部大型分段切換器（Segmented Control） -->
+      <div class="p-3 sm:p-4 bg-[#e8f6ee] border-b border-[#c8e6d4]">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" role="tablist" aria-label="轉換方向選擇">
+          <button type="button" id="dirDecodeBtn" role="tab" aria-selected="true"
+            class="min-h-[48px] flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-sm sm:text-base font-bold transition-all bg-[#238656] text-white shadow-md shadow-[#238656]/20">
+            <span class="text-base" aria-hidden="true">🔓</span>
+            <span>還原解碼（編碼 → 可讀文字）</span>
+          </button>
+
+          <button type="button" id="dirEncodeBtn" role="tab" aria-selected="false"
+            class="min-h-[48px] flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-sm sm:text-base font-semibold transition-all bg-white/80 text-[#174d33] hover:bg-white border border-[#c8e6d4]/80">
+            <span class="text-base" aria-hidden="true">🔒</span>
+            <span>反向編碼（可讀文字 → 百分比編碼）</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 區塊一：輸入區與快捷工具列 -->
+      <section class="p-5 sm:p-7 border-b border-[#e6f4ec]">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3.5">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#238656]"></span>
+            <label for="inputUrl" id="inputLabelText" class="text-base font-bold text-[#163024]">
+              原始編碼網址
+            </label>
+            <span id="inputCharCount" class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#e8f6ee] text-[#174d33]">
+              0 字元
+            </span>
+          </div>
+
+          <!-- 大顆好點擊的輸入輔助工具列 -->
+          <div class="grid grid-cols-3 sm:flex items-center gap-2">
             <button type="button" id="pasteBtn"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 active:scale-95 transition">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              貼上
+              class="min-h-[42px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#e8f6ee] text-[#174d33] hover:bg-[#d5efe0] border border-[#c8e6d4] active:scale-[0.98] transition">
+              <span aria-hidden="true">📋</span>
+              <span>貼上</span>
             </button>
+
+            <button type="button" id="sampleBtn"
+              class="min-h-[42px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-[#e8f6ee] text-[#174d33] hover:bg-[#d5efe0] border border-[#c8e6d4] active:scale-[0.98] transition">
+              <span aria-hidden="true">✨</span>
+              <span>填入範例</span>
+            </button>
+
             <button type="button" id="clearBtn"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 active:scale-95 transition">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              清空
+              class="min-h-[42px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 active:scale-[0.98] transition">
+              <span aria-hidden="true">🗑️</span>
+              <span>清空</span>
             </button>
           </div>
         </div>
 
-        <div class="relative">
-          <textarea id="inputUrl" rows="3" spellcheck="false"
-            placeholder="請在此貼上或輸入包含 %E5%8F%B0... 的編碼網址"
-            class="w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3.5 text-sm sm:text-base font-mono text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition resize-y">https://d.jwint.net/2026%20%E5%B9%B4%E5%8F%B0%E7%81%A3%E7%B1%B3%E5%85%B6%E6%9E%97%E5%BF%85%E6%AF%94%E7%99%BB%E6%8E%A8%E4%BB%8B</textarea>
-        </div>
+        <textarea id="inputUrl" rows="3" spellcheck="false"
+          placeholder="請在此貼上或輸入包含 %E5%8F%B0... 的編碼網址"
+          class="w-full rounded-2xl border-2 border-[#c8e6d4] bg-[#f7fcf9] px-4 py-3.5 text-sm sm:text-base font-mono text-[#163024] placeholder:text-[#174d33]/40 focus:bg-white focus:border-[#238656] focus:ring-4 focus:ring-[#238656]/15 outline-none transition resize-y">https://d.jwint.net/2026%20%E5%B9%B4%E5%8F%B0%E7%81%A3%E7%B1%B3%E5%85%B6%E6%9E%97%E5%BF%85%E6%AF%94%E7%99%BB%E6%8E%A8%E4%BB%8B</textarea>
 
-        <!-- 友善提示訊息（例如剪貼簿限制或編碼不完整） -->
-        <div id="warningBanner" class="hidden mt-3 flex items-start gap-2.5 rounded-xl bg-amber-50 border border-amber-200/80 px-3.5 py-2.5 text-xs sm:text-sm text-amber-800">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <span id="warningText"></span>
+        <!-- 溫和淡琥珀色容錯提示橫幅 -->
+        <div id="warningBanner" role="alert"
+          class="hidden mt-3.5 flex items-start gap-2.5 rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 text-xs sm:text-sm text-amber-900">
+          <span class="text-base leading-none mt-0.5" aria-hidden="true">⚠️</span>
+          <span id="warningText" class="leading-relaxed"></span>
         </div>
       </section>
 
-      <!-- 區塊二：轉換模式切換 -->
-      <section class="px-5 sm:px-7 py-4 bg-slate-50/80 border-b border-slate-100">
+      <!-- 區塊二：子模式快捷選項膠囊（Pills） -->
+      <section class="px-5 sm:px-7 py-4 bg-[#f4fbf7] border-b border-[#e6f4ec]">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">轉換模式選擇</span>
-          
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full sm:w-auto" role="radiogroup" aria-label="解碼模式">
-            <!-- 模式一（預設） -->
-            <button type="button" id="modeKeepSpace" role="radio" aria-checked="true"
-              class="mode-btn flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium border transition-all bg-indigo-600 text-white border-indigo-600 shadow-sm">
-              <span class="w-2 h-2 rounded-full bg-white"></span>
-              <span>可讀連線網址（保留 %20）</span>
+          <span id="subModeTitle" class="text-xs sm:text-sm font-bold text-[#174d33]">
+            還原解碼選項：
+          </span>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full sm:w-auto" role="radiogroup" aria-label="轉換細部模式">
+            <button type="button" id="optionABtn" role="radio" aria-checked="true"
+              class="min-h-[42px] flex items-center justify-center sm:justify-start gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition-all bg-[#238656] text-white border-[#238656] shadow-sm">
+              <span class="w-2 h-2 rounded-full bg-white shrink-0"></span>
+              <span id="optionAText">保留 %20（防斷行，預設）</span>
             </button>
 
-            <!-- 模式二 -->
-            <button type="button" id="modeFullDecode" role="radio" aria-checked="false"
-              class="mode-btn flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium border transition-all bg-white text-slate-600 border-slate-200 hover:bg-slate-50">
-              <span class="w-2 h-2 rounded-full bg-slate-300"></span>
-              <span>完全解碼（含空白）</span>
+            <button type="button" id="optionBBtn" role="radio" aria-checked="false"
+              class="min-h-[42px] flex items-center justify-center sm:justify-start gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition-all bg-white text-[#174d33] border-[#c8e6d4] hover:bg-[#e8f6ee]">
+              <span class="w-2 h-2 rounded-full bg-[#9fd4b5] shrink-0"></span>
+              <span id="optionBText">完全解碼（含空白轉空格）</span>
             </button>
           </div>
         </div>
-        <p id="modeDescription" class="mt-2.5 text-xs text-slate-500 leading-relaxed">
-          目前模式：將 UTF-8 編碼還原為中文字，並保留 <code class="px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-700 font-mono">%20</code>，確保貼到 LINE、Messenger 或文件中不會因空白而截斷超連結。
+
+        <p id="modeDescription" class="mt-2.5 text-xs sm:text-sm text-[#174d33]/85 leading-relaxed">
+          目前模式：將 UTF-8 編碼還原為可讀中文字，並保留 <code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">%20</code>，確保貼到 LINE、Messenger 或文件中不會因空白而截斷超連結。
         </p>
       </section>
 
-      <!-- 區塊三：輸出與操作區 -->
+      <!-- 中央醒目「上下互換並切換方向」按鈕列 -->
+      <div class="relative flex items-center justify-center py-3.5 bg-white border-b border-[#e6f4ec]">
+        <div class="absolute inset-x-6 top-1/2 -translate-y-1/2 border-t border-dashed border-[#c8e6d4]" aria-hidden="true"></div>
+        <button type="button" id="swapBtn"
+          class="relative z-10 min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold text-[#174d33] bg-[#e8f6ee] hover:bg-[#d5efe0] border-2 border-[#c8e6d4] shadow-sm active:scale-[0.98] transition">
+          <span class="text-base leading-none" aria-hidden="true">⇅</span>
+          <span>上下互換並切換方向</span>
+        </button>
+      </div>
+
+      <!-- 區塊三：輸出區與一鍵複製主按鈕 -->
       <section class="p-5 sm:p-7">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <label for="outputUrl" class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            轉換結果
-          </label>
-          <span id="charCount" class="text-xs text-slate-400">0 個字元</span>
+        <div class="flex flex-wrap items-center justify-between gap-2.5 mb-3.5">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#3f9d6b]"></span>
+            <label for="outputUrl" id="outputLabelText" class="text-base font-bold text-[#163024]">
+              還原後可讀連線網址
+            </label>
+            <span id="outputCharCount" class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-[#e8f6ee] text-[#174d33]">
+              0 字元
+            </span>
+          </div>
+
+          <!-- 輸出區上方複製快捷按鈕 -->
+          <button type="button" id="copyBtnTop"
+            class="copy-trigger min-h-[42px] inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#238656] hover:bg-[#1b6e46] text-white shadow-sm active:scale-[0.98] transition">
+            <span class="copy-icon" aria-hidden="true">📄</span>
+            <span class="copy-label">一鍵複製結果</span>
+          </button>
         </div>
 
-        <div class="relative">
-          <textarea id="outputUrl" rows="3" readonly
-            placeholder="轉換後的網址將會即時顯示於此..."
-            class="w-full rounded-2xl border border-slate-200 bg-emerald-50/30 px-4 py-3.5 text-sm sm:text-base text-slate-900 font-medium focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition resize-y"></textarea>
-        </div>
+        <textarea id="outputUrl" rows="3" readonly
+          placeholder="轉換後的網址結果會即時顯示於此..."
+          class="w-full rounded-2xl border-2 border-[#c8e6d4] bg-[#f1f9f4] px-4 py-3.5 text-sm sm:text-base text-[#163024] font-medium focus:border-[#238656] focus:ring-4 focus:ring-[#238656]/15 outline-none transition resize-y"></textarea>
 
-        <!-- 主要操作按鈕列 -->
+        <!-- 輸出區下方醒目主操作按鈕列 -->
         <div class="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <button type="button" id="copyBtn"
-            class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] shadow-md shadow-indigo-200 transition">
-            <svg id="copyIconDefault" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            <svg id="copyIconSuccess" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-            <span id="copyBtnText">一鍵複製結果</span>
+          <button type="button" id="copyBtnBottom"
+            class="copy-trigger flex-1 min-h-[48px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm sm:text-base font-bold bg-[#238656] hover:bg-[#1b6e46] text-white shadow-md shadow-[#238656]/20 active:scale-[0.99] transition">
+            <span class="copy-icon text-base" aria-hidden="true">📄</span>
+            <span class="copy-label">一鍵複製結果</span>
           </button>
 
           <a id="openLinkBtn" href="#" target="_blank" rel="noopener noreferrer"
-            class="hidden sm:inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200/80 active:scale-[0.99] transition">
-            <span>直接開啟連結</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
+            class="hidden min-h-[48px] inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm sm:text-base font-bold bg-[#e8f6ee] hover:bg-[#d5efe0] text-[#174d33] border border-[#c8e6d4] active:scale-[0.99] transition">
+            <span aria-hidden="true">↗️</span>
+            <span>新分頁開啟</span>
           </a>
         </div>
 
-        <!-- 有效網址超連結預覽卡片 -->
-        <div id="linkPreviewBox" class="hidden mt-5 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 transition-all">
-          <div class="flex items-center justify-between gap-2 mb-1.5">
-            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-              </svg>
-              可點擊超連結預覽
+        <!-- 有效 http/https 網址可點擊超連結預覽卡片 -->
+        <div id="linkPreviewBox" class="hidden mt-5 rounded-2xl border border-[#c8e6d4] bg-[#f1f9f4] p-4 transition-all">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+            <span class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#174d33]">
+              <span aria-hidden="true">🔗</span>
+              <span>可點擊超連結預覽</span>
             </span>
-            <span class="text-[11px] text-indigo-500">點擊可於新分頁開啟測試</span>
+            <span class="text-xs text-[#238656] font-medium">點擊下方連結可於新分頁測試開啟</span>
           </div>
           <a id="previewAnchor" href="#" target="_blank" rel="noopener noreferrer"
-            class="block text-sm text-indigo-600 hover:text-indigo-800 underline decoration-indigo-300 hover:decoration-indigo-600 underline-offset-4 break-all font-medium transition">
+            class="block text-sm sm:text-base text-[#1b6e46] hover:text-[#163024] underline decoration-[#6bb98d] hover:decoration-[#238656] underline-offset-4 break-all font-semibold transition">
           </a>
         </div>
       </section>
     </main>
 
+    <!-- 頁面底部：可折疊「檢視完整 HTML 原始碼」區塊 -->
+    <section class="mt-6 bg-white/90 rounded-3xl border border-[#c8e6d4] shadow-sm overflow-hidden">
+      <button type="button" id="toggleSourceBtn" aria-expanded="false" aria-controls="sourceCodePanel"
+        class="w-full min-h-[52px] px-5 sm:px-7 py-3.5 flex items-center justify-between gap-3 text-left bg-[#e8f6ee]/70 hover:bg-[#e8f6ee] transition">
+        <span class="flex items-center gap-2 text-sm sm:text-base font-bold text-[#174d33]">
+          <span aria-hidden="true">💻</span>
+          <span>檢視完整 HTML 原始碼</span>
+        </span>
+        <span id="toggleSourceArrow" class="text-xs font-semibold px-3 py-1 rounded-full bg-white text-[#174d33] border border-[#c8e6d4] transition-transform">
+          展開 ▼
+        </span>
+      </button>
+
+      <div id="sourceCodePanel" class="hidden p-5 sm:p-7 border-t border-[#c8e6d4] bg-white">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <p class="text-xs sm:text-sm text-[#174d33]/80">
+            此為本單頁式應用程式的完整自包含 HTML 程式碼，可直接存為 <code class="px-1.5 py-0.5 rounded bg-[#e8f6ee] font-mono text-[#174d33]">.html</code> 檔案離線或線上使用。
+          </p>
+          <button type="button" id="copyFullSourceBtn"
+            class="min-h-[42px] shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#238656] hover:bg-[#1b6e46] text-white shadow-sm active:scale-[0.98] transition">
+            <span id="copySourceIcon" aria-hidden="true">📋</span>
+            <span id="copySourceLabel">複製完整程式碼</span>
+          </button>
+        </div>
+
+        <textarea id="fullSourceTextarea" rows="12" readonly spellcheck="false"
+          class="w-full rounded-2xl border border-[#c8e6d4] bg-[#163024] text-[#e6f4ec] p-4 text-xs font-mono leading-relaxed outline-none resize-y"></textarea>
+      </div>
+    </section>
+
     <!-- 頁尾說明 -->
-    <footer class="mt-6 text-center text-xs text-slate-400">
-      所有解碼運算皆於您的瀏覽器本機端即時完成，不會上傳任何網址資料。
+    <footer class="mt-6 text-center text-xs text-[#174d33]/75">
+      所有編碼與還原運算皆於您的瀏覽器本機端即時執行，絕不會上傳任何網址或文字資料。
     </footer>
   </div>
 
   <script>
     (function () {
-      // 預設範例網址
-      const SAMPLE_URL = 'https://d.jwint.net/2026%20%E5%B9%B4%E5%8F%B0%E7%81%A3%E7%B1%B3%E5%85%B6%E6%9E%97%E5%BF%85%E6%AF%94%E7%99%BB%E6%8E%A8%E4%BB%8B';
+      // 預設雙向範例網址
+      const ENCODED_SAMPLE_URL = 'https://d.jwint.net/2026%20%E5%B9%B4%E5%8F%B0%E7%81%A3%E7%B1%B3%E5%85%B6%E6%9E%97%E5%BF%85%E6%AF%94%E7%99%BB%E6%8E%A8%E4%BB%8B';
+      const READABLE_SAMPLE_URL = 'https://d.jwint.net/2026%20年台灣米其林必比登推介';
 
       // DOM 元素參照
+      const dirDecodeBtn = document.getElementById('dirDecodeBtn');
+      const dirEncodeBtn = document.getElementById('dirEncodeBtn');
       const inputEl = document.getElementById('inputUrl');
+      const inputLabelText = document.getElementById('inputLabelText');
+      const inputCharCount = document.getElementById('inputCharCount');
       const outputEl = document.getElementById('outputUrl');
-      const sampleBtn = document.getElementById('sampleBtn');
-      const pasteBtn = document.getElementById('pasteBtn');
-      const clearBtn = document.getElementById('clearBtn');
-      const copyBtn = document.getElementById('copyBtn');
-      const copyBtnText = document.getElementById('copyBtnText');
-      const copyIconDefault = document.getElementById('copyIconDefault');
-      const copyIconSuccess = document.getElementById('copyIconSuccess');
-      const modeKeepSpaceBtn = document.getElementById('modeKeepSpace');
-      const modeFullDecodeBtn = document.getElementById('modeFullDecode');
+      const outputLabelText = document.getElementById('outputLabelText');
+      const outputCharCount = document.getElementById('outputCharCount');
+      const subModeTitle = document.getElementById('subModeTitle');
+      const optionABtn = document.getElementById('optionABtn');
+      const optionBBtn = document.getElementById('optionBBtn');
+      const optionAText = document.getElementById('optionAText');
+      const optionBText = document.getElementById('optionBText');
       const modeDescription = document.getElementById('modeDescription');
-      const warningBanner = document.getElementById('warningBanner');
-      const warningText = document.getElementById('warningText');
-      const charCount = document.getElementById('charCount');
+      const swapBtn = document.getElementById('swapBtn');
+      const pasteBtn = document.getElementById('pasteBtn');
+      const sampleBtn = document.getElementById('sampleBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const copyTriggers = document.querySelectorAll('.copy-trigger');
       const openLinkBtn = document.getElementById('openLinkBtn');
       const linkPreviewBox = document.getElementById('linkPreviewBox');
       const previewAnchor = document.getElementById('previewAnchor');
+      const warningBanner = document.getElementById('warningBanner');
+      const warningText = document.getElementById('warningText');
       const toast = document.getElementById('toast');
-      const toastText = document.getElementById('toastText');
       const toastIcon = document.getElementById('toastIcon');
+      const toastText = document.getElementById('toastText');
 
-      // 狀態變數：預設為模式一（保留 %20）
-      let currentMode = 'keepSpace'; // 'keepSpace' | 'full'
+      // 原始碼區塊元素
+      const toggleSourceBtn = document.getElementById('toggleSourceBtn');
+      const toggleSourceArrow = document.getElementById('toggleSourceArrow');
+      const sourceCodePanel = document.getElementById('sourceCodePanel');
+      const fullSourceTextarea = document.getElementById('fullSourceTextarea');
+      const copyFullSourceBtn = document.getElementById('copyFullSourceBtn');
+      const copySourceIcon = document.getElementById('copySourceIcon');
+      const copySourceLabel = document.getElementById('copySourceLabel');
+
+      // 狀態變數
+      let direction = 'decode';       // 'decode' | 'encode'
+      let decodeOption = 'keepSpace'; // 'keepSpace' | 'full'
+      let encodeOption = 'smartUri';  // 'smartUri' | 'component'
       let toastTimer = null;
       let copyResetTimer = null;
+      let sourceCopyResetTimer = null;
 
       /**
-       * 顯示頂部輕量通知氣泡
+       * 顯示畫面底部 Toast 提示訊息
        */
-      function showToast(message, type = 'success') {
-        clearTimeout(toastTimer);
+      function showToast(message, icon = '✅') {
         toastText.textContent = message;
-        toastIcon.textContent = type === 'success' ? '✓' : '!';
-        toast.classList.remove('opacity-0', '-translate-y-3');
+        toastIcon.textContent = icon;
+        toast.classList.remove('opacity-0', 'translate-y-3');
         toast.classList.add('opacity-100', 'translate-y-0');
 
+        if (toastTimer) clearTimeout(toastTimer);
         toastTimer = setTimeout(() => {
           toast.classList.remove('opacity-100', 'translate-y-0');
-          toast.classList.add('opacity-0', '-translate-y-3');
-        }, 2200);
+          toast.classList.add('opacity-0', 'translate-y-3');
+        }, 2400);
       }
 
       /**
-       * 安全解碼片段：將連續的 %XX 區塊嘗試進行 UTF-8 decodeURIComponent，
-       * 若遇到不完整的百分比編碼（例如截斷的 %E5），保留原樣並標記警告，避免程式拋出例外崩潰。
+       * 通用安全複製文字函式（支援 iframe 與各種瀏覽器環境）
        */
-      function safeDecodeChunk(text) {
-        let hasMalformed = false;
+      async function copyTextSafely(text) {
+        if (!text) return false;
 
-        // 偵測孤立或不完整的 % 符號（例如 %E 或結尾單獨的 %）
-        if (/%(?![0-9A-Fa-f]{2})/.test(text)) {
-          hasMalformed = true;
+        // 優先嘗試 Clipboard API
+        if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(text);
+            return true;
+          } catch (_) {
+            // 失敗時退回至 execCommand
+          }
         }
 
-        // 針對連續的 %XX 序列逐段解碼
-        const decoded = text.replace(/((?:%[0-9A-Fa-f]{2})+)/g, (match) => {
-          try {
-            return decodeURIComponent(match);
-          } catch (e) {
-            // 若整段連續 %XX 無法一次解碼（例如中間夾雜不完整 UTF-8 位元組），
-            // 嘗試退回逐個有效 UTF-8 序列解碼，其餘保留原字元
-            hasMalformed = true;
-            return match.replace(
-              /(?:%[0-7][0-9A-Fa-f]|%[CcDd][0-9A-Fa-f]%[89ABab][0-9A-Fa-f]|%[Ee][0-9A-Fa-f](?:%[89ABab][0-9A-Fa-f]){2}|%[Ff][0-7](?:%[89ABab][0-9A-Fa-f]){3})/g,
-              (validUtf8) => {
-                try {
-                  return decodeURIComponent(validUtf8);
-                } catch (_) {
-                  return validUtf8;
-                }
-              }
-            );
-          }
-        });
-
-        return { decoded, hasMalformed };
+        // 備援方案：建立暫存 textarea 執行 execCommand('copy')
+        try {
+          const tempArea = document.createElement('textarea');
+          tempArea.value = text;
+          tempArea.setAttribute('readonly', '');
+          tempArea.style.position = 'fixed';
+          tempArea.style.top = '-9999px';
+          tempArea.style.left = '-9999px';
+          document.body.appendChild(tempArea);
+          tempArea.select();
+          tempArea.setSelectionRange(0, tempArea.value.length);
+          const success = document.execCommand('copy');
+          document.body.removeChild(tempArea);
+          return success;
+        } catch (_) {
+          return false;
+        }
       }
 
       /**
-       * 依據目前選擇的模式進行網址解碼
+       * 安全解碼單一字串片段，遇到截斷或不完整的 % 序列時自動容錯保留原始字元
+       */
+      function safeDecodeChunk(chunk) {
+        try {
+          return { decoded: decodeURIComponent(chunk), hasMalformed: false };
+        } catch (_) {
+          let hasMalformed = false;
+          // 逐段匹配合法的 UTF-8 百分比編碼序列並解碼，其餘無效的 % 片段原樣保留
+          const recovered = chunk.replace(/(?:%[0-9A-Fa-f]{2})+/g, (seq) => {
+            try {
+              return decodeURIComponent(seq);
+            } catch (e) {
+              hasMalformed = true;
+              return seq;
+            }
+          });
+
+          // 檢查是否仍存在孤立或不完整的 %（例如 %E 或 %2G）
+          if (/%(?![0-9A-Fa-f]{2})/.test(recovered)) {
+            hasMalformed = true;
+          }
+
+          return { decoded: recovered, hasMalformed };
+        }
+      }
+
+      /**
+       * 執行解碼運算（還原解碼模式）
        */
       function decodeUrlString(rawInput, mode) {
         if (!rawInput) {
-          return { result: '', hasMalformed: false };
+          return { result: '', warning: '' };
         }
 
         if (mode === 'full') {
           const { decoded, hasMalformed } = safeDecodeChunk(rawInput);
-          return { result: decoded, hasMalformed };
+          return {
+            result: decoded,
+            warning: hasMalformed
+              ? '偵測到部分不完整或無效的百分比編碼（例如截斷的 %E5），已自動保留異常字元並完成其餘部分解碼。'
+              : ''
+          };
         }
 
-        // 模式一：保留 %20（不區分大小寫如 %20），其餘百分比編碼還原為可讀文字
+        // 預設模式：保留 %20（防通訊軟體斷行），其餘 UTF-8 百分比編碼還原為可讀文字
         const segments = rawInput.split(/(%20)/gi);
         let anyMalformed = false;
 
@@ -300,63 +423,111 @@
           return decoded;
         });
 
-        return { result: processed.join(''), hasMalformed: anyMalformed };
+        return {
+          result: processed.join(''),
+          warning: anyMalformed
+            ? '偵測到部分不完整或無效的百分比編碼（例如截斷的 %E5），已自動保留異常字元並完成其餘部分解碼。'
+            : ''
+        };
       }
 
       /**
-       * 檢查字串是否為單一有效的 http:// 或 https:// 網址
+       * 執行反向編碼運算（反向編碼模式）
+       */
+      function encodeUrlString(rawInput, mode) {
+        if (!rawInput) {
+          return { result: '', warning: '' };
+        }
+
+        if (mode === 'component') {
+          // 完整字串編碼：encodeURIComponent
+          try {
+            return { result: encodeURIComponent(rawInput), warning: '' };
+          } catch (_) {
+            const sanitized = rawInput.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g, '\uFFFD');
+            return {
+              result: encodeURIComponent(sanitized),
+              warning: '輸入包含異常的 Unicode 代理字元，已自動修正並完成完整字串編碼。'
+            };
+          }
+        }
+
+        // 預設模式：智慧網址編碼
+        // 保留 https://、/、?、&、=、# 等網址結構，且智慧偵測已存在的合法 %XX 序列避免重複編碼成 %2520
+        const tokens = rawInput.split(/(%[0-9A-Fa-f]{2})/g);
+        let hasLoneSurrogate = false;
+
+        const encodedTokens = tokens.map((token) => {
+          if (/^%[0-9A-Fa-f]{2}$/.test(token)) {
+            return token.toUpperCase();
+          }
+          try {
+            return encodeURI(token);
+          } catch (_) {
+            hasLoneSurrogate = true;
+            const sanitized = token.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g, '\uFFFD');
+            return encodeURI(sanitized);
+          }
+        });
+
+        return {
+          result: encodedTokens.join(''),
+          warning: hasLoneSurrogate
+            ? '輸入包含異常的 Unicode 代理字元，已自動修正並完成智慧網址編碼。'
+            : ''
+        };
+      }
+
+      /**
+       * 驗證輸出是否為單一有效的 http:// 或 https:// 網址
        */
       function extractValidHttpUrl(str) {
         const trimmed = str.trim();
-        if (!trimmed || /\s/.test(trimmed)) {
-          // 若包含實際空白字元（例如模式二將 %20 轉為空白），將空白轉回 %20 供 href 使用
-          const firstLine = trimmed.split(/\r?\n/)[0].trim();
-          if (/^https?:\/\/\S+/i.test(firstLine)) {
-            try {
-              const normalized = firstLine.replace(/ /g, '%20');
-              const urlObj = new URL(normalized);
-              if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
-                return normalized;
-              }
-            } catch (_) {
-              return null;
-            }
-          }
+        if (!trimmed) return null;
+
+        const lines = trimmed.split(/\r?\n/);
+        if (lines.length > 1) return null;
+
+        const singleLine = lines[0];
+        if (!/^https?:\/\/\S+/i.test(singleLine)) {
           return null;
         }
 
-        if (/^https?:\/\//i.test(trimmed)) {
-          try {
-            const urlObj = new URL(trimmed);
-            if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
-              return trimmed;
-            }
-          } catch (_) {
-            return null;
+        try {
+          const normalized = singleLine.replace(/ /g, '%20');
+          const urlObj = new URL(normalized);
+          if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+            return normalized;
           }
+        } catch (_) {
+          return null;
         }
         return null;
       }
 
       /**
-       * 執行轉換並更新畫面狀態
+       * 執行即時轉換並更新所有介面狀態
        */
       function processConversion() {
         const raw = inputEl.value;
-        const { result, hasMalformed } = decodeUrlString(raw, currentMode);
+        inputCharCount.textContent = `${raw.length} 字元`;
+
+        const { result, warning } = direction === 'decode'
+          ? decodeUrlString(raw, decodeOption)
+          : encodeUrlString(raw, encodeOption);
 
         outputEl.value = result;
-        charCount.textContent = `${result.length} 個字元`;
+        outputCharCount.textContent = `${result.length} 字元`;
 
-        // 處理不完整編碼的友善警告
-        if (hasMalformed && raw.trim() !== '') {
-          warningText.textContent = '偵測到部分不完整或無效的百分比編碼（如截斷的 %E5），已自動保留異常字元並完成其餘部分解碼。';
+        // 顯示或隱藏溫和淡琥珀色容錯提示橫幅
+        if (warning && raw.trim() !== '') {
+          warningText.textContent = warning;
           warningBanner.classList.remove('hidden');
         } else {
           warningBanner.classList.add('hidden');
         }
 
-        // 處理超連結預覽與「直接開啟連結」按鈕
+        // 處理有效網址的超連結預覽與新分頁開啟按鈕
         const validHref = extractValidHttpUrl(result);
         if (validHref) {
           openLinkBtn.href = validHref;
@@ -374,135 +545,283 @@
       }
 
       /**
-       * 切換解碼模式 UI 與邏輯
+       * 更新子模式快捷選項膠囊（Pills）與說明文字
        */
-      function setMode(mode) {
-        currentMode = mode;
+      function renderSubOptionsUI() {
+        const activePillClass = 'min-h-[42px] flex items-center justify-center sm:justify-start gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition-all bg-[#238656] text-white border-[#238656] shadow-sm';
+        const inactivePillClass = 'min-h-[42px] flex items-center justify-center sm:justify-start gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition-all bg-white text-[#174d33] border-[#c8e6d4] hover:bg-[#e8f6ee]';
 
-        if (mode === 'keepSpace') {
-          modeKeepSpaceBtn.setAttribute('aria-checked', 'true');
-          modeKeepSpaceBtn.className = 'mode-btn flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium border transition-all bg-indigo-600 text-white border-indigo-600 shadow-sm';
-          modeKeepSpaceBtn.querySelector('span:first-child').className = 'w-2 h-2 rounded-full bg-white';
+        const isOptionA = direction === 'decode'
+          ? decodeOption === 'keepSpace'
+          : encodeOption === 'smartUri';
 
-          modeFullDecodeBtn.setAttribute('aria-checked', 'false');
-          modeFullDecodeBtn.className = 'mode-btn flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium border transition-all bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
-          modeFullDecodeBtn.querySelector('span:first-child').className = 'w-2 h-2 rounded-full bg-slate-300';
+        optionABtn.setAttribute('aria-checked', isOptionA ? 'true' : 'false');
+        optionABtn.className = isOptionA ? activePillClass : inactivePillClass;
+        optionABtn.querySelector('span:first-child').className = isOptionA
+          ? 'w-2 h-2 rounded-full bg-white shrink-0'
+          : 'w-2 h-2 rounded-full bg-[#9fd4b5] shrink-0';
 
-          modeDescription.innerHTML = '目前模式：將 UTF-8 編碼還原為中文字，並保留 <code class="px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-700 font-mono">%20</code>，確保貼到 LINE、Messenger 或文件中不會因空白而截斷超連結。';
+        optionBBtn.setAttribute('aria-checked', !isOptionA ? 'true' : 'false');
+        optionBBtn.className = !isOptionA ? activePillClass : inactivePillClass;
+        optionBBtn.querySelector('span:first-child').className = !isOptionA
+          ? 'w-2 h-2 rounded-full bg-white shrink-0'
+          : 'w-2 h-2 rounded-full bg-[#9fd4b5] shrink-0';
+
+        if (direction === 'decode') {
+          subModeTitle.textContent = '還原解碼選項：';
+          optionAText.textContent = '保留 %20（防斷行，預設）';
+          optionBText.textContent = '完全解碼（含空白轉空格）';
+
+          if (decodeOption === 'keepSpace') {
+            modeDescription.innerHTML = '目前模式：將 UTF-8 編碼還原為可讀中文字，並保留 <code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">%20</code>，確保貼到 LINE、Messenger 或文件中不會因空白而截斷超連結。';
+          } else {
+            modeDescription.innerHTML = '目前模式：完全解碼所有百分比編碼（包含將 <code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">%20</code> 還原為一般空白鍵），適合純文字閱讀與內容檢視。';
+          }
         } else {
-          modeFullDecodeBtn.setAttribute('aria-checked', 'true');
-          modeFullDecodeBtn.className = 'mode-btn flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium border transition-all bg-indigo-600 text-white border-indigo-600 shadow-sm';
-          modeFullDecodeBtn.querySelector('span:first-child').className = 'w-2 h-2 rounded-full bg-white';
+          subModeTitle.textContent = '反向編碼選項：';
+          optionAText.textContent = '智慧網址編碼（預設）';
+          optionBText.textContent = '完整字串編碼（encodeURIComponent）';
 
-          modeKeepSpaceBtn.setAttribute('aria-checked', 'false');
-          modeKeepSpaceBtn.className = 'mode-btn flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium border transition-all bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
-          modeKeepSpaceBtn.querySelector('span:first-child').className = 'w-2 h-2 rounded-full bg-slate-300';
+          if (encodeOption === 'smartUri') {
+            modeDescription.innerHTML = '目前模式：保留 <code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">https://</code>、<code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">/</code>、<code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">?</code>、<code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">&amp;</code>、<code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">=</code>、<code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">#</code> 等結構，且不重複編碼既有的 <code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">%XX</code>。';
+          } else {
+            modeDescription.innerHTML = '目前模式：使用 <code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">encodeURIComponent</code> 將所有非英數符號（含 <code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">/</code>、<code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">:</code>、<code class="px-1.5 py-0.5 rounded-md bg-[#e8f6ee] text-[#174d33] font-mono font-semibold">?</code>）完整編碼，適合用於查詢參數值。';
+          }
+        }
+      }
 
-          modeDescription.innerHTML = '目前模式：完全解碼所有百分比編碼（包含將 <code class="px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-700 font-mono">%20</code> 還原為一般空白鍵），適合用於純文字閱讀與內容檢視。';
+      /**
+       * 切換頂部雙向轉換方向（還原解碼 vs 反向編碼）
+       */
+      function setDirection(newDirection, options = {}) {
+        const { autoFillSampleIfDefault = false } = options;
+        const prevDirection = direction;
+        direction = newDirection;
+
+        const activeSegClass = 'min-h-[48px] flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-sm sm:text-base font-bold transition-all bg-[#238656] text-white shadow-md shadow-[#238656]/20';
+        const inactiveSegClass = 'min-h-[48px] flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-sm sm:text-base font-semibold transition-all bg-white/80 text-[#174d33] hover:bg-white border border-[#c8e6d4]/80';
+
+        if (direction === 'decode') {
+          dirDecodeBtn.setAttribute('aria-selected', 'true');
+          dirDecodeBtn.className = activeSegClass;
+
+          dirEncodeBtn.setAttribute('aria-selected', 'false');
+          dirEncodeBtn.className = inactiveSegClass;
+
+          inputLabelText.textContent = '原始編碼網址';
+          outputLabelText.textContent = '還原後可讀連線網址';
+          inputEl.placeholder = '請在此貼上或輸入包含 %E5%8F%B0... 的編碼網址';
+          inputEl.classList.add('font-mono');
+          outputEl.classList.remove('font-mono');
+
+          if (autoFillSampleIfDefault && prevDirection !== 'decode' && inputEl.value.trim() === READABLE_SAMPLE_URL) {
+            inputEl.value = ENCODED_SAMPLE_URL;
+          }
+        } else {
+          dirEncodeBtn.setAttribute('aria-selected', 'true');
+          dirEncodeBtn.className = activeSegClass;
+
+          dirDecodeBtn.setAttribute('aria-selected', 'false');
+          dirDecodeBtn.className = inactiveSegClass;
+
+          inputLabelText.textContent = '可讀網址或文字';
+          outputLabelText.textContent = '轉換後百分比編碼網址';
+          inputEl.placeholder = '請在此貼上或輸入包含中文或空白的網址（例如：https://d.jwint.net/2026%20年台灣米其林必比登推介）';
+          inputEl.classList.remove('font-mono');
+          outputEl.classList.add('font-mono');
+
+          if (autoFillSampleIfDefault && prevDirection !== 'encode' && inputEl.value.trim() === ENCODED_SAMPLE_URL) {
+            inputEl.value = READABLE_SAMPLE_URL;
+          }
         }
 
+        renderSubOptionsUI();
         processConversion();
       }
 
       /**
-       * 複製結果文字至剪貼簿（使用相容性最高的 execCommand('copy')）
+       * 上下互換：將目前輸出結果帶入輸入框並自動切換轉換方向
        */
-      function copyResult() {
-        const textToCopy = outputEl.value;
-        if (!textToCopy) {
-          showToast('目前沒有可複製的內容', 'warn');
+      function swapInputAndOutput() {
+        const currentOutput = outputEl.value;
+        if (!currentOutput) {
+          showToast('目前沒有可互換的輸出結果', 'ℹ️');
           return;
         }
 
-        const tempTextarea = document.createElement('textarea');
-        tempTextarea.value = textToCopy;
-        tempTextarea.style.position = 'fixed';
-        tempTextarea.style.left = '-9999px';
-        tempTextarea.style.top = '0';
-        document.body.appendChild(tempTextarea);
-        tempTextarea.focus();
-        tempTextarea.select();
-
-        let copied = false;
-        try {
-          copied = document.execCommand('copy');
-        } catch (err) {
-          copied = false;
-        }
-        document.body.removeChild(tempTextarea);
-
-        if (copied) {
-          // 更新按鈕狀態為「已複製！」
-          clearTimeout(copyResetTimer);
-          copyBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'shadow-indigo-200');
-          copyBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700', 'shadow-emerald-200');
-          copyIconDefault.classList.add('hidden');
-          copyIconSuccess.classList.remove('hidden');
-          copyBtnText.textContent = '已複製！';
-          showToast('已複製到剪貼簿！');
-
-          copyResetTimer = setTimeout(() => {
-            copyBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700', 'shadow-emerald-200');
-            copyBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'shadow-indigo-200');
-            copyIconSuccess.classList.add('hidden');
-            copyIconDefault.classList.remove('hidden');
-            copyBtnText.textContent = '一鍵複製結果';
-          }, 2000);
-        } else {
-          // 若複製受限，自動選取輸出框文字方便手動複製
-          outputEl.focus();
-          outputEl.select();
-          showToast('已選取文字，請按 Ctrl+C / Cmd+C 複製', 'warn');
-        }
+        inputEl.value = currentOutput;
+        const nextDirection = direction === 'decode' ? 'encode' : 'decode';
+        setDirection(nextDirection, { autoFillSampleIfDefault: false });
+        showToast(nextDirection === 'encode' ? '已上下互換並切換為「反向編碼」' : '已上下互換並切換為「還原解碼」', '⇅');
       }
 
       /**
-       * 貼上剪貼簿內容
+       * 從剪貼簿貼上文字
        */
       async function pasteFromClipboard() {
         try {
           if (navigator.clipboard && navigator.clipboard.readText) {
-            const clipText = await navigator.clipboard.readText();
-            if (clipText) {
-              inputEl.value = clipText;
+            const text = await navigator.clipboard.readText();
+            if (text) {
+              inputEl.value = text;
               processConversion();
-              showToast('已貼上剪貼簿內容');
+              showToast('已從剪貼簿貼上內容', '📋');
               return;
             }
           }
-          throw new Error('Clipboard read unavailable');
-        } catch (err) {
-          // 若因權限或 iframe 環境無法直接讀取剪貼簿，聚焦輸入框並給予友善引導
           inputEl.focus();
-          inputEl.select();
-          showToast('請直接在輸入框按 Ctrl+V / Cmd+V 貼上', 'warn');
+          showToast('請直接使用 Ctrl+V 或長按貼上', 'ℹ️');
+        } catch (_) {
+          inputEl.focus();
+          showToast('瀏覽器限制自動讀取剪貼簿，請按 Ctrl+V 貼上', 'ℹ️');
         }
       }
 
-      // 綁定事件監聽器
+      /**
+       * 一鍵複製轉換結果並切換按鈕視覺回饋
+       */
+      async function handleCopyResult() {
+        const resultText = outputEl.value;
+        if (!resultText) {
+          showToast('目前沒有可複製的結果', 'ℹ️');
+          return;
+        }
+
+        const success = await copyTextSafely(resultText);
+        if (success) {
+          copyTriggers.forEach((btn) => {
+            btn.classList.remove('bg-[#238656]', 'hover:bg-[#1b6e46]');
+            btn.classList.add('bg-[#163024]', 'hover:bg-[#163024]');
+            btn.querySelector('.copy-icon').textContent = '✅';
+            btn.querySelector('.copy-label').textContent = '已複製！';
+          });
+
+          showToast('已複製轉換結果到剪貼簿！', '✅');
+
+          if (copyResetTimer) clearTimeout(copyResetTimer);
+          copyResetTimer = setTimeout(() => {
+            copyTriggers.forEach((btn) => {
+              btn.classList.remove('bg-[#163024]', 'hover:bg-[#163024]');
+              btn.classList.add('bg-[#238656]', 'hover:bg-[#1b6e46]');
+              btn.querySelector('.copy-icon').textContent = '📄';
+              btn.querySelector('.copy-label').textContent = '一鍵複製結果';
+            });
+          }, 2200);
+        } else {
+          outputEl.select();
+          showToast('自動複製受限，已為您全選文字，請按 Ctrl+C 複製', 'ℹ️');
+        }
+      }
+
+      /**
+       * 取得乾淨的完整頁面 HTML 原始碼（排除動態填入的 textarea 執行期文字）
+       */
+      function getCleanPageHtmlSource() {
+        const cloneDoc = document.documentElement.cloneNode(true);
+        const clonedSourceArea = cloneDoc.querySelector('#fullSourceTextarea');
+        if (clonedSourceArea) {
+          clonedSourceArea.textContent = '';
+        }
+        const clonedSourcePanel = cloneDoc.querySelector('#sourceCodePanel');
+        if (clonedSourcePanel) {
+          clonedSourcePanel.classList.add('hidden');
+        }
+        const clonedToggleBtn = cloneDoc.querySelector('#toggleSourceBtn');
+        if (clonedToggleBtn) {
+          clonedToggleBtn.setAttribute('aria-expanded', 'false');
+        }
+        const clonedArrow = cloneDoc.querySelector('#toggleSourceArrow');
+        if (clonedArrow) {
+          clonedArrow.textContent = '展開 ▼';
+        }
+        return '<!DOCTYPE html>\n' + cloneDoc.outerHTML;
+      }
+
+      // 綁定雙向與選項事件
+      dirDecodeBtn.addEventListener('click', () => setDirection('decode', { autoFillSampleIfDefault: true }));
+      dirEncodeBtn.addEventListener('click', () => setDirection('encode', { autoFillSampleIfDefault: true }));
+
       inputEl.addEventListener('input', processConversion);
 
-      modeKeepSpaceBtn.addEventListener('click', () => setMode('keepSpace'));
-      modeFullDecodeBtn.addEventListener('click', () => setMode('full'));
-
-      sampleBtn.addEventListener('click', () => {
-        inputEl.value = SAMPLE_URL;
+      optionABtn.addEventListener('click', () => {
+        if (direction === 'decode') {
+          decodeOption = 'keepSpace';
+        } else {
+          encodeOption = 'smartUri';
+        }
+        renderSubOptionsUI();
         processConversion();
-        showToast('已填入範例網址');
       });
 
+      optionBBtn.addEventListener('click', () => {
+        if (direction === 'decode') {
+          decodeOption = 'full';
+        } else {
+          encodeOption = 'component';
+        }
+        renderSubOptionsUI();
+        processConversion();
+      });
+
+      swapBtn.addEventListener('click', swapInputAndOutput);
       pasteBtn.addEventListener('click', pasteFromClipboard);
+
+      sampleBtn.addEventListener('click', () => {
+        inputEl.value = direction === 'decode' ? ENCODED_SAMPLE_URL : READABLE_SAMPLE_URL;
+        processConversion();
+        showToast(direction === 'decode' ? '已填入編碼網址範例' : '已填入可讀網址範例', '✨');
+      });
 
       clearBtn.addEventListener('click', () => {
         inputEl.value = '';
-        inputEl.focus();
         processConversion();
-        showToast('已清空內容');
+        inputEl.focus();
+        showToast('已清空輸入內容', '🗑️');
       });
 
-      copyBtn.addEventListener('click', copyResult);
+      copyTriggers.forEach((btn) => {
+        btn.addEventListener('click', handleCopyResult);
+      });
 
-      // 頁面載入後立即執行一次預設範例轉換
+      // 折疊／展開「檢視完整 HTML 原始碼」區塊
+      toggleSourceBtn.addEventListener('click', () => {
+        const isHidden = sourceCodePanel.classList.contains('hidden');
+        if (isHidden) {
+          if (!fullSourceTextarea.value) {
+            fullSourceTextarea.value = getCleanPageHtmlSource();
+          }
+          sourceCodePanel.classList.remove('hidden');
+          toggleSourceBtn.setAttribute('aria-expanded', 'true');
+          toggleSourceArrow.textContent = '收合 ▲';
+        } else {
+          sourceCodePanel.classList.add('hidden');
+          toggleSourceBtn.setAttribute('aria-expanded', 'false');
+          toggleSourceArrow.textContent = '展開 ▼';
+        }
+      });
+
+      // 複製完整 HTML 原始碼
+      copyFullSourceBtn.addEventListener('click', async () => {
+        const codeText = fullSourceTextarea.value || getCleanPageHtmlSource();
+        const success = await copyTextSafely(codeText);
+        if (success) {
+          copySourceIcon.textContent = '✅';
+          copySourceLabel.textContent = '已複製完整程式碼！';
+          showToast('已複製完整 HTML 原始碼！', '✅');
+
+          if (sourceCopyResetTimer) clearTimeout(sourceCopyResetTimer);
+          sourceCopyResetTimer = setTimeout(() => {
+            copySourceIcon.textContent = '📋';
+            copySourceLabel.textContent = '複製完整程式碼';
+          }, 2200);
+        } else {
+          fullSourceTextarea.select();
+          showToast('自動複製受限，已全選原始碼，請按 Ctrl+C 複製', 'ℹ️');
+        }
+      });
+
+      // 初始化介面並執行預設範例轉換
+      renderSubOptionsUI();
       processConversion();
     })();
   </script>
