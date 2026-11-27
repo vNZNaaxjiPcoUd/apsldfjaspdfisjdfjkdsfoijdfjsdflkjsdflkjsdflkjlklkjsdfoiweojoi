@@ -36,6 +36,12 @@
             white-space: nowrap;   /* 防止座標文字自動換行 */
             margin-bottom: 10px;   /* 若不想完全貼緊最底部，可調整此邊距 */
         }
+        .custom-wrap-tooltip {
+            white-space: normal !important;
+            width: max-content;
+            max-width: 26em; /* 以中文字寬度為基準，約 26 個全形字 */
+            word-break: break-word;
+        }
     </style>
 </head>
 <body>
